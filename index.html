@@ -942,7 +942,7 @@ function side(){
 }
 function header(title,actions=''){
   const opts=PJ().sort((a,b)=>(b.created||0)-(a.created||0)).map(p=>`<option value="${p.id}" ${S.proj===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('');
-  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar"><h1>${title}</h1>${S.ready&&canView('alerts')&&S.view!=='dashboard'?(()=>{const c=computeAlerts().length;return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
+  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar"><h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().length;return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
     <label class="psw">${ico('building-2')}<select id="projSel" aria-label="Project"><option value="all">All projects</option>${opts}</select></label>${actions}</div>`;
 }
 const isAdmin=()=>ME.isOwner||ME.canEdit;
@@ -1052,7 +1052,7 @@ function vProjects(){
 
 /* ================= Dashboard ================= */
 function vDashboard(){
-  if(!PJ().length)return header(label('dashboard'))+orgsBox()+`<div class="box hero-empty">${ico('hard-hat')}<h2>Welcome to BuildMitr</h2><p>Create a project first. Then your team can log daily reports, tasks, issues, material and labour from site — on phone or computer.</p><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${CANW?`<button class="btn pri" data-add="projects">${ico('plus')}Create first project</button>`:''}<button class="btn" data-demo="on">${ico('flask-conical')}See a demo with sample data</button></div></div>`;
+  if(!PJ().length)return header(label('dashboard'))+`<div class="box hero-empty">${ico('hard-hat')}<h2>Welcome to BuildMitr</h2><p>Create a project first. Then your team can log daily reports, tasks, issues, material and labour from site — on phone or computer.</p><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${CANW?`<button class="btn pri" data-add="projects">${ico('plus')}Create first project</button>`:''}<button class="btn" data-demo="on">${ico('flask-conical')}See a demo with sample data</button></div></div>`;
   const t=today(),f=a=>a.filter(inProj);
   const tasks=f(D.tasks),issues=f(D.issues),pay=f(D.payments);
   const openT=tasks.filter(x=>x.status!=='Completed'),late=openT.filter(x=>x.due&&x.due<t);
@@ -1066,7 +1066,7 @@ function vDashboard(){
   const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
-  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+orgsBox()+siteBox+alBox+ownerBox()+mktBox()+`
+  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+siteBox+ownerBox()+mktBox()+`
   ${S.stale?`<div class="note">${ico('wifi-off')}<span>Can't reach the server right now — figures may be out of date.</span></div>`:''}
   <div class="box tiles">
     <div class="tile"><b>${openT.length}</b><span>Open tasks${late.length?` · <span style="color:var(--red-ink)">${late.length} late</span>`:''}</span></div>
@@ -3178,7 +3178,7 @@ function vAdminPanel(){
   const tiles=[[ppl.length,'People in the team'],[joined,'Signed in at least once'],[pendingJoins().length,'Code sent, not signed in yet'],[noProj.length,'Clients without a project']];
   const roles=ALL_ROLES();
   const pname_=t=>(t.projects||[]).includes('all')?'All projects':(t.projects||[]).length?(t.projects||[]).map(id=>(D.projects.find(p=>p.id===id)||{}).name||'—').join(', '):'No project';
-  return header(label('adminpanel'))+orgsBox()+
+  return header(label('adminpanel'))+
   `<div class="box"><div class="tiles">${tiles.map(([n,l])=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`).join('')}</div></div>`+
   (noProj.length?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('info')}<span><b>${noProj.length} client(s) cannot see any project yet.</b> Tap <b>Edit</b> next to them below and choose their project.</span></div>`:'')+
   joinReqBox()+
@@ -3214,7 +3214,7 @@ function signOutBar(){
   if(!S.cloud||!S.ready||S.viewAs)return '';
   const many=(CLOUD.mems||[]).length>1;
   return `<div class="box signout-bar"><div class="srow"><span style="flex:1;min-width:180px" class="code">Signed in as <b data-notr>${esc(ME.email||'')}</b> · ${esc(curRole())}${CLOUD.mem?` · <b data-notr>${esc(CLOUD.mem.org_name||'')}</b>`:''}</span>
-    ${many?(isSuperAdmin()?`<button class="btn" data-orgswitch>${ico('building-2')}<span>Organisations</span></button>`:`<button class="btn" id="orgPick">${ico('building-2')}<span>Switch organisation</span></button>`):''}
+    ${many&&!isSuperAdmin()?`<button class="btn" id="orgPick">${ico('building-2')}<span>Switch organisation</span></button>`:''}
     <button class="btn" data-go="settings">${ico('settings')}<span>Settings</span></button><button class="btn warn" id="signOut">${ico('log-in')}<span>Log out</span></button></div></div>`;
 }
 /* ================= Site cameras ================= */
@@ -3799,7 +3799,7 @@ function render(){
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
   if(v==='adminpanel'&&S.cloud&&isAdmin())aiAdminLoad();
-  if(['adminpanel','orgs','dashboard'].includes(v)&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
+  if(v==='orgs'&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
   if(v==='messages'&&S.ready){const box=document.getElementById('chatMsgs');if(box&&box.scrollTo)box.scrollTop=box.scrollHeight;if(S.chatFocus){const ta=document.getElementById('chatText');if(ta&&ta.focus){ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);}catch(_){}}}chatMarkSeen();}
   const qi=document.getElementById('q');
   if(qi)qi.oninput=e=>{S.q=e.target.value;const pos=e.target.selectionStart;render();const n=document.getElementById('q');if(n){n.focus();n.setSelectionRange(pos,pos);}};
