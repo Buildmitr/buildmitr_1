@@ -1283,7 +1283,7 @@ const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;
 function vSchedule(){
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
   const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
-  const btn=CANW?`<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
+  const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
   if(!ts.length)return header(label('schedule'),btn)+`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`;
   const day=s=>new Date(s+'T00:00').getTime()/864e5;
   let min=Math.min(...ts.map(t=>day(t.s)),day(today()))-2,max=Math.max(...ts.map(t=>day(t.e)),day(today()))+3;
@@ -3127,6 +3127,9 @@ function gasDb(org,pre){
       add:async o=>{const id=newId();await docRef(c,id).set(o);return {id};},
       onSnapshot:next=>{(ls[c]=ls[c]||[]).push(next);if(ready)setTimeout(()=>next(snap(c)),0);return()=>{};}}),
     refreshNow:poll,
+    /* many entries in one request (e.g. a whole work schedule) */
+    batch:async list=>{const prev=list.map(([c,id])=>(store[c]||[]).find(x=>x.id===id));list.forEach(([c,id,d])=>put(c,id,d));
+      try{await send('putMany',{items:list});}catch(e){list.forEach(([c,id],i)=>prev[i]?put(c,id,prev[i].data):drop(c,id));throw fail(e);}},
     reset:()=>toast('Your data is saved on the server — nothing to reset.')
   };
 }
@@ -3903,7 +3906,10 @@ function vEstDetailed(){
     <div class="note">${ico('info')}<span>2026 market range for ${esc(E2.tier)} homes in Hyderabad / Bangalore: about ${E2_BAND[E2.tier]} per sq.ft before GST. Excludes land, approvals, interiors and furniture.</span></div>
     <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="e2Xls">${ico('file-down')}<span>Download Excel</span></button><button class="btn" id="e2Doc">${ico('printer')}<span>Download PDF view</span></button>
       <button class="btn" id="e2Share">${ico('share-2')}<span>Share or save</span></button>
-      ${E2.lead&&CANW?`<button class="btn" id="e2Save">${ico('check')}<span>Save to lead</span></button>`:''}${canView('invoices')&&CANW?`<button class="btn" id="e2Quote">${ico('receipt')}<span>Make quotation</span></button>`:''}</div>`
+      ${E2.lead&&CANW?`<button class="btn" id="e2Save">${ico('check')}<span>Save to lead</span></button>`:''}${canView('invoices')&&CANW?`<button class="btn" id="e2Quote">${ico('receipt')}<span>Make quotation</span></button>`:''}</div>
+    ${CANW&&isAdmin()?`<div class="box-h" style="border-top:1px solid var(--line)"><h2>Make it a project</h2><span class="code">Project + budget + payment stages + work schedule</span></div><div class="srow" style="align-items:flex-end">
+      <label class="code">Start date<input id="e2-start" type="date" value="${esc(E2.pstart||today())}"></label><label class="code">Complete in (months)<input id="e2-months" type="number" min="1" max="60" step="0.5" value="${esc(E2.pmonths||'6')}" style="width:110px"></label>
+      <button class="btn pri" id="e2Proj">${ico('gantt-chart')}<span>Create project with work schedule</span></button></div>`:''}`
     :`<div class="empty">Enter the slab area of each floor to see the estimate.</div>`}</div>`;
   const boq=v.B?`<div class="box"><div class="box-h"><h2>BOQ</h2><span class="code">Change any quantity or rate — the totals update. ${Object.keys(E2.ov).length?`<button type="button" class="linkish" id="e2ResetOv">Undo my changes</button>`:''}</span></div>
     ${c.heads.filter(h=>h.rows.length).map(h=>{const key=h.sec+h.hd,open=E2.open[key];return `<div class="e2hd"><button type="button" class="e2hb" data-e2open="${esc(key)}" aria-expanded="${!!open}"><span>${esc(h.sec)} · ${L(h.hd)}</span><span class="num">${inr(h.amt)}</span>${ico('chevron-down','i chev')}</button>
@@ -3979,6 +3985,7 @@ document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!t.clo
   if(d.e2q!==undefined||d.e2r!==undefined){const k=d.e2q||d.e2r,f=d.e2q!==undefined?'q':'r';E2.ov[k]=Object.assign({},E2.ov[k],{[f]:t.value});
     if(E2.ov[k].q===undefined&&E2.ov[k].r==='')delete E2.ov[k];e2Rerender(`[data-e2${f}="${k}"]`,t.selectionStart);return;}
   if(d.e2f!==undefined){E2.floors[+d.e2f].n=t.value;}
+  if(t.id==='e2-start')E2.pstart=t.value;if(t.id==='e2-months')E2.pmonths=t.value;
 },true);
 document.addEventListener('change',e=>{const t=e.target;if(!t.id&&!(t.dataset&&t.dataset.e2f!==undefined))return;
   if(t.id==='e2-tier'){E2.tier=t.value;E2.ov={};render();}else if(t.id==='e2-city'){E2.city=+t.value;render();}
@@ -4004,6 +4011,107 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
     openForm('invoices',null,{kind:'Quotation',client:cl?cl.id:'',date:today(),desc:`Construction (${E2.tier}) — ${num(c.v.B)} sq.ft BUA, ${c.v.F} floors, ${num(c.v.R)} rooms, ${num(c.v.T)} toilets — as per estimate dated ${fd(today())}`,amount:Math.round(c.sub),gst:E2.gst?'GST 18%':'',status:'Unpaid'});return;}
 },true);
 document.addEventListener('submit',e=>{if(e.target.id==='e2RateForm'){e.preventDefault();e2SaveRates(e.target);}},true);
+
+/* ================= Work schedule generator + "create project from estimate" =================
+ * Builds a floor-wise construction schedule (substructure → each slab → masonry & MEP rough-in per floor →
+ * plastering, waterproofing, flooring, joinery, painting, fittings → handover) and stretches or squeezes it to the
+ * duration asked for (e.g. 6 months). Payment stages are linked to the activity that completes them. */
+function makeSchedule(floorNames,start,months,lift){
+  const A=[];let id=0;const add=(wbs,title,res,dur,after,lag)=>{const s=Math.max(0,...(after||[]).map(a=>A[a].s+A[a].d+(lag||0)));A.push({i:id++,wbs,title,res,s,d:dur,pred:(after||[]).map(a=>A[a].wbs).join(', ')});return A.length-1;};
+  const F=floorNames.length||1,fn=floorNames.length?floorNames:['Ground floor'];
+  const mob=add('1.1','Mobilisation, site clearing & setting out','Civil gang',4,[]);
+  const exc=add('2.1','Excavation for footings','Excavator + civil gang',6,[mob]);
+  const ftg=add('2.2','PCC & RCC footings','Structure contractor',10,[exc]);
+  const plb=add('2.3','Columns to plinth, plinth beams & back-filling','Structure contractor',8,[ftg]);
+  let prev=plb;const slab=[],cure=[];
+  fn.forEach((f,i)=>{const col=add(`3.${i*2+1}`,`Columns — ${f}`,'Structure contractor',6,[prev],i?7:0);   // next floor columns 7 days after casting
+    const sl=add(`3.${i*2+2}`,`Beams & roof slab — ${f}`,'Structure contractor',10,[col]);slab.push(sl);prev=sl;});
+  const head=add(`3.${F*2+1}`,'Headroom, parapet & terrace works','Structure contractor',8,[prev],7);
+  const bw=[],cd=[],ip=[],fl=[];
+  fn.forEach((f,i)=>{const b=add(`4.${i*3+1}`,`Block-work — ${f}`,'Masonry gang',10,[slab[i]],14);bw.push(b);   // after de-shuttering
+    const c=add(`4.${i*3+2}`,`Electrical & plumbing conduits, chasing — ${f}`,'Electrician + plumber',6,[b]);cd.push(c);
+    const p=add(`4.${i*3+3}`,`Internal plastering — ${f}`,'Plastering gang',10,[c]);ip.push(p);});
+  const frames=add('4.'+(F*3+1),'Door & window frames, lintels','Carpenter',5,[bw[0]],3);
+  const ext=add('5.1','External plastering','Plastering gang',18,[head,bw[F-1]]);
+  const wp=add('5.2','Terrace waterproofing & screed','Waterproofing contractor',6,[head],7);
+  let k=3;
+  fn.forEach((f,i)=>{const tw=add(`5.${k++}`,`Toilet & balcony sunken waterproofing — ${f}`,'Waterproofing contractor',3,[ip[i]]);
+    fl.push(add(`5.${k++}`,`Flooring, skirting & toilet tiling — ${f}`,'Tiling gang',10,[tw]));});const gr=add(`5.${k++}`,'Staircase granite, sills & kitchen platform','Granite contractor',8,[fl[F-1]],-4);
+  const lf=lift?add(`5.${k++}`,'Lift installation & commissioning','Lift vendor',25,[head],10):null;
+  const dw=add(`5.${k++}`,'Door shutters, windows & glass','Carpenter / window vendor',8,[fl[F-1]]);
+  const rl=add(`5.${k++}`,'Staircase & balcony railing','Fabricator',6,[gr]);
+  const pp=add(`5.${k++}`,'Painting — putty, primer & first coat','Painter',14,[ext,ip[F-1]]);
+  const fx=add(`5.${k++}`,'Electrical fixtures, CP & sanitary fittings','Electrician + plumber',8,[fl[F-1],pp]);
+  const fp=add(`5.${k++}`,'Final painting coat','Painter',8,[fx,dw,rl]);
+  const ho=add('6.1','Cleaning, snag list & handover','Site engineer',5,[fp,wp,...(lf!==null?[lf]:[])]);
+  const end0=Math.max(...A.map(a=>a.s+a.d)),target=Math.max(30,Math.round((+months||6)*30.4)),f=target/end0;
+  const rows=A.map(a=>({...a,start:addDays(start,Math.round(a.s*f)),due:addDays(start,Math.max(Math.round(a.s*f)+1,Math.round((a.s+a.d)*f))-1)}));
+  return {rows,keys:{mob,ftg,plb,slab,bw,ip,ext,fl,fx,ho},end:addDays(start,target)};
+}
+/* tasks + payment-stage milestones for a project, written in one request */
+function scheduleRecords(pid,floorNames,start,months,lift){
+  const S_=makeSchedule(floorNames,start,months,lift),nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const ids=S_.rows.map(()=>nid()),now=Date.now(),recs=[];
+  S_.rows.forEach((r,i)=>recs.push(['tasks',ids[i],{project:pid,wbs:r.wbs,title:r.title,resource:r.res,start:r.start,due:r.due,progress:0,status:'Not started',pred:r.pred,source:'BuildMitr schedule ('+months+' months)',by:ME.id,at:now}]));
+  const K=S_.keys,fl=floorNames.length||1,se=+(30/fl).toFixed(1);
+  const ms=[['Booking / agreement',5,null,start],['Foundation & footings',10,K.ftg],['Plinth beam',5,K.plb],...K.slab.map((s,i)=>[`${floorNames[i]||'Floor'} roof slab`,se,s]),
+    ['Brickwork / blockwork',10,K.bw[K.bw.length-1]],['Plastering',10,K.ext],['Flooring & tiling',10,K.fl[K.fl.length-1]],['Doors, windows, electrical & plumbing',10,K.fx],['Painting & handover',10,K.ho]];
+  ms.forEach(([st,p,ti,due])=>recs.push(['milestones',nid(),{project:pid,stage:st,pct:p,...(ti!==null&&ti!==undefined?{task:ids[ti]}:{due}),by:ME.id,at:now}]));
+  return {recs,end:S_.end,n:S_.rows.length};
+}
+async function dbBatch(list){
+  if(db.batch)return db.batch(list);
+  for(const [c,id,d] of list)await db.doc(c+'/'+id).set(d);
+}
+const E2_CAT={'Earthwork':'Sub-contract','Formwork':'Sub-contract','Labour cost for structure':'Labour','Labour cost civil per toilet':'Labour','Lift':'Sub-contract','Electrical':'Sub-contract','Machinery & scaffolding':'Equipment','IDC':'Design & approvals','External works & extras':'Sub-contract'};
+async function e2MakeProject(){
+  const c=e2Calc(),v=c.v;if(!v.B){toast('Enter the slab areas first.');return;}
+  const start=(document.getElementById('e2-start')||{}).value||today(),months=+((document.getElementById('e2-months')||{}).value||6);
+  const nm=(E2.name||'New project').trim(),lead=D.leads.find(x=>x.id===E2.lead);
+  const btn=document.getElementById('e2Proj');if(btn){btn.disabled=true;btn.textContent='Creating…';}
+  const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const recs=[],now=Date.now();
+  let client=lead?(D.clients.find(x=>x.phone&&lead.phone&&waNum(x.phone)===waNum(lead.phone))||{}).id:'';
+  const cname=nm.split(/[—–-]/)[0].trim();
+  if(!client){const ex=D.clients.find(x=>(x.name||'').toLowerCase()===cname.toLowerCase());client=ex?ex.id:nid();if(!ex)recs.push(['clients',client,{name:cname,phone:lead?lead.phone:'',address:lead?lead.place||'':'',by:ME.id,at:now}]);}
+  const pid=nid(),floors=E2.floors.filter(f=>n(f.a)).map(f=>f.n);
+  const sch=scheduleRecords(pid,floors,start,months,v.L>0);
+  const prefix=(nm.match(/[A-Za-z]+/g)||['PRJ']).filter(w=>!/^(mr|mrs|ms|dr)$/i.test(w)).map(w=>w[0]).join('').toUpperCase().slice(0,4)||'PRJ';
+  recs.unshift(['projects',pid,{prefix,name:nm,client,description:`${E2.tier} specification · ${v.F} floors · ${num(v.R)} rooms · ${num(v.T)} toilets${v.L?' · lift':''}. From the estimate of ${fd(today())}.`,
+    start,end:sch.end,value:Math.round(c.sub),area:Math.round(v.B),created:now,by:ME.id,
+    estimate:{tier:E2.tier,bua:Math.round(v.B),sub:Math.round(c.sub),gst:Math.round(c.gst),total:Math.round(c.total),date:today(),floors:E2.floors.filter(f=>n(f.a)),heads:c.heads.map(h=>({sec:h.sec,hd:h.hd,amt:Math.round(h.amt)}))}}]);
+  c.heads.filter(h=>h.amt).forEach(h=>recs.push(['budget',nid(),{project:pid,cat:E2_CAT[h.hd]||'Material',amount:Math.round(h.amt*(1+(c.overP+c.contP)/100)),notes:`${h.sec} · ${h.hd} (incl. overheads & contingency)`,by:ME.id,at:now}]));
+  recs.push(...sch.recs);
+  const ok=await write(()=>dbBatch(recs),`Project created: ${sch.n} activities, ${months}-month schedule`);
+  if(btn){btn.disabled=false;}
+  if(ok)setTimeout(()=>{S.proj=pid;try{localStorage.setItem('bm-proj',pid);}catch(_){}S.view='schedule';render();scrollTo(0,0);},300);   // after the new project has reached the lists
+}
+function schedDialog(){
+  const p=proj(S.proj);if(!p){toast('Choose a project first (top of the page).');return;}
+  const has=D.tasks.filter(t=>t.project===p.id).length,est=p.estimate||{};
+  const fl=(est.floors||[]).map(f=>f.n).join(', ')||'Ground floor, First floor';
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="schedForm">
+    <div class="pane-h"><h2>Generate work schedule</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><p class="code">For <b data-notr>${esc(pname(p.id))}</b>. Activities floor by floor — footings, each slab, block-work, plastering, waterproofing, flooring, joinery, painting, fittings and handover — fitted into the time you choose. Payment stages are linked to the activities.</p>
+      ${has?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('info')}<span>This project already has ${has} activities. The new schedule is added next to them.</span></div>`:''}
+      <label class="req">Start date<input name="start" type="date" value="${esc(p.start||today())}" required></label>
+      <label class="req">Complete in (months)<input name="months" type="number" min="1" max="60" step="0.5" value="6" required></label>
+      <label class="req">Floors / slabs (comma separated, bottom to top)<input name="floors" value="${esc(fl)}" required></label>
+      <label style="display:flex;gap:8px;align-items:center"><input name="lift" type="checkbox" style="width:auto" ${(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'checked':''}>Building has a lift</label></div>
+    <div class="pane-f"><button type="button" class="btn" data-close>Cancel</button><button class="btn pri">${ico('gantt-chart')}<span>Make schedule</span></button></div></form></div>`;
+}
+async function schedMake(f){
+  const p=proj(S.proj);if(!p)return;const g=k=>(f.elements[k]||{}).value;
+  const floors=g('floors').split(',').map(x=>x.trim()).filter(Boolean),months=+g('months');
+  const sch=scheduleRecords(p.id,floors,g('start'),months,f.elements.lift.checked);
+  const ok=await write(async()=>{await dbBatch(sch.recs);await db.doc('projects/'+p.id).update({start:g('start'),end:sch.end});},`${sch.n} activities scheduled over ${months} months`);
+  if(ok){closeLayer();render();}
+}
+document.addEventListener('click',e=>{if(!e.target.closest)return;const b=e.target.closest('button');if(!b)return;
+  if(b.id==='e2Proj'){e2MakeProject();return;}
+  if(b.id==='schedGen'){schedDialog();return;}
+},true);
+document.addEventListener('submit',e=>{if(e.target.id==='schedForm'){e.preventDefault();schedMake(e.target);}},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
