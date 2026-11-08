@@ -4491,6 +4491,14 @@ const DOC_DEF={
   Invoice:{title:'TAX INVOICE',subject:'',items:[{d:'',amt:''}],terms:'',showBank:true}};
 const DOC_PRESETS={"Quotation": [["Standard quotation", {}], ["Architecture & interior services (letter of appointment)", {"title": "ARCHITECTURE AND INTERIOR SERVICES", "salute": "Dear Sir,", "intro": "We have great pleasure in rendering our Comprehensive Architectural services as detailed below :", "details": [["Project", "Residence"], ["Services", "Architectural and Interior"], ["Fees", "77/- per sqft"]], "terms": "This letter of appointment, together with the scope of Architectural and Interior services and the accompanying fee schedule, shall constitute the terms governing this agreement.\nA duplicate copy of this letter is enclosed. Kindly sign and return one copy as confirmation of your acceptance.", "closing": "Thanking You,", "scopeTitle": "A R C H I T E C T U R E     S E R V I C E S     S C O P E", "scope": "Taking Client's instructions and preparation of design brief\nSite evaluation and analysis\nArchitectural floor plans\nInterior design / space planning / development and volumetric study\nDesign of fixed items of work, loose furniture, and interior related civil work\nSelection of materials, equipment, and other interior related elements\nIllumination design\nElectrical, electronic design\nSanitary plumbing, drainage, water supply, and sewerage design\nIntegration of all engineering services\nInteriors (3D and virtual reality)\nDetailed working drawings of interiors\nScheduled site visit for each set", "stagesTitle": "SCHEDULE OF PAYMENT", "stages": [["Advance", "10"], ["Final plan & 3D with execution drawings", "20"], ["Electrical & plumbing drawings", "20"], ["Working drawings", "20"], ["3D view interiors", "10"], ["Material selections", "10"], ["Successful completion", "10"]], "newPage": true}], ["Construction quotation", {"title": "QUOTATION FOR CONSTRUCTION", "salute": "Dear Sir / Madam,", "intro": "We are pleased to submit our quotation for the construction of your building as detailed below:", "details": [["Project", ""], ["Location", ""], ["Built-up area", ""], ["Specification", ""]], "terms": "Rates are valid for 30 days from the date above.\nGST extra as applicable. Approvals, borewell and electricity deposits are not included unless listed above.", "closing": "Thanking you,", "scopeTitle": "SCOPE OF WORK", "scope": "Excavation, foundations and plinth\nRCC frame, slabs and staircase\nBlock work and plastering\nWaterproofing\nFlooring and tiling\nDoors and windows\nElectrical and plumbing\nPainting\nHandover with cleaning", "stagesTitle": "SCHEDULE OF PAYMENT", "stages": [["Booking / agreement", "5"], ["Foundation & footings", "10"], ["Plinth beam", "5"], ["Each roof slab", "30"], ["Brickwork", "10"], ["Plastering", "10"], ["Flooring & tiling", "10"], ["Doors, windows, electrical & plumbing", "10"], ["Painting & handover", "10"]], "newPage": true}]], "Invoice": [["Tax invoice", {}], ["Architectural invoice (stage payment)", {"title": "ARCHITECTURAL INVOICE", "showBank": true, "terms": ""}]]};
 const docIsQ=k=>k==='Quotation';
+const DOC_TKEYS={Quotation:['title','salute','intro','details','items','terms','closing','scopeTitle','scope','stagesTitle','stages','newPage','gst'],Invoice:['title','subject','items','terms','showBank','gst']};
+const docTpls=kind=>((orgMain().docTs)||[]).filter(x=>x.kind===docTplKey(kind)).map(x=>({...x,def:(orgMain().docTdef||{})[x.kind]===x.id}));
+function docTplPick(d){const k=docTplKey(d.kind),t={};DOC_TKEYS[k].forEach(x=>{if(d[x]!==undefined)t[x]=JSON.parse(JSON.stringify(d[x]));});return t;}
+async function docTplSave(name,def){
+  const d=DM.d,k=docTplKey(d.kind),o=orgMain(),list=[...(o.docTs||[])];const t=docTplPick(d);
+  let ex=list.find(x=>x.kind===k&&x.name.toLowerCase()===name.toLowerCase());if(ex)ex.t=t;else{ex={id:'t'+Date.now().toString(36),name,kind:k,t};list.push(ex);}
+  const patch={docTs:list};if(def){patch.docTdef={...(o.docTdef||{}),[k]:ex.id};patch.docT={...(o.docT||{}),[k]:t};}
+  const ok=await write(()=>db.doc('org/main').update(patch),`Template “${name}” saved`);if(ok)render();return ok;}
 const docTplKey=k=>docIsQ(k)?'Quotation':'Invoice';
 const orgMain=()=>D.org.find(o=>o.id==='main')||{};
 const inr2=x=>'₹'+(+x||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -4505,7 +4513,7 @@ function docNextNo(kind){
   const mx=same.reduce((m,r)=>{const x=+(String(r.no).match(/(\d+)\s*$/)||[])[1]||0;return Math.max(m,x);},0);
   return `${pre}-${y}-${String(mx+1).padStart(3,'0')}`;
 }
-function docTpl(kind){const t=(orgMain().docT||{})[docTplKey(kind)]||{};return JSON.parse(JSON.stringify({...DOC_DEF[docTplKey(kind)],...t}));}
+function docTpl(kind){const t=(orgMain().docT||{})[docTplKey(kind)]||{};if(t.items&&!t.items.length)delete t.items;return JSON.parse(JSON.stringify({...DOC_DEF[docTplKey(kind)],...t}));}
 let DM=null;   // the document being edited
 function docBlank(kind,preset){
   const t=docTpl(kind);
@@ -4668,7 +4676,7 @@ function vDocMaker(){
   const stageOpts=quotes.flatMap(r=>r.tpl.stages.map((s,i)=>({r,i,s,amt:n(r.amount)*n(s[1])/100})));
   const left=`<div class="box"><div class="box-h"><h2>${q?'Quotation':'Invoice'} details</h2>${DM.id?'<span class="pill p-green">Saved</span>':'<span class="pill p-amber">Not saved yet</span>'}</div>
    <div class="srow">${['Quotation','Tax invoice','Proforma invoice','RA bill'].map(k=>`<button type="button" class="btn sm ${d.kind===k?'pri':''}" data-dmkind="${k}">${k}</button>`).join('')}</div>
-   <div class="srow"><label class="code" style="flex:1">Start from a template<select id="dm-preset"><option value="">— choose —</option>${(orgMain().docT||{})[docTplKey(d.kind)]?`<option value="org">My saved ${q?'quotation':'invoice'} template</option>`:''}${DOC_PRESETS[docTplKey(d.kind)].map(([nm_],i)=>`<option value="${i}">${esc(nm_)}</option>`).join('')}</select></label></div>
+   <div class="srow"><label class="code" style="flex:1">Start from a template<select id="dm-preset"><option value="">— choose —</option>${docTpls(d.kind).map(x=>`<option value="n:${esc(x.id)}">${esc(x.name)}${x.def?' (default)':''}</option>`).join('')}${!docTpls(d.kind).length&&(orgMain().docT||{})[docTplKey(d.kind)]?`<option value="org">My saved ${q?'quotation':'invoice'} template</option>`:''}${DOC_PRESETS[docTplKey(d.kind)].map(([nm_],i)=>`<option value="${i}">${esc(nm_)}</option>`).join('')}</select></label></div>
    <div class="e2form">
     ${fi('title','Heading on the page','e.g. ARCHITECTURAL INVOICE',{wide:1})}${fi('no','Number','')}${fi('date','Date','',{type:'date'})}
     <label>Project<select id="dm-proj"><option value="">—</option>${PJ().map(p=>`<option value="${p.id}" ${d.project===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
@@ -4692,7 +4700,11 @@ function vDocMaker(){
    <div class="e2form">${fi('terms',q?'Closing paragraphs (one per line)':'Notes / terms (one per line)','',{wide:1,ta:3})}${q?fi('closing','Sign-off','Thanking you,'):''}
      ${!q?`<label class="pl-chk" style="align-self:end"><input type="checkbox" id="dm-bank" ${d.showBank?'checked':''}>Show bank details</label>`:''}
      <label>Status<select data-dm="status">${(q?['Sent','Accepted','Rejected']:['Unpaid','Part paid','Paid','Sent']).map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select></label></div>
-   ${isAdmin()?`<div class="srow"><button type="button" class="btn sm" id="dmTplSave">${ico('check')}<span>Use this layout as my ${q?'quotation':'invoice'} template</span></button><span class="code">Heading, text, details, scope, stages and terms become the start of every new ${q?'quotation':'invoice'}.</span></div>`:''}
+   ${isAdmin()?`<div class="box-h"><h2>Save as a template</h2><span class="code">Heading, text, details, items, scope, stages and terms</span></div><div class="srow">
+     <input id="dm-tname" list="dmTplNames" placeholder="Template name, e.g. Template-1" style="flex:1;min-width:180px" value="${esc(DM.tname||'')}"><datalist id="dmTplNames">${docTpls(d.kind).map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>
+     <label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dm-tdef" checked style="width:auto">Start new ${q?'quotations':'invoices'} with it</label>
+     <button type="button" class="btn sm" id="dmTplSave">${ico('check')}<span>Save template</span></button></div>
+     ${docTpls(d.kind).length?`<div class="srow"><span class="code">Saved:</span>${docTpls(d.kind).map(x=>`<span class="pill p-grey">${esc(x.name)}${x.def?' · default':''} <button type="button" class="linkish" data-dmtdel="${esc(x.id)}" aria-label="Delete template ${esc(x.name)}">✕</button></span>`).join('')}</div>`:''}`:''}
   </div>`;
   const right=`<div class="box dm-side"><div class="box-h"><h2>Preview</h2><span class="code">${org.lh&&org.lh.id?'On your letterhead':`<a href="#" data-go="settings">Add your letterhead in Settings</a>`}</span></div>
     <div class="srow dm-acts">${CANW?`<button class="btn pri" id="dmSave">${ico('check')}<span>Save</span></button>`:''}
@@ -4739,7 +4751,7 @@ document.addEventListener('input',e=>{if(S.view!=='docmaker'||!DM)return;const t
 document.addEventListener('change',e=>{if(S.view!=='docmaker'||!DM)return;const t=e.target,D_=DM.d;
   if(t.id==='dm-proj'){D_.project=t.value;const p=proj(t.value);if(p&&p.client&&!D_.client)docClient(p.client);render();return;}
   if(t.id==='dm-client'){if(t.value)docClient(t.value);else D_.client='';render();return;}
-  if(t.id==='dm-preset'&&t.value!==''){const k=docTplKey(D_.kind);const tp=t.value==='org'?(orgMain().docT||{})[k]:{...DOC_DEF[k],...DOC_PRESETS[k][+t.value][1]};
+  if(t.id==='dm-preset'&&t.value!==''){const k=docTplKey(D_.kind);const tp=t.value.startsWith('n:')?((orgMain().docTs||[]).find(x=>x.id===t.value.slice(2))||{}).t:t.value==='org'?(orgMain().docT||{})[k]:{...DOC_DEF[k],...DOC_PRESETS[k][+t.value][1]};if(t.value.startsWith('n:'))DM.tname=((orgMain().docTs||[]).find(x=>x.id===t.value.slice(2))||{}).name;
     Object.assign(D_,JSON.parse(JSON.stringify({...DOC_DEF[k],...tp})));render();toast('Template applied — edit anything');return;}
   if(t.id==='dm-np'){D_.newPage=t.checked;docQ();return;}if(t.id==='dm-bank'){D_.showBank=t.checked;docQ();return;}
   if(t.id==='dm-stage'&&t.value){const [rid,i]=t.value.split(':');const r=D.invoices.find(x=>x.id===rid);const s=r&&r.tpl.stages[+i];if(!s)return;
@@ -4754,6 +4766,8 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
   if(S.view==='docmaker'&&DM){
     {const b=e.target.closest('[data-dmkind]');if(b){const k=b.dataset.dmkind;if(docIsQ(k)!==docIsQ(DM.d.kind)){const keep={project:DM.d.project,client:DM.d.client,toName:DM.d.toName,toAddr:DM.d.toAddr,toPhone:DM.d.toPhone,toEmail:DM.d.toEmail};DM={id:null,d:docBlank(k,keep)};}else DM.d.kind=k;render();return;}}
     {const b=e.target.closest('[data-dmadd]');if(b){const k=b.dataset.dmadd;DM.d[k]=DM.d[k]||[];DM.d[k].push(k==='items'?{d:'',amt:''}:['','']);render();return;}}
+    if(e.target.closest('[data-dmtdel]')){const tid=e.target.closest('[data-dmtdel]').dataset.dmtdel,o=orgMain(),x=(o.docTs||[]).find(y=>y.id===tid);if(!x||!confirm(`Delete template “${x.name}”?`))return;
+    const patch={docTs:(o.docTs||[]).filter(y=>y.id!==tid)};if((o.docTdef||{})[x.kind]===tid){patch.docTdef={...o.docTdef,[x.kind]:''};patch.docT={...(o.docT||{}),[x.kind]:null};}write(()=>db.doc('org/main').update(patch),'Template deleted').then(()=>render());return;}
     {const b=e.target.closest('[data-dmrm]');if(b){const [k,i]=b.dataset.dmrm.split(':');DM.d[k].splice(+i,1);render();return;}}
   }
   const id=(e.target.closest('button')||{}).id;if(!id)return;
@@ -4762,9 +4776,8 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
   if(id==='dmMail'){location.href='mailto:'+encodeURIComponent(DM.d.toEmail||'')+'?subject='+encodeURIComponent(`${DM.d.title||DM.d.kind} ${DM.d.no} — ${orgName()}`)+'&body='+encodeURIComponent(docText().replace(/\*/g,'')+'\n\n(PDF attached)');docPdf();return;}
   if(id==='dmFile'){docShareFile();return;}
   if(id==='dmMore'){shareSheet(`${DM.d.title||DM.d.kind} ${DM.d.no}`,docText(),DM.d.toPhone);return;}
-  if(id==='dmTplSave'){const d=DM.d,k=docTplKey(d.kind),keys=docIsQ(d.kind)?['title','salute','intro','details','terms','closing','scopeTitle','scope','stagesTitle','stages','newPage']:['title','terms','showBank'];
-    const t={};keys.forEach(x=>t[x]=d[x]);if(docIsQ(d.kind))t.details=(d.details||[]).map(([l,v])=>[l,v]);
-    write(()=>db.doc('org/main').update({docT:{...(orgMain().docT||{}),[k]:t}}),`Saved as your ${docIsQ(d.kind)?'quotation':'invoice'} template`);return;}
+  if(id==='dmTplSave'){const name=(document.getElementById('dm-tname').value||'').trim();if(!name){toast('Give the template a name, e.g. Template-1');return;}
+    const def=document.getElementById('dm-tdef').checked;DM.tname=name;docTplSave(name,def);return;}
   if(id==='lhDel'){write(()=>db.doc('org/main').update({lh:null}),'Letterhead removed').then(()=>render());return;}
   if(id==='sigDel'){write(()=>db.doc('org/main').update({sig:null}),'Signature removed').then(()=>render());return;}
 },true);
