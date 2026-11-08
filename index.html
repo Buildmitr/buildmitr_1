@@ -3569,7 +3569,7 @@ async function aiAdminLoad(set){
       <label class="code" style="display:flex;gap:6px;align-items:center"><input id="ai-on" type="checkbox" ${c.enabled?'checked':''} style="width:auto">AI switched on</label>
       <button class="btn pri">${ico('check')}<span>Save</span></button></form>
     ${j.people.length?`<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Role</th><th class="num">Today</th><th class="num">This month</th><th class="num">Tokens</th></tr></thead><tbody>${j.people.map(p=>`<tr><td data-notr>${esc(p.email)}</td><td>${esc(p.role)}</td><td class="num">${p.today}</td><td class="num">${p.month}</td><td class="num">${((p.inTokens+p.outTokens)/1000).toFixed(1)}k</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No AI questions this month yet.</div>'}
-    <div class="srow"><span class="code" style="white-space:normal">Cost uses Gemini 2.5 Flash-Lite paid prices ($0.10 per million input tokens, $0.40 per million output tokens). On Google's free tier it costs nothing but has lower limits.</span></div>`;
+    <div class="srow"><span class="code" style="white-space:normal">Cost uses the paid prices set on the server ($${c.priceInPerM} per million input tokens, $${c.priceOutPerM} per million output tokens). On Google's free tier it costs nothing but has lower limits.</span></div>`;
 }
 
 /* ================= CSV export ================= */
