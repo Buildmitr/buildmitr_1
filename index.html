@@ -348,6 +348,9 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .dm-prev{display:grid;gap:12px;padding:12px 16px 16px;max-height:calc(100vh - 210px);overflow:auto;background:var(--bg)}.dm-page{width:100%;height:auto;box-shadow:0 1px 6px rgba(0,0,0,.18);border-radius:2px;background:#fff}
 .dm-acts{gap:8px}.lh-wrap{display:flex;gap:16px;padding:12px 16px;flex-wrap:wrap;align-items:flex-start}.lh-thumb{width:150px;flex:none}.lh-thumb img{width:150px;border:1px solid var(--line);border-radius:4px;display:block}
 @media(max-width:900px){.dm-grid{grid-template-columns:1fr}.dm-side{position:static}.dm-prev{max-height:none}}
+.st-tbl input,.st-tbl select{font-size:13px;padding:6px 8px}.st-tbl input[type=date]{width:140px}
+#saveChip{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;font-size:12.5px;padding:6px 12px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.12);display:none}#saveChip.on{display:block}#saveChip.offline{background:var(--amber);color:var(--amber-ink)}
+.fv .fv-pane{width:min(1100px,100%);max-width:100%}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -1081,7 +1084,7 @@ function vDashboard(){
   const dprs=f(D.dpr).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5);
   const sp=S.proj!=='all'?proj(S.proj):null,sl=sp&&(sp.loc||(sp.maps&&parseLoc(sp.maps)));
   const pc=sp?D.cameras.filter(c=>c.project===sp.id&&camAllowed(c)):[];
-  const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
+  const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${canView('invoices')&&CANW?`<button class="btn sm" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn sm" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
   return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+siteBox+ownerBox()+mktBox()+`
@@ -1302,7 +1305,7 @@ const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;
 function vSchedule(){
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
   const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
-  const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
+  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
   if(!ts.length)return header(label('schedule'),btn)+`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`;
   const day=s=>new Date(s+'T00:00').getTime()/864e5;
   let min=Math.min(...ts.map(t=>day(t.s)),day(today()))-2,max=Math.max(...ts.map(t=>day(t.e)),day(today()))+3;
@@ -1311,10 +1314,11 @@ function vSchedule(){
   for(let d=new Date(st);d.getTime()/864e5<=max;d.setMonth(d.getMonth()+1)){const v=d.getTime()/864e5;if(v>=min)ticks.push([v,d.toLocaleDateString(LOC(),{month:'short',year:'2-digit'})]);}
   if(span<75){ticks.length=0;for(let v=Math.ceil(min);v<=max;v+=7)ticks.push([v,new Date(v*864e5).toLocaleDateString(LOC(),{day:'numeric',month:'short'})]);}
   const tdy=day(today());
+  if(S.schedTable&&ed)return header(label('schedule'),btn)+schedTable(ts);
   const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
-    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)} <button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button></span></div>
-      <div class="g-track"><div class="g-bar ${late?'late':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
+    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)} <button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></div>
+      <div class="g-track"${ed?` data-sedit="${esc(t.id)}" style="cursor:pointer" title="Tap to edit"`:''}><div class="g-bar ${late?'late':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
   return header(label('schedule'),btn)+`<div class="box tiles"><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div></div>
@@ -1571,7 +1575,7 @@ function vProject(){
   return header(esc(p.name),`<button class="btn" data-go="projects">${ico('arrow-left')}Projects</button>`)+
   `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
   <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>
-  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button><button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button></div></div>`;
+  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button><button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}</div></div>`;
 }
 const fmtTs=ms=>ms?new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'short'}):'—';
 
@@ -3106,7 +3110,7 @@ function gasDb(org,pre){
   const store={},ls={};COLS.forEach(c=>store[c]=[]);let ready=false,cursor=0,polling=false,pend=0;
   const CK='bm-c-data:'+org;let saveT=0;
   const saveCache=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{const rows=[];Object.keys(store).forEach(c=>(store[c]||[]).forEach(r=>rows.push([c,r.id,JSON.stringify(r.data)])));bmSet(CK,{cursor,rows,at:Date.now()});},1500);};
-  const fill=rows=>{Object.keys(store).forEach(c=>store[c]=[]);(rows||[]).forEach(([c,id,s])=>{(store[c]=store[c]||[]).push({id,data:parse(s)});});};
+  const fill=rows=>{Object.keys(store).forEach(c=>store[c]=[]);(rows||[]).forEach(([c,id,s])=>{(store[c]=store[c]||[]).push({id,data:parse(s)});});out.forEach(o=>applyOp(o));};
   const snap=c=>({docs:(store[c]||[]).map(r=>({id:r.id,exists:true,data:()=>r.data})),metadata:{fromCache:false,hasPendingWrites:pend>0}});
   const timers={};const emit=c=>{clearTimeout(timers[c]);timers[c]=setTimeout(()=>(ls[c]||[]).forEach(f=>f(snap(c))),20);};
   const put=(c,id,data)=>{const a=store[c]||(store[c]=[]);const i=a.findIndex(x=>x.id===id);if(i>=0)a[i]={id,data};else a.push({id,data});emit(c);};
@@ -3114,17 +3118,35 @@ function gasDb(org,pre){
   const parse=s=>{try{return JSON.parse(s)||{};}catch(_){return {};}};
   const fail=e=>{const x=new Error(e&&e.message||'save failed');x.code=e&&e.code==='denied'?'invalid_argument':'save_failed';return x;};
   const newId=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-  /* writes go one after another so a quick edit never overtakes the save before it */
-  let chain=Promise.resolve();const send=(a,args)=>{pend++;const p=chain.then(()=>gasApi(a,args));chain=p.catch(()=>{}).then(()=>{pend--;});return p;};
+  /* Saving is instant: a change shows at once and goes into an outbox that is sent in order in the background.
+     The outbox is kept on the device, so nothing is lost if the network drops or the app is closed; it is sent when back online. */
+  const OK='bm-c-out:'+org;let out=(()=>{const o=bmGet(OK);return Array.isArray(o)?o:[];})(),flushing=false,resync=false;
+  const saveOut=()=>{bmSet(OK,out);pend=out.length;saveChip(out.length?(navigator.onLine===false?'offline':'saving'):'');};
+  const opIds=o=>o.a==='putMany'?o.args.items.map(([c,id])=>c+'|'+id):[o.args.col+'|'+o.args.id];
+  const pendingIds=()=>new Set(out.flatMap(opIds));
+  const applyOp=o=>{if(o.a==='put')put(o.args.col,o.args.id,o.args.data);else if(o.a==='merge'){const pr=(store[o.args.col]||[]).find(x=>x.id===o.args.id);put(o.args.col,o.args.id,{...(pr?pr.data:{}),...o.args.patch});}
+    else if(o.a==='del')drop(o.args.col,o.args.id);else if(o.a==='putMany')o.args.items.forEach(([c,id,d])=>put(c,id,d));};
+  const flush=async()=>{if(flushing||!out.length)return;flushing=true;saveChip('saving');
+    while(out.length){const o=out[0];
+      try{await gasApi(o.a,o.args);out.shift();saveOut();}
+      catch(e){if(e.code==='net'){flushing=false;saveChip('offline');setTimeout(flush,navigator.onLine===false?15000:5000);return;}
+        out.shift();saveOut();resync=true;
+        if(e.code==='denied'){CANW=CANW0=false;toast('You can view but not change data. Ask the admin for Contributor access.');}
+        else if(e.code!=='auth'&&e.code!=='no_access')toast('A change could not be saved: '+(e.message||'server error'));}}
+    flushing=false;saveChip('');
+    if(resync){resync=false;try{const j=await gasApi('load');fill(j.rows);cursor=(j.now||Date.now())-3000;saveCache();COLS.forEach(emit);}catch(_){}}};
+  const send=(a,args)=>{out.push({a,args});saveOut();setTimeout(flush,0);return Promise.resolve();};
+  try{window.addEventListener('online',()=>flush());window.addEventListener('beforeunload',ev=>{if(out.length){ev.preventDefault();ev.returnValue='';}});}catch(_){}
   const poll=async()=>{if(polling||!ready)return;polling=true;
     try{const j=await gasApi('since',{ts:cursor});
-      (j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>drop(c,id));
+      const pi=pendingIds();(j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c)&&!pi.has(c+'|'+id))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>{if(!pi.has(c+'|'+id))drop(c,id);});
       cursor=Math.max(cursor,(j.now||Date.now())-3000);if((j.rows||[]).length||(j.gone||[]).length)saveCache();}catch(_){}
     polling=false;};
   const tick=()=>{const hidden=document.visibilityState==='hidden';setTimeout(async()=>{await poll();tick();},hidden?30000:(S.view==='messages'?4000:8000));};
   try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')poll();});}catch(_){}
   const cached=pre?null:bmGet(CK);
-  if(pre){fill(pre.rows);cursor=(pre.now||Date.now())-3000;ready=true;saveCache();setTimeout(tick,0);}       // came with the sign-in request
+  if(pre){fill(pre.rows);cursor=(pre.now||Date.now())-3000;ready=true;saveCache();setTimeout(tick,0);}
+  if(out.length)setTimeout(flush,800);       // came with the sign-in request
   else if(cached&&cached.rows){fill(cached.rows);cursor=cached.cursor||0;ready=true;}                         // last visit's copy: shown at once
   (async()=>{if(pre)return;
     for(let k=0;k<3;k++){try{const j=await gasApi('load');
@@ -3134,12 +3156,9 @@ function gasDb(org,pre){
     COLS.forEach(c=>(ls[c]||[]).forEach(f=>f(snap(c))));tick();})();
   const docRef=(c,id)=>({
     get:async()=>{const r=(store[c]||[]).find(x=>x.id===id);return {id,exists:!!r,data:()=>r?r.data:undefined};},
-    set:async o=>{const prev=(store[c]||[]).find(x=>x.id===id);put(c,id,o);
-      try{await send('put',{col:c,id,data:o});}catch(e){prev?put(c,id,prev.data):drop(c,id);throw fail(e);}},
-    update:async o=>{const prev=(store[c]||[]).find(x=>x.id===id);if(!prev)throw {code:'invalid_argument'};put(c,id,{...prev.data,...o});
-      try{await send('merge',{col:c,id,patch:o});}catch(e){put(c,id,prev.data);throw fail(e);}},
-    delete:async()=>{const prev=(store[c]||[]).find(x=>x.id===id);drop(c,id);
-      try{await send('del',{col:c,id});}catch(e){if(prev)put(c,id,prev.data);throw fail(e);}}});
+    set:async o=>{put(c,id,o);saveCache();await send('put',{col:c,id,data:o});},
+    update:async o=>{const prev=(store[c]||[]).find(x=>x.id===id);if(!prev)throw {code:'invalid_argument'};put(c,id,{...prev.data,...o});saveCache();await send('merge',{col:c,id,patch:o});},
+    delete:async()=>{drop(c,id);saveCache();await send('del',{col:c,id});}});
   return {
     doc:path=>{const i=path.indexOf('/');return docRef(path.slice(0,i),path.slice(i+1));},
     collection:c=>({doc:id=>docRef(c,id||newId()),
@@ -3147,8 +3166,8 @@ function gasDb(org,pre){
       onSnapshot:next=>{(ls[c]=ls[c]||[]).push(next);if(ready)setTimeout(()=>next(snap(c)),0);return()=>{};}}),
     refreshNow:poll,
     /* many entries in one request (e.g. a whole work schedule) */
-    batch:async list=>{const prev=list.map(([c,id])=>(store[c]||[]).find(x=>x.id===id));list.forEach(([c,id,d])=>put(c,id,d));
-      try{await send('putMany',{items:list});}catch(e){list.forEach(([c,id],i)=>prev[i]?put(c,id,prev[i].data):drop(c,id));throw fail(e);}},
+    batch:async list=>{list.forEach(([c,id,d])=>put(c,id,d));saveCache();for(let i=0;i<list.length;i+=300)await send('putMany',{items:list.slice(i,i+300)});},
+    flush,pending:()=>out.length,
     reset:()=>toast('Your data is saved on the server — nothing to reset.')
   };
 }
@@ -3168,8 +3187,14 @@ function fixBlobs(root){if(!CLOUD.blob||!root||root.nodeType!==1)return;
     const h=el.getAttribute('href');if(h&&h.startsWith('/_blob/'))el.setAttribute('href',driveView(h.slice(7)));});}
 try{new MutationObserver(ms=>{if(!CLOUD.blob)return;for(const m of ms)for(const n of m.addedNodes)fixBlobs(n);}).observe(document.body,{childList:true,subtree:true});}catch(_){}
 /* the PDF report reads photo bytes: ask the server for them (Drive pictures cannot be read directly by the page) */
+function saveChip(st){let c=document.getElementById('saveChip');if(!c){c=document.createElement('div');c.id='saveChip';c.setAttribute('role','status');document.body.appendChild(c);}
+  c.className=st?'on '+st:'';c.textContent=st==='offline'?'Offline — changes will save when you are back online':st==='saving'?'Saving…':'';}
 async function bmBlob(id){
   if(!CLOUD.blob)return fetch('/_blob/'+id);
+  let cache=null;try{cache=await caches.open('bm-files');const hit=await cache.match('/f/'+id);if(hit)return hit;}catch(_){}
+  const r=await bmBlobNet(id);try{if(cache)await cache.put('/f/'+id,r.clone());}catch(_){}return r;
+}
+async function bmBlobNet(id){
   const j=await gasApi('file',{id});const bin=atob(j.b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return new Response(new Blob([u],{type:j.type||'application/octet-stream'}));
 }
@@ -4527,7 +4552,7 @@ function docFromRec(r){
     items:t.items||[{d:r.desc||'',amt:r.amount||''}]};
 }
 function docOpen(id){const r=D.invoices.find(x=>x.id===id);if(!r)return;DM={id,d:docFromRec(r)};S.view='docmaker';render();scrollTo(0,0);}
-function docNew(kind,preset){DM={id:null,d:docBlank(kind||'Tax invoice',preset)};if(DM.d.client)docClient(DM.d.client);S.view='docmaker';render();scrollTo(0,0);}
+function docNew(kind,preset){DM={id:null,d:docBlank(kind||'Tax invoice',preset)};if(!DM.d.client){const p=proj(DM.d.project);if(p&&p.client)DM.d.client=p.client;}if(DM.d.client&&!(preset&&preset.toName))docClient(DM.d.client);S.view='docmaker';render();scrollTo(0,0);}
 function docClient(id){const c=D.clients.find(x=>x.id===id)||{};Object.assign(DM.d,{client:id,toName:c.name||'',toAddr:c.address||'',toPhone:c.phone||'',toEmail:c.email||''});}
 const docSub=d=>(d.items||[]).reduce((s,x)=>s+n(x.amt),0);
 function docTotals(d){const sub=docSub(d),rate=GST[d.gst]||0,c=D.clients.find(x=>x.id===d.client)||{},os=orgVal('state'),cs=c.state||'',inter=!!(os&&cs&&os!==cs);
@@ -4783,6 +4808,106 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
 },true);
 document.addEventListener('submit',e=>{if(e.target.id==='lhForm'){e.preventDefault();lhSave(e.target);}},true);
 
+/* ================= Editing the activity schedule =================
+ * Pencil on each activity opens a quick editor; when a finish date changes, the activities that follow can move by the same
+ * number of days. "Edit as table" lets you change many activities in place; "Shift schedule" moves a whole stretch at once. */
+const addD=(s,k)=>{if(!s)return s;const d=new Date(s+'T00:00');d.setDate(d.getDate()+k);return isoD(d);};
+const dDiff=(a,b)=>Math.round((new Date(a+'T00:00')-new Date(b+'T00:00'))/864e5);
+function schedFollowers(t,mode){
+  const same=D.tasks.filter(x=>x.project===t.project&&x.id!==t.id);
+  if(mode==='later')return same.filter(x=>(x.start||x.due||'')>=(t.due||t.start||''));
+  if(mode!=='linked'||!t.wbs)return [];
+  const out=new Map(),q=[t];
+  while(q.length){const cur=q.shift();if(!cur.wbs)continue;
+    same.forEach(x=>{if(out.has(x.id))return;const ps=String(x.pred||'').split(/[,;\s]+/).map(s=>s.replace(/(FS|SS|FF|SF)([+-]\d+\s*d?)?$/i,'')).filter(Boolean);
+      if(ps.includes(String(cur.wbs))){out.set(x.id,x);q.push(x);}});}
+  return [...out.values()];
+}
+const recOf=r=>{const {id,...d}=r;return d;};
+async function schedApply(t,patch,mode){
+  const delta=patch.due&&t.due?dDiff(patch.due,t.due):0;const list=[['tasks',t.id,{...recOf(t),...patch}]];
+  if(delta&&mode&&mode!=='none')schedFollowers(t,mode).forEach(x=>list.push(['tasks',x.id,{...recOf(x),start:addD(x.start,delta),due:addD(x.due,delta)}]));
+  const ok=await write(()=>dbBatch(list),list.length>1?`Saved · ${list.length-1} following ${list.length-1===1?'activity':'activities'} moved ${delta>0?'+':''}${delta} days`:'Saved');
+  return ok;
+}
+function schedEdit(id){
+  const t=D.tasks.find(x=>x.id===id);if(!t)return;const hasLinks=schedFollowers(t,'linked').length;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="seForm" data-task="${esc(id)}">
+   <div class="pane-h"><h2>Edit activity</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b">
+    <label>Activity<input name="title" value="${esc(t.title||'')}" required></label>
+    <div class="grid2" style="gap:10px"><label>Start<input type="date" name="start" value="${esc(t.start||'')}"></label><label>Finish<input type="date" name="due" value="${esc(t.due||'')}"></label></div>
+    <div class="grid2" style="gap:10px"><label>Progress %<input name="progress" inputmode="numeric" value="${esc(t.progress??'')}"></label>
+      <label>Status<select name="status">${MOD.tasks.fields.find(f=>f.k==='status').o.map(o=>`<option ${t.status===o?'selected':''}>${o}</option>`).join('')}</select></label></div>
+    <label>Assigned to<select name="who"><option value="">—</option>${D.members.map(m=>`<option value="${esc(m.id)}" ${t.who===m.id?'selected':''}>${esc(nm(m.id))}</option>`).join('')}</select></label>
+    <label>Resource / gang<input name="resource" value="${esc(t.resource||'')}"></label>
+    <label>If the finish date changes<select name="mode"><option value="linked" ${hasLinks?'selected':''}>Move the linked activities that follow (${hasLinks})</option><option value="later" ${hasLinks?'':'selected'}>Move all later activities of this project</option><option value="none">Move only this activity</option></select></label>
+    <label>Notes<textarea name="notes" rows="3">${esc(t.notes||'')}</textarea></label>
+    <div class="code">WBS ${esc(t.wbs||'—')}${t.pred?` · after ${esc(t.pred)}`:''}</div>
+   </div>
+   <div class="pane-f"><button type="button" class="btn ghost warn" data-sedel="${esc(id)}">${S.confirm==='se'+id?'Tap again to delete':ico('trash-2')}</button><button type="button" class="btn" data-edit="tasks:${esc(id)}">All fields</button><button class="btn pri">${ico('check')}<span>Save</span></button></div></form></div>`;
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='seForm')return;e.preventDefault();const f=e.target,t=D.tasks.find(x=>x.id===f.dataset.task);if(!t)return;
+  const g=k=>f.elements[k].value;const patch={title:g('title').trim(),start:g('start'),due:g('due'),progress:g('progress')===''?'':Math.max(0,Math.min(100,n(g('progress')))),status:g('status'),who:g('who'),resource:g('resource'),notes:g('notes')};
+  if(patch.status==='Completed')patch.progress=100;if(patch.start&&patch.due&&patch.due<patch.start){toast('Finish is before start.');return;}
+  if(await schedApply(t,patch,g('mode'))){document.getElementById('layer').innerHTML='';render();}},true);
+/* table editing */
+function schedTable(ts){
+  return `<div class="box"><div class="box-h"><h2>Edit activities</h2><label class="code" style="display:flex;gap:6px;align-items:center">When a finish date changes:<select id="st-mode"><option value="linked" ${S.stMode==='linked'||!S.stMode?'selected':''}>move linked activities</option><option value="later" ${S.stMode==='later'?'selected':''}>move all later activities</option><option value="none" ${S.stMode==='none'?'selected':''}>move only that one</option></select></label></div>
+  <div class="tbl-wrap"><table class="pl-tbl st-tbl"><thead><tr><th>WBS</th><th>Activity</th><th>Start</th><th>Finish</th><th class="num">Days</th><th class="num">Progress</th><th>Status</th><th></th></tr></thead><tbody>
+  ${ts.map(t=>`<tr><td class="code">${esc(t.wbs||'')}</td><td><input data-st="${t.id}:title" value="${esc(t.title||'')}" style="min-width:220px;width:100%">${S.proj==='all'?`<div class="code">${esc(pname(t.project))}</div>`:''}</td>
+    <td><input type="date" data-st="${t.id}:start" value="${esc(t.start||'')}"></td><td><input type="date" data-st="${t.id}:due" value="${esc(t.due||'')}"></td>
+    <td class="num code">${t.start&&t.due?dDiff(t.due,t.start)+1:''}</td><td class="num"><input data-st="${t.id}:progress" value="${esc(t.status==='Completed'?100:(t.progress??''))}" inputmode="numeric" style="width:64px;text-align:right"></td>
+    <td><select data-st="${t.id}:status">${MOD.tasks.fields.find(f=>f.k==='status').o.map(o=>`<option ${t.status===o?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td class="acts"><button type="button" class="btn sm ghost" data-sedit="${t.id}" aria-label="More">${ico('pencil')}</button><button type="button" class="btn sm ghost" data-tcm="${t.id}" aria-label="Comments">💬${(t.comments||[]).length||''}</button></td></tr>`).join('')}
+  </tbody></table></div><div class="code" style="padding:10px 16px">Changes save as soon as you leave a box.</div></div>`;
+}
+document.addEventListener('change',async e=>{const t0=e.target;if(t0.id==='st-mode'){S.stMode=t0.value;return;}
+  const k=t0.dataset&&t0.dataset.st;if(!k)return;const [id,fld]=k.split(':');const t=D.tasks.find(x=>x.id===id);if(!t)return;
+  let v=t0.value;if(fld==='progress')v=v===''?'':Math.max(0,Math.min(100,n(v)));if(fld==='title'&&!v.trim()){t0.value=t.title;return;}
+  const patch={[fld]:v};if(fld==='status'&&v==='Completed')patch.progress=100;
+  if(fld==='start'&&t.start&&t.due&&v){patch.due=addD(t.due,dDiff(v,t.start));}   // moving the start keeps the duration
+  if((patch.due||t.due)&&(patch.start||t.start)&&(patch.due||t.due)<(patch.start||t.start)){toast('Finish is before start.');t0.value=t[fld]||'';return;}
+  await schedApply(t,patch,S.stMode||'linked');},true);
+/* shift a stretch of the schedule */
+function schedShiftDialog(){
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="ssForm"><div class="pane-h"><h2>Shift schedule</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><p class="code">Moves every activity of ${S.proj==='all'?'the chosen project':esc(pname(S.proj))} that starts on or after a date — for example after rain, a holiday or a delay in approvals.</p>
+    ${S.proj==='all'?`<label>Project<select name="project">${PJ().map(p=>`<option value="${p.id}">${esc(pname(p.id))}</option>`).join('')}</select></label>`:''}
+    <label>Activities starting on or after<input type="date" name="from" value="${today()}" required></label>
+    <label>Move by (days; negative moves earlier)<input name="days" inputmode="numeric" required placeholder="e.g. 7"></label>
+    <label class="pl-chk"><input type="checkbox" name="open" checked style="width:auto">Skip activities already completed</label></div>
+   <div class="pane-f"><button type="button" class="btn" data-close>Cancel</button><button class="btn pri">${ico('check')}<span>Shift</span></button></div></form></div>`;
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='ssForm')return;e.preventDefault();const f=e.target;const pid=S.proj!=='all'?S.proj:f.elements.project.value,from=f.elements.from.value,k=Math.round(n(f.elements.days.value));
+  if(!k){toast('Enter the number of days.');return;}
+  const ts=D.tasks.filter(t=>t.project===pid&&(t.start||t.due||'')>=from&&!(f.elements.open.checked&&t.status==='Completed'));
+  if(!ts.length){toast('No activities start on or after that date.');return;}
+  const ok=await write(()=>dbBatch(ts.map(t=>['tasks',t.id,{...recOf(t),start:addD(t.start,k),due:addD(t.due,k)}])),`${ts.length} activities moved ${k>0?'+':''}${k} days`);
+  if(ok){document.getElementById('layer').innerHTML='';render();}},true);
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-sedit]');if(b){e.stopPropagation();schedEdit(b.dataset.sedit);return;}}
+  {const b=e.target.closest('[data-sedel]');if(b){const id=b.dataset.sedel;if(S.confirm!=='se'+id){S.confirm='se'+id;b.textContent='Tap again to delete';return;}S.confirm=null;
+    write(()=>db.doc('tasks/'+id).delete(),'Activity deleted').then(ok=>{if(ok){document.getElementById('layer').innerHTML='';render();}});return;}}
+  const id=(e.target.closest('button')||{}).id;
+  if(id==='schedTbl'){S.schedTable=!S.schedTable;render();return;}
+  if(id==='schedShift'){schedShiftDialog();return;}
+  if(id==='schedPlan'){plOpen(S.proj!=='all'?S.proj:'');return;}
+},true);
+
+/* ================= Open files inside the app ================= */
+function fileIdOf(href){const m=String(href||'').match(/drive\.google\.com\/file\/d\/([\w-]+)|lh3\.googleusercontent\.com\/d\/([\w-]+)|\/_blob\/([\w-]+)/);return m?(m[1]||m[2]||m[3]):null;}
+function openFile(id,isImg,name){
+  const big=isImg?`<img src="${esc(driveImg(id))}" alt="${esc(name||'Photo')}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px">`:`<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" title="${esc(name||'File')}" style="width:100%;height:calc(100vh - 150px);border:0;border-radius:6px;background:#fff" allow="autoplay"></iframe>`;
+  document.getElementById('layer').innerHTML=`<div class="drawer fv"><div class="pane fv-pane"><div class="pane-h"><h2 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name||(isImg?'Photo':'File'))}</h2>
+    <a class="btn sm" href="https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${ico('file-down')}<span>Download</span></a>
+    <a class="btn sm ghost" href="${esc(isImg?driveImg(id):driveView(id))}" target="_blank" rel="noopener" aria-label="Open in a new tab">${ico('external-link')}</a>
+    <button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div><div class="pane-b" style="padding:8px">${big}</div></div></div>`;
+}
+document.addEventListener('click',e=>{if(!e.target.closest||!CLOUD.blob)return;const a=e.target.closest('a[href]');if(!a||a.closest('.fv')||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  const id=fileIdOf(a.getAttribute('href'));if(!id)return;e.preventDefault();e.stopPropagation();
+  const img=/lh3\.googleusercontent/.test(a.href)||!!a.querySelector('img');openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''));},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -4802,7 +4927,8 @@ function draw(){}
 function toast(m){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
 function render(){
   document.documentElement.lang=LANG;
-  if(S.cloud&&S.authStep){try{document.body.setAttribute('data-view','login');}catch(_){}document.getElementById('side').innerHTML='';document.getElementById('view').innerHTML=vLogin();draw();return;}
+  if(S.cloud&&S.authStep){if(!LG.warm&&CLOUD.url){LG.warm=1;try{fetch(CLOUD.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:'{"action":"ping"}'}).catch(()=>{});}catch(_){}}   // wakes the server while the person types
+    try{document.body.setAttribute('data-view','login');}catch(_){}document.getElementById('side').innerHTML='';document.getElementById('view').innerHTML=vLogin();draw();return;}
   if(!db){document.getElementById('side').innerHTML=`<div class="brand">BuildMitr</div>`;
     document.getElementById('view').innerHTML=`<div class="box hero-empty">${ico('log-in')}<h2>Sign in to use BuildMitr</h2><p>Open this page signed in to claude.ai with the account it was shared with. All project data is saved there for the whole team.</p></div>`;draw();return;}
   if(S.proj!=='all'&&!proj(S.proj)&&S.ready)S.proj='all';
