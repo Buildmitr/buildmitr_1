@@ -330,7 +330,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .ai-acts{display:flex;gap:14px;margin-top:6px;font-size:12px}.ai-acts .linkish{font-size:12px}
 .share-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.share-opt{justify-content:flex-start}
 .share-prev{margin:14px 0 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:13px/1.5 var(--f-body);white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
-.org-row{border-bottom:1px solid var(--line)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
+.org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
 @keyframes aipulse{from{opacity:.2}to{opacity:1}}
@@ -3766,147 +3766,222 @@ document.addEventListener('submit',e=>{
   if(e.target.dataset&&e.target.dataset.orgform){e.preventDefault();orgSave(e.target);return;}
 },true);
 
-/* ================= Detailed estimate template: slab area per floor, rooms, toilets — Standard / Premium / Luxury =================
- * Default rates (₹, Nov 2026) are built up per work head so the all-in rate lands in the market bands seen for
- * Hyderabad / Bangalore in 2026: Standard ≈ ₹2,200–2,730, Premium ≈ ₹2,835–4,200, Luxury ≈ ₹4,200–7,000 per sq.ft.
- * Each organisation's admin can change every rate (saved with the company settings). */
+/* ================= Detailed estimate template — Abstract + BOQ (format of the office's Chandradar / Prasad Reddy estimates) =================
+ * Quantities come from the slab area of each floor and the counts of rooms, toilets, kitchens, balconies and lifts,
+ * using ratios taken from those two real estimates. Starting rates are the rates used in those sheets (Oct 2026),
+ * adjusted for Standard / Premium / Luxury. Every quantity and rate can be changed on the estimate; the admin can
+ * change the organisation's rate card. */
 const E2_TIERS=['Standard','Premium','Luxury'];
-const E2_DEF={
-  heads:[ // key, work head, ₹ per sq.ft of built-up area for Standard / Premium / Luxury, what is included in each
-    ['found','Excavation, footings & plinth',[185,205,235],['Isolated RCC footings, M20, plinth beam, anti-termite','RCC footings M25, plinth beam, anti-termite, DPC','RCC footings/raft as per design M25–M30, anti-termite, DPC & waterproofing']],
-    ['rcc','RCC frame — columns, beams, slabs',[710,770,870],['M20 concrete, Fe500 TMT (Vizag / Kamdhenu or equal), UltraTech / Dalmia cement','M25 concrete, Fe500D TMT (JSW / Tata Tiscon), UltraTech / ACC cement','M25–M30 concrete, Fe550D TMT (Tata Tiscon), premium cement, design-mix']],
-    ['mason','Masonry walls',[165,180,205],['6″ / 4″ solid cement blocks','AAC blocks 8″ / 4″','AAC blocks, acoustic infill where needed']],
-    ['plaster','Plastering & waterproofing',[155,175,210],['Internal & external sand-cement plaster, terrace waterproofing','Double-coat external plaster, chemical waterproofing for terrace & toilets','Gypsum internal finish, premium waterproofing system with warranty']],
-    ['floor','Flooring & skirting',[185,320,650],['Vitrified tiles 2′×2′ (material up to ₹60/sq.ft), granite steps','Large vitrified 4′×2′ (up to ₹120/sq.ft), granite staircase','Italian marble / premium porcelain (up to ₹350/sq.ft), marble staircase']],
-    ['doors','Main door, common doors & windows',[45,75,130],['Teak frame with flush main door, aluminium / UPVC windows with grills','Teak main door, UPVC windows with mesh','Designer teak main door, system aluminium / UPVC windows']],
-    ['elec','Electrical wiring & fittings',[165,235,420],['FR wires (Finolex / Polycab), Anchor Roma switches, MCB DB','FRLS wires (Havells / Polycab), Legrand / Schneider modular switches','FRLS wires, Legrand Arteor / Schneider premium, smart-home & automation ready']],
-    ['plumb','Plumbing (pipes, tanks connection, drainage)',[105,130,175],['CPVC / UPVC pipes (Astral / Ashirvad), drainage to municipal line','CPVC / UPVC (Astral / Supreme), pressure pump provision','Hot & cold lines, pressure pump, rainwater harvesting']],
-    ['paint','Painting',[120,165,250],['Putty + Tractor emulsion inside, Apex exterior','Putty + Royale inside, Apex Ultima exterior','Royale Luxury / texture inside, Ultima Protek exterior']],
-    ['stair','Staircase, railing, grills & parapet',[85,125,215],['MS railing, MS window grills, brick parapet','SS railing, MS grills, parapet with coping','SS / glass railing, designer grills, parapet with stone coping']],
-  ],
-  units:[ // key, item, ₹ each for Standard / Premium / Luxury, what is included
-    ['toilet','Toilet / bathroom',[85000,145000,320000],['7′ wall tiles, waterproofing, Hindware / Parryware WC, Jaquar Continental CP fittings','Full-height tiles, wall-hung WC, Jaquar / Kohler fittings, glass partition','Premium tiles, Grohe / Kohler, rain shower, glass enclosure, vanity']],
-    ['kitchen','Kitchen',[65000,160000,450000],['Granite platform, SS sink, 2′ dado tiles, exhaust point','Semi-modular, quartz top, full dado, chimney point','Full modular kitchen with appliance provision, quartz / granite top']],
-    ['room','Room (bedroom / hall / pooja) — door, window, points',[32000,52000,90000],['Flush door with laminate, window, 6 electrical points','Teak-finish door, UPVC window, 8 points','Designer door, premium window, 10 points + data / TV']],
-    ['balcony','Balcony / sit-out',[25000,45000,85000],['Anti-skid tiles, MS railing','Anti-skid tiles, SS railing','Premium tiles, glass railing, lighting']],
-  ],
-  over:12, cont:3,
-  city:[['Hyderabad',1],['Bangalore',1.05],['Tier-2 town (Guntur, Vijayawada…)',0.93]],
-  mat:[ // planning thumb rules per sq.ft of built-up area, and current rates
-    ['Cement','bags',0.40,410],['Steel (TMT)','kg',4.0,65],['Sand / M-sand','cft',1.8,50],['Coarse aggregate','cft',1.35,40],['Blocks / bricks (brick equivalent)','nos',8,9],['Floor & wall tiles','sq.ft',1.3,0],['Paint','litres',0.18,0]]
+const E2_SECS=[['I','SHELL & CORE'],['II','FINISHES'],['III','MEP'],['IV','MACHINERY & SCAFFOLDING'],['V','IDC — SITE & DESIGN COSTS'],['VI','EXTERNAL WORKS & EXTRAS']];
+/* element: [section, head, key, description, unit, quantity(v), rates [Standard, Premium, Luxury], note]
+ * v = {B built-up incl. headroom, S sum of floor slabs, GF ground-floor slab, TOP top slab (terrace), F floors, R rooms, T toilets, K kitchens, BL balconies, L lifts, M months} */
+const SQM=0.0929;
+const E2_EL=[
+ ['I','Earthwork','ew_exc','Excavation for footings by machine, up to 2 m depth','Cum',v=>v.GF*0.10,[250,250,250]],
+ ['I','Earthwork','ew_fill','Back-filling with excavated earth, watered & compacted','Cum',v=>v.GF*0.06,[450,450,450]],
+ ['I','Earthwork','ew_at','Anti-termite treatment','Sqm',v=>v.GF*SQM*1.1,[75,75,75]],
+ ['I','Concrete works','c_pcc','PCC (M10) below footings & floors','Cum',v=>v.GF*0.0045,[3811,3811,3811]],
+ ['I','Concrete works','c_ftg','RCC footings & pedestals','Cum',v=>v.GF*0.012,[5300,5610,6200]],
+ ['I','Concrete works','c_plb','RCC plinth beams','Cum',v=>v.GF*0.0035,[5300,5610,6200]],
+ ['I','Concrete works','c_col','RCC columns — all floors','Cum',v=>v.B*0.0034,[5300,5610,6200]],
+ ['I','Concrete works','c_bm','RCC roof beams — all floors','Cum',v=>v.B*0.0055,[5300,5610,6200]],
+ ['I','Concrete works','c_slab','RCC roof slabs — all floors','Cum',v=>v.B*0.0105,[5300,5610,6200]],
+ ['I','Concrete works','c_stair','RCC staircase, lintels & sunshades','Cum',v=>v.F*1.6+v.B*0.0006,[5300,5610,6200]],
+ ['I','Formwork','f_all','Formwork & shuttering — columns, beams, slabs','Sqm',v=>v.B*0.17,[0,0,0],'Included in structure labour (as in your sheets)'],
+ ['I','Reinforcement','st_ftg','TMT steel — footings & plinth beams','MT',v=>v.GF*0.0014,[70000,72000,75000]],
+ ['I','Reinforcement','st_frm','TMT steel — columns, beams, slabs, staircase','MT',v=>v.B*0.0026,[70000,72000,75000]],
+ ['I','Waterproofing','wp_sunk','Toilet & balcony sunken waterproofing','Sqm',v=>v.T*5.5+v.BL*2,[1091,1091,1300]],
+ ['I','Waterproofing','wp_sscr','Sunken filling / screed, 100 mm average','Cum',v=>v.T*0.55+v.BL*0.2,[3811,3811,3811]],
+ ['I','Waterproofing','wp_terr','Terrace waterproofing','Sqm',v=>v.TOP*SQM,[1200,1560,1900]],
+ ['I','Waterproofing','wp_tscr','Terrace screed concrete with slope, 100 mm average','Cum',v=>v.TOP*SQM*0.1,[6411,6411,6411]],
+ ['I','Labour cost for structure','lb_pl','Structure labour — plinth','Sft',v=>v.GF,[60,60,60]],
+ ['I','Labour cost for structure','lb_rf','Structure labour incl. shuttering — each roof slab','Sft',v=>v.S+v.HD,[120,130,140]],
+ ['I','Block-work & plastering','bw_ext','External walls 200/230 mm','Sqm',v=>v.B*0.11,[1368,1368,1500]],
+ ['I','Block-work & plastering','bw_int','Internal walls 100/150 mm','Sqm',v=>v.B*0.07,[1039,1039,1100]],
+ ['I','Block-work & plastering','bw_par','Terrace parapet wall, 1 m high','Sqm',v=>Math.sqrt(v.TOP)*4*0.3048,[1039,1039,1100]],
+ ['I','Block-work & plastering','pl_ext','External plastering 20 mm, two coats','Sqm',v=>v.B*0.13+Math.sqrt(v.TOP)*4*0.3048*2,[442,442,480]],
+ ['I','Block-work & plastering','pl_int','Internal plastering 12–15 mm','Sqm',v=>v.B*0.20,[300,300,320]],
+ ['II','Painting','pt_int','Internal walls — putty, primer, 2 coats emulsion','Sqm',v=>v.B*0.20,[300,474,650]],
+ ['II','Painting','pt_cl','Ceilings — putty, primer, 2 coats','Sqm',v=>v.B*0.085,[180,237,320]],
+ ['II','Painting','pt_ext','External — texture / weather-proof emulsion','Sqm',v=>v.B*0.13+Math.sqrt(v.TOP)*4*0.3048*2,[300,401,600]],
+ ['II','Tiling','tl_flr','Floor tiles incl. laying (vitrified / large format / marble)','Sqm',v=>v.B*0.07,[1000,1600,5200]],
+ ['II','Tiling','tl_sk','Skirting 100 mm','Rmt',v=>v.B*0.065,[120,142,350]],
+ ['II','Tiling','tl_as','Anti-skid tiles — toilets & balconies','Sqm',v=>v.T*4.5+v.BL*4,[1100,1238,1600]],
+ ['II','Tiling','tl_dd','Wall dado — toilets (7 ft) & kitchen','Sqm',v=>v.T*16+v.K*4,[950,1134,2200]],
+ ['II','Granite','gr_st','Staircase granite — treads & risers','Sqm',v=>v.F*9.2,[2600,3116,4500]],
+ ['II','Granite','gr_sk','Staircase skirting','Rmt',v=>v.F*3,[288,288,400]],
+ ['II','Granite','gr_jb','Window sills & jambs','Sqm',v=>v.B*0.0035,[2600,3116,4500]],
+ ['II','Granite','gr_kt','Kitchen platform (granite / quartz)','Sqm',v=>v.K*4,[2500,3116,6000]],
+ ['II','Granite','gr_lf','Lift cladding','Sqm',v=>v.L*v.F*13,[3116,3116,4500]],
+ ['II','Doors & windows','dw_mn','Main door — frame, shutter & hardware','Nos',v=>v.S?1:0,[45000,75000,200000]],
+ ['II','Doors & windows','dw_rm','Room doors — frame, shutter & hardware','Nos',v=>v.R,[20000,32000,55000]],
+ ['II','Doors & windows','dw_tl','Toilet doors (WPC / FRP)','Nos',v=>v.T,[12000,16000,28000]],
+ ['II','Doors & windows','dw_wn','Windows & ventilators (aluminium / UPVC / system)','Sft',v=>v.B,[95,150,300],'Per sq.ft of built-up area'],
+ ['II','Railing','rl_st','Staircase railing','Sft',v=>v.F*80,[650,900,1800]],
+ ['II','Railing','rl_bl','Balcony railing','Sft',v=>v.BL*35,[650,900,1800]],
+ ['III','Lift','mp_lift','Lift — supply & installation','Nos',v=>v.L,[1000000,1120000,1500000]],
+ ['III','Plumbing material — CP & sanitary','mp_cp','CP fittings & sanitaryware','Nos',v=>v.T,[35000,75000,200000],'Per toilet'],
+ ['III','Plumbing material — CP & sanitary','mp_pp','Plumbing pipes, fittings & drainage','Sft',v=>v.B,[60,75,100],'Per sq.ft of built-up area'],
+ ['III','Plumbing material — CP & sanitary','mp_kt','Kitchen sink, taps & points','Nos',v=>v.K,[15000,25000,65000]],
+ ['III','Labour cost civil per toilet','mp_tl','Civil & plumbing labour per toilet','Nos',v=>v.T,[40000,50000,65000]],
+ ['III','Electrical','mp_el','Internal electrical — wiring, DB, switches, fittings','Sft',v=>v.B,[190,280,420],'Per sq.ft of built-up area'],
+ ['III','Electrical','mp_ex','External electrical — meter, earthing, cable, outdoor lights','Sft',v=>v.B,[25,35,60],'Per sq.ft of built-up area'],
+ ['IV','Machinery & scaffolding','mc','Machinery, scaffolding & site equipment','Sft',v=>v.B,[30,35,45],'Per sq.ft of built-up area'],
+ ['V','IDC','idc_dsg','Design fees — architect, structural & MEP','Sft',v=>v.B,[27,27,40],'Architect ₹20 + structural ₹5 + MEP ₹2 per sq.ft'],
+ ['V','IDC','idc_eng','Site engineer / supervisor','Month',v=>v.M,[25000,35000,45000]],
+ ['V','IDC','idc_sec','Security / watchman','Month',v=>v.M,[10000,12000,15000]],
+ ['V','IDC','idc_inf','Site infra, water, power & NMR labour','Month',v=>v.M,[8000,10000,15000]],
+];
+const E2_SPEC={ // what's included, by specification
+ 'Concrete & steel':['M20–M25 RCC, Fe500 TMT, UltraTech / Dalmia','M25–M30 RMC, Fe500D TMT (JSW / Tata), UltraTech / ACC','M30 design-mix RMC, Fe550D TMT (Tata Tiscon)'],
+ 'Walls & plaster':['200/230 mm external & 100/150 mm internal block / brick walls, sand-cement plaster','Same, double-coat external plaster with waterproof compound','AAC / brick walls, premium plaster & gypsum finish'],
+ 'Waterproofing':['Polymer-cement toilets & terrace','Polymer-cement toilets, membrane terrace','Premium membrane system with warranty'],
+ 'Painting':['Tractor emulsion inside, Apex exterior','Royale / acrylic premium inside, Apex Ultima / texture exterior','Royale Luxury / texture inside, Ultima Protek exterior'],
+ 'Flooring':['Vitrified 2′×2′ (tile up to ₹60/sq.ft)','Large vitrified 4′×2′ (up to ₹120/sq.ft), granite staircase','Italian marble / premium porcelain (up to ₹350/sq.ft)'],
+ 'Doors & windows':['Teak-frame main door, flush room doors, WPC toilet doors, aluminium windows','Teak main door, laminated room doors, UPVC windows with mesh','Designer teak main door, veneer doors, system aluminium / UPVC'],
+ 'Railing':['MS railing','SS railing','SS / glass railing'],
+ 'Toilets & kitchen':['Hindware / Parryware, Jaquar Continental; granite platform','Wall-hung WC, Jaquar / Kohler; semi-modular kitchen, quartz top','Grohe / Kohler, rain shower; modular kitchen, premium top'],
+ 'Electrical':['Finolex / Polycab FR wires, Anchor Roma switches','Havells / Polycab FRLS, Legrand / Schneider modular','FRLS, Legrand Arteor / Schneider premium, automation-ready'],
 };
-const E2={tier:'Standard',floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],head:true,city:0,rooms:'4',toilets:'3',kitchens:'1',balconies:'1',extras:{},gst:true,lead:'',name:'',edit:false};
-/* rate card of this organisation (admin can change it), falling back to the defaults */
-function e2Rates(){const o=(D.org.find(x=>x.id==='main')||{}).estRates;let r=E2_DEF;
-  if(o&&typeof o==='object'){r=JSON.parse(JSON.stringify(E2_DEF));(r.heads).forEach(h=>{if(o.h&&o.h[h[0]])h[2]=o.h[h[0]].map(Number);});r.units.forEach(u=>{if(o.u&&o.u[u[0]])u[2]=o.u[u[0]].map(Number);});
-    if(o.over!==undefined)r.over=+o.over;if(o.cont!==undefined)r.cont=+o.cont;}
-  return r;}
+const E2={tier:'Standard',floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],head:true,city:0,rooms:'4',toilets:'3',kitchens:'1',balconies:'1',lifts:'0',months:'',extras:{},ov:{},gst:true,lead:'',name:'',edit:false,open:{}};
+const E2_CITY=[['Hyderabad',1],['Bangalore',1.05],['Tier-2 town (Guntur, Vijayawada…)',0.93]];
+function e2Card(){ // organisation rate card: {r:{key:[s,p,l]}, over, cont}
+  const o=(D.org.find(x=>x.id==='main')||{}).estRates2;return o&&typeof o==='object'?o:{};}
 function e2Calc(){
-  const R=e2Rates(),t=Math.max(0,E2_TIERS.indexOf(E2.tier)),cf=(R.city[E2.city]||R.city[0])[1];
-  const slabs=E2.floors.map(f=>n(f.a)),built=slabs.reduce((s,x)=>s+x,0)+(E2.head&&slabs.some(Boolean)?150:0);
-  const heads=R.heads.map(([k,l,rt,sp])=>({k,l,rate:Math.round(rt[t]*cf),spec:sp[t],amt:built*rt[t]*cf}));
-  const cnt={toilet:n(E2.toilets),kitchen:n(E2.kitchens),room:n(E2.rooms),balcony:n(E2.balconies)};
-  const units=R.units.map(([k,l,rt,sp])=>({k,l,q:cnt[k],rate:Math.round(rt[t]*cf),spec:sp[t],amt:cnt[k]*rt[t]*cf})).filter(u=>u.q);
+  const card=e2Card(),t=Math.max(0,E2_TIERS.indexOf(E2.tier)),cf=(E2_CITY[E2.city]||E2_CITY[0])[1];
+  const slabs=E2.floors.map(f=>n(f.a)),S=slabs.reduce((s,x)=>s+x,0),HD=E2.head&&S?150:0;
+  const ls=slabs.filter(Boolean);const F=ls.length;
+  const v={S,HD,B:S+HD,GF:ls[0]||0,TOP:ls[ls.length-1]||0,F,R:n(E2.rooms),T:n(E2.toilets),K:n(E2.kitchens),BL:n(E2.balconies),L:n(E2.lifts)};
+  v.M=n(E2.months)||(F?Math.round(4+1.5*F):0);
+  const rows=E2_EL.map(([sec,hd,k,d,u,qf,rt,note])=>{const ov=E2.ov[k]||{};const base=(card.r&&card.r[k]?card.r[k]:rt)[t];
+    const q=ov.q!==undefined&&ov.q!==''?n(ov.q):Math.round(qf(v)*100)/100;const r=ov.r!==undefined&&ov.r!==''?n(ov.r):Math.round(base*cf);
+    return {sec,hd,k,d,u,q,r,amt:q*r,note:note||'',edited:ov.q!==undefined&&ov.q!==''||ov.r!==undefined&&ov.r!==''};});
   const ex=EXTRAS.map(([nm_,u,r],i)=>({nm:nm_,u,r,q:n(E2.extras[i]),amt:n(E2.extras[i])*r})).filter(x=>x.q);
-  const works=heads.reduce((s,h)=>s+h.amt,0)+units.reduce((s,u)=>s+u.amt,0);
-  const over=works*R.over/100,cont=works*R.cont/100,exT=ex.reduce((s,x)=>s+x.amt,0);
-  const sub=works+over+cont+exT,gst=E2.gst?sub*0.18:0,total=sub+gst;
-  const mat=R.mat.map(([m,u,q,r])=>{const qq=built*q*(m.startsWith('Steel')&&E2.floors.length>=4?1.12:1);return {m,u,q:qq,cost:r?qq*r:0};});
-  // payment stages, spread over the floors
-  const fl=E2.floors.filter(f=>n(f.a));const slabEach=fl.length?30/fl.length:30;
-  const stages=[['Booking / agreement',5],['Foundation & footings',10],['Plinth beam',5],...fl.map(f=>[`${f.n} roof slab`,+slabEach.toFixed(1)]),['Brickwork / blockwork',10],['Plastering',10],['Flooring & tiling',10],['Doors, windows, electrical & plumbing',10],['Painting & handover',10]];
-  return {R,t,cf,slabs,built,heads,units,ex,works,over,cont,exT,sub,gst,total,mat,stages,per:built?total/built:0,perEx:built?sub/built:0};
+  const heads=[];rows.forEach(r=>{let h=heads.find(x=>x.sec===r.sec&&x.hd===r.hd);if(!h)heads.push(h={sec:r.sec,hd:r.hd,amt:0,rows:[]});h.amt+=r.amt;h.rows.push(r);});
+  const exT=ex.reduce((s,x)=>s+x.amt,0);if(exT)heads.push({sec:'VI',hd:'External works & extras',amt:exT,rows:[]});
+  const works=heads.reduce((s,h)=>s+h.amt,0);
+  const overP=card.over!==undefined?+card.over:7.5,contP=card.cont!==undefined?+card.cont:5;
+  const over=works*overP/100,cont=works*contP/100,sub=works+over+cont,gst=E2.gst?sub*0.18:0,total=sub+gst;
+  const fl=E2.floors.filter(f=>n(f.a));const se=fl.length?30/fl.length:30;
+  const stages=[['Booking / agreement',5],['Foundation & footings',10],['Plinth beam',5],...fl.map(f=>[`${f.n} roof slab`,+se.toFixed(1)]),['Brickwork / blockwork',10],['Plastering',10],['Flooring & tiling',10],['Doors, windows, electrical & plumbing',10],['Painting & handover',10]];
+  const q=k=>(rows.find(r=>r.k===k)||{}).q||0;
+  const conc=['c_ftg','c_plb','c_col','c_bm','c_slab','c_stair'].reduce((s,k)=>s+q(k),0);
+  const mat=[['RCC concrete','Cum',conc],['PCC','Cum',q('c_pcc')],['Cement for RCC & PCC (≈8.6 bags/cum)','Bags',(conc+q('c_pcc'))*8.6],['TMT steel','MT',q('st_ftg')+q('st_frm')],['Block / brick walls','Sqm',q('bw_ext')+q('bw_int')+q('bw_par')],['Plastering','Sqm',q('pl_ext')+q('pl_int')],['Painting','Sqm',q('pt_int')+q('pt_cl')+q('pt_ext')],['Tiles (floor, anti-skid, dado)','Sqm',q('tl_flr')+q('tl_as')+q('tl_dd')],['Granite','Sqm',q('gr_st')+q('gr_jb')+q('gr_kt')+q('gr_lf')]];
+  return {t,cf,v,rows,heads,ex,exT,works,overP,contP,over,cont,sub,gst,total,stages,mat,per:v.B?total/v.B:0,perEx:v.B?sub/v.B:0};
 }
 const E2_BAND={Standard:'₹2,200–2,730',Premium:'₹2,835–4,200',Luxury:'₹4,200–7,000'};
 function estModeBtns(){return `<div class="seg">${[['detail','Detailed template'],['quick','Quick (package rate)']].map(([k,l])=>`<button type="button" class="btn sm ${(EST.mode||'detail')===k?'pri':''}" data-estmode="${k}">${l}</button>`).join('')}</div>`;}
+const fq=x=>x>=100?num(Math.round(x)):(Math.round(x*100)/100).toLocaleString('en-IN');
 function vEstDetailed(){
-  const c=e2Calc(),R=c.R,adm=isAdmin()&&CANW,L=x=>esc(x);
-  const inp=(k,v,ph,w)=>`<input data-e2="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" inputmode="decimal" style="${w?'width:'+w:''}">`;
-  const left=`<div class="box"><div class="box-h"><h2>Customer & house</h2></div><div class="fhead">
+  const c=e2Calc(),adm=isAdmin()&&CANW,L=esc,v=c.v;
+  const inp=(k,val,ph)=>`<input data-e2="${k}" value="${esc(val)}" placeholder="${esc(ph||'')}" inputmode="decimal">`;
+  const left=`<div class="box"><div class="box-h"><h2>Project</h2></div><div class="fhead">
     <label>Lead (optional)<select id="e2-lead"><option value="">— none —</option>${D.leads.filter(l=>l.stage!=='Lost').map(l=>`<option value="${l.id}" ${E2.lead===l.id?'selected':''}>${esc(l.name)}</option>`).join('')}</select></label>
-    <label>Customer / project name<input data-e2="name" value="${esc(E2.name)}" placeholder="e.g. Mr. Rao, Kokapet"></label>
+    <label>Project / customer name<input data-e2="name" value="${esc(E2.name)}" placeholder="e.g. Mr. Rao — Duplex villa"></label>
     <label>Specification<select id="e2-tier">${E2_TIERS.map(x=>`<option ${E2.tier===x?'selected':''}>${x}</option>`).join('')}</select></label>
-    <label>Location<select id="e2-city">${R.city.map(([nm_,f],i)=>`<option value="${i}" ${+E2.city===i?'selected':''}>${esc(nm_)}${f!==1?` (×${f})`:''}</option>`).join('')}</select></label></div>
+    <label>Location<select id="e2-city">${E2_CITY.map(([nm_,f],i)=>`<option value="${i}" ${+E2.city===i?'selected':''}>${esc(nm_)}${f!==1?` (×${f})`:''}</option>`).join('')}</select></label></div>
     <div class="box-h"><h2>Floors & slab area</h2><span class="code">Built-up area of each slab (sq.ft)</span></div>
-    <div class="tbl-wrap"><table><tbody>${E2.floors.map((f,i)=>`<tr><td><input data-e2f="${i}" data-k="n" value="${esc(f.n)}" style="width:100%"></td><td style="width:130px">${inp('fa'+i,f.a,'sq.ft','120px')}</td><td style="width:44px">${E2.floors.length>1?`<button type="button" class="btn sm ghost" data-e2del="${i}" aria-label="Remove floor">${ico('x')}</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="tbl-wrap"><table><tbody>${E2.floors.map((f,i)=>`<tr><td><input data-e2f="${i}" value="${esc(f.n)}" style="width:100%"></td><td style="width:130px">${inp('fa'+i,f.a,'sq.ft')}</td><td style="width:44px">${E2.floors.length>1?`<button type="button" class="btn sm ghost" data-e2del="${i}" aria-label="Remove floor">${ico('x')}</button>`:''}</td></tr>`).join('')}</tbody></table></div>
     <div class="srow"><button type="button" class="btn sm" id="e2Add">${ico('plus')}<span>Add floor</span></button>
-      <label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e2-head" ${E2.head?'checked':''} style="width:auto">Staircase headroom on terrace (150 sq.ft)</label></div>
-    <div class="box-h"><h2>Rooms</h2></div><div class="fhead">
-      <label>Rooms (bedrooms + hall + pooja)${inp('rooms',E2.rooms,'nos')}</label><label>Toilets / bathrooms${inp('toilets',E2.toilets,'nos')}</label>
-      <label>Kitchens${inp('kitchens',E2.kitchens,'nos')}</label><label>Balconies / sit-outs${inp('balconies',E2.balconies,'nos')}</label></div>
-    <div class="box-h"><h2>Extras</h2></div><div class="tbl-wrap"><table><tbody>${EXTRAS.map(([nm_,u,r],i)=>`<tr><td>${esc(nm_)}<div class="code">${inr(r)} / ${u}</div></td><td style="width:110px"><input data-e2x="${i}" value="${esc(E2.extras[i]||'')}" placeholder="${u}" inputmode="decimal"></td></tr>`).join('')}</tbody></table></div>
+      <label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e2-head" ${E2.head?'checked':''} style="width:auto">Staircase headroom (150 sq.ft)</label></div>
+    <div class="box-h"><h2>Rooms & services</h2></div><div class="fhead">
+      <label>Rooms (bedrooms, hall, pooja)${inp('rooms',E2.rooms,'nos')}</label><label>Toilets${inp('toilets',E2.toilets,'nos')}</label>
+      <label>Kitchens${inp('kitchens',E2.kitchens,'nos')}</label><label>Balconies${inp('balconies',E2.balconies,'nos')}</label>
+      <label>Lifts${inp('lifts',E2.lifts,'nos')}</label><label>Duration (months)${inp('months',E2.months,v.M?String(v.M):'months')}</label></div>
+    <div class="box-h"><h2>External works & extras</h2></div><div class="tbl-wrap"><table><tbody>${EXTRAS.map(([nm_,u,r],i)=>`<tr><td>${esc(nm_)}<div class="code">${inr(r)} / ${u}</div></td><td style="width:110px"><input data-e2x="${i}" value="${esc(E2.extras[i]||'')}" placeholder="${u}" inputmode="decimal"></td></tr>`).join('')}</tbody></table></div>
     <div class="srow"><label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e2-gst" ${E2.gst?'checked':''} style="width:auto">Add GST 18%</label></div></div>`;
-  const row=(a,b,cl)=>`<tr${cl?` class="${cl}"`:''}><td>${a}</td><td class="num">${b}</td></tr>`;
-  const right=`<div class="box"><div class="box-h"><h2>${esc(E2.tier)} estimate</h2><span class="code">${num(c.built)} sq.ft built-up</span></div>
-    ${c.built?`<div class="tbl-wrap"><table><thead><tr><th>Work</th><th class="num">Amount</th></tr></thead><tbody>
-      ${c.heads.map(h=>row(`${L(h.l)}<div class="code">${inr(h.rate)}/sq.ft × ${num(c.built)}</div>`,inr(h.amt))).join('')}
-      ${c.units.map(u=>row(`${L(u.l)}<div class="code">${num(u.q)} × ${inr(u.rate)}</div>`,inr(u.amt))).join('')}
-      ${row(`Supervision, overheads & contractor margin (${R.over}%)`,inr(c.over))}${row(`Contingency (${R.cont}%)`,inr(c.cont))}
-      ${c.ex.map(x=>row(`${L(x.nm)} · ${num(x.q)} ${x.u}`,inr(x.amt))).join('')}
-      ${row('<b>Sub-total</b>',`<b>${inr(c.sub)}</b>`)}${E2.gst?row('GST 18%',inr(c.gst)):''}
-      ${row('<b style="font-size:16px">Total estimate</b>',`<b style="font-size:18px">${inr(c.total)}</b>`)}
-      ${row(`<span class="code">All-in rate${E2.gst?' (incl. GST)':''}</span>`,`<span class="code">${inr(c.per)}/sq.ft</span>`)}${E2.gst?row('<span class="code">Rate before GST</span>',`<span class="code">${inr(c.perEx)}/sq.ft</span>`):''}
+  const rb=x=>v.B?inr(x/v.B):'—';
+  const abs=`<div class="box"><div class="box-h"><h2>Abstract — ${esc(E2.tier)}</h2><span class="code">BUA ${num(v.B)} sq.ft</span></div>
+    ${v.B?`<div class="tbl-wrap"><table class="e2abs"><thead><tr><th>Sl.no</th><th>Description</th><th class="num">Amount</th><th class="num">Rate/BUA</th></tr></thead><tbody>
+    ${E2_SECS.map(([sn,st])=>{const hs=c.heads.filter(h=>h.sec===sn&&(h.amt||h.rows.some(r=>r.note&&r.q&&!r.r)));if(!hs.length)return '';return `<tr class="e2sec"><td><b>${sn}</b></td><td colspan="3"><b>${st}</b></td></tr>`+hs.map((h,i)=>`<tr><td>${i+1}</td><td>${L(h.hd)}${!h.amt?`<div class="code">${L((h.rows.find(r=>r.note)||{}).note||'')}</div>`:''}</td><td class="num">${inr(h.amt)}</td><td class="num">${rb(h.amt)}</td></tr>`).join('');}).join('')}
+    <tr><td></td><td>Overheads & contractor margin (${c.overP}%)</td><td class="num">${inr(c.over)}</td><td class="num">${rb(c.over)}</td></tr>
+    <tr><td></td><td>Contingencies (${c.contP}%)</td><td class="num">${inr(c.cont)}</td><td class="num">${rb(c.cont)}</td></tr>
+    <tr class="e2sec"><td colspan="2"><b>TOTAL</b></td><td class="num"><b>${inr(c.sub)}</b></td><td class="num"><b>${rb(c.sub)}</b></td></tr>
+    ${E2.gst?`<tr><td></td><td>Add GST (18%)</td><td class="num">${inr(c.gst)}</td><td class="num">${rb(c.gst)}</td></tr>`:''}
+    <tr class="e2sec"><td colspan="2"><b style="font-size:15px">GRAND TOTAL</b></td><td class="num"><b style="font-size:16px">${inr(c.total)}</b></td><td class="num"><b>${rb(c.total)}</b></td></tr>
     </tbody></table></div>
-    <div class="note">${ico('info')}<span>2026 market range for ${esc(E2.tier)} in Hyderabad / Bangalore: about ${E2_BAND[E2.tier]} per sq.ft. Excludes land, approvals, interiors and furniture.</span></div>
-    <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="e2Doc">${ico('file-down')}<span>Download estimate</span></button>
+    <div class="note">${ico('info')}<span>2026 market range for ${esc(E2.tier)} homes in Hyderabad / Bangalore: about ${E2_BAND[E2.tier]} per sq.ft before GST. Excludes land, approvals, interiors and furniture.</span></div>
+    <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="e2Xls">${ico('file-down')}<span>Download Excel</span></button><button class="btn" id="e2Doc">${ico('printer')}<span>Download PDF view</span></button>
       <button class="btn" id="e2Share">${ico('share-2')}<span>Share or save</span></button>
       ${E2.lead&&CANW?`<button class="btn" id="e2Save">${ico('check')}<span>Save to lead</span></button>`:''}${canView('invoices')&&CANW?`<button class="btn" id="e2Quote">${ico('receipt')}<span>Make quotation</span></button>`:''}</div>`
     :`<div class="empty">Enter the slab area of each floor to see the estimate.</div>`}</div>`;
-  const specs=c.built?`<div class="box"><div class="box-h"><h2>What's included — ${esc(E2.tier)}</h2></div><div class="tbl-wrap"><table><tbody>${[...c.heads,...R.units.map(([k,l,rt,sp])=>({l,spec:sp[c.t]}))].map(h=>`<tr><td style="width:34%"><b>${L(h.l)}</b></td><td>${L(h.spec)}</td></tr>`).join('')}</tbody></table></div></div>`:'';
-  const mats=c.built?`<div class="box"><div class="box-h"><h2>Main materials (planning quantities)</h2><span class="code">Thumb rules per sq.ft — check against the structural design</span></div><div class="tbl-wrap"><table><thead><tr><th>Material</th><th class="num">Quantity</th><th class="num">Approx. cost</th></tr></thead><tbody>${c.mat.map(m=>`<tr><td>${L(m.m)}</td><td class="num">${num(Math.round(m.q))} ${m.u}</td><td class="num">${m.cost?inr(m.cost):'—'}</td></tr>`).join('')}</tbody></table></div></div>`:'';
-  const stg=c.built?`<div class="box"><div class="box-h"><h2>Payment stages</h2></div><div class="tbl-wrap"><table><thead><tr><th>Stage</th><th class="num">%</th><th class="num">Amount</th></tr></thead><tbody>${c.stages.map(([s,p])=>`<tr><td>${L(s)}</td><td class="num">${p}%</td><td class="num">${inr(c.total*p/100)}</td></tr>`).join('')}</tbody></table></div></div>`:'';
-  const rates=E2.edit&&adm?`<div class="box"><div class="box-h"><h2>Your rate card</h2><span class="code">₹ per sq.ft (work heads) and ₹ each (rooms) — used for every estimate in your organisation</span></div>
-    <form id="e2RateForm"><div class="tbl-wrap"><table><thead><tr><th>Item</th>${E2_TIERS.map(x=>`<th class="num">${x}</th>`).join('')}</tr></thead><tbody>
-    ${R.heads.map(([k,l,rt])=>`<tr><td>${L(l)} <span class="code">/sq.ft</span></td>${rt.map((v,i)=>`<td class="num"><input name="h_${k}_${i}" value="${v}" inputmode="decimal" style="width:90px"></td>`).join('')}</tr>`).join('')}
-    ${R.units.map(([k,l,rt])=>`<tr><td>${L(l)} <span class="code">each</span></td>${rt.map((v,i)=>`<td class="num"><input name="u_${k}_${i}" value="${v}" inputmode="decimal" style="width:90px"></td>`).join('')}</tr>`).join('')}
-    <tr><td>Overheads & margin %</td><td class="num"><input name="over" value="${R.over}" style="width:90px"></td><td></td><td></td></tr><tr><td>Contingency %</td><td class="num"><input name="cont" value="${R.cont}" style="width:90px"></td><td></td><td></td></tr>
-    </tbody></table></div><div class="srow"><button class="btn pri">${ico('check')}<span>Save rate card</span></button><button type="button" class="btn ghost" id="e2Reset">Back to 2026 default rates</button></div></form></div>`:'';
-  return header(label('estimator'),estModeBtns()+(adm?`<button type="button" class="btn" id="e2Edit">${ico('pencil')}<span>${E2.edit?'Close rate card':'Edit rates'}</span></button>`:''))+rates+`<div class="grid2">${left}${right}</div>`+specs+mats+stg;
+  const boq=v.B?`<div class="box"><div class="box-h"><h2>BOQ</h2><span class="code">Change any quantity or rate — the totals update. ${Object.keys(E2.ov).length?`<button type="button" class="linkish" id="e2ResetOv">Undo my changes</button>`:''}</span></div>
+    ${c.heads.filter(h=>h.rows.length).map(h=>{const key=h.sec+h.hd,open=E2.open[key];return `<div class="e2hd"><button type="button" class="e2hb" data-e2open="${esc(key)}" aria-expanded="${!!open}"><span>${esc(h.sec)} · ${L(h.hd)}</span><span class="num">${inr(h.amt)}</span>${ico('chevron-down','i chev')}</button>
+      ${open?`<div class="tbl-wrap"><table><thead><tr><th>Particulars</th><th>Unit</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${h.rows.map(r=>`<tr${r.edited?' class="e2ed"':''}><td>${L(r.d)}${r.note?`<div class="code">${L(r.note)}</div>`:''}</td><td>${r.u}</td>
+        <td class="num"><input data-e2q="${r.k}" value="${(E2.ov[r.k]||{}).q??fq(r.q).replace(/,/g,'')}" inputmode="decimal" style="width:90px;text-align:right"></td>
+        <td class="num"><input data-e2r="${r.k}" value="${(E2.ov[r.k]||{}).r??r.r}" inputmode="decimal" style="width:100px;text-align:right"></td><td class="num">${inr(r.amt)}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;}).join('')}</div>`:'';
+  const specs=v.B?`<div class="box"><div class="box-h"><h2>What's included — ${esc(E2.tier)}</h2></div><div class="tbl-wrap"><table><tbody>${Object.entries(E2_SPEC).map(([k,s])=>`<tr><td style="width:30%"><b>${L(k)}</b></td><td>${L(s[c.t])}</td></tr>`).join('')}</tbody></table></div></div>`:'';
+  const mats=v.B?`<div class="box"><div class="box-h"><h2>Main quantities</h2><span class="code">From the BOQ — check against the structural design</span></div><div class="tbl-wrap"><table><tbody>${c.mat.map(([m,u,q])=>`<tr><td>${L(m)}</td><td class="num">${fq(q)} ${u}</td></tr>`).join('')}<tr><td>Steel per sq.ft of BUA</td><td class="num">${(c.mat[3][2]*1000/v.B).toFixed(2)} kg</td></tr></tbody></table></div></div>`:'';
+  const stg=v.B?`<div class="box"><div class="box-h"><h2>Payment stages</h2></div><div class="tbl-wrap"><table><thead><tr><th>Stage</th><th class="num">%</th><th class="num">Amount</th></tr></thead><tbody>${c.stages.map(([s,p])=>`<tr><td>${L(s)}</td><td class="num">${p}%</td><td class="num">${inr(c.total*p/100)}</td></tr>`).join('')}</tbody></table></div></div>`:'';
+  const card=e2Card();
+  const rates=E2.edit&&adm?`<div class="box"><div class="box-h"><h2>Your rate card</h2><span class="code">Starting rates for every estimate in your organisation (Hyderabad base)</span></div>
+    <form id="e2RateForm"><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Unit</th>${E2_TIERS.map(x=>`<th class="num">${x}</th>`).join('')}</tr></thead><tbody>
+    ${E2_EL.map(([sec,hd,k,d,u,qf,rt])=>{const r=card.r&&card.r[k]?card.r[k]:rt;return `<tr><td>${L(d)}<div class="code">${L(hd)}</div></td><td>${u}</td>${r.map((x,i)=>`<td class="num"><input name="${k}_${i}" value="${x}" inputmode="decimal" style="width:90px"></td>`).join('')}</tr>`;}).join('')}
+    <tr><td>Overheads & contractor margin %</td><td></td><td class="num"><input name="over" value="${card.over!==undefined?card.over:7.5}" style="width:90px"></td><td></td><td></td></tr>
+    <tr><td>Contingencies %</td><td></td><td class="num"><input name="cont" value="${card.cont!==undefined?card.cont:5}" style="width:90px"></td><td></td><td></td></tr>
+    </tbody></table></div><div class="srow"><button class="btn pri">${ico('check')}<span>Save rate card</span></button><button type="button" class="btn ghost" id="e2Reset">Back to default rates</button></div></form></div>`:'';
+  return header(label('estimator'),estModeBtns()+(adm?`<button type="button" class="btn" id="e2Edit">${ico('pencil')}<span>${E2.edit?'Close rate card':'Edit rates'}</span></button>`:''))+rates+`<div class="grid2">${left}${abs}</div>`+boq+specs+mats+stg;
 }
 function e2Text(){
-  const c=e2Calc();
-  return [`*${orgName()} — construction estimate*`,E2.name?`For: ${E2.name}`:'',`Date: ${fd(today())} · ${E2.tier} specification · ${c.R.city[E2.city][0]}`,
-    `Floors: ${E2.floors.filter(f=>n(f.a)).map(f=>`${f.n} ${num(n(f.a))} sq.ft`).join(', ')}${E2.head?' + headroom 150 sq.ft':''}`,
-    `Built-up: ${num(c.built)} sq.ft · Rooms ${num(n(E2.rooms))} · Toilets ${num(n(E2.toilets))} · Kitchens ${num(n(E2.kitchens))}`,'',
-    ...c.heads.map(h=>`• ${h.l}: ${inr(h.amt)}`),...c.units.map(u=>`• ${u.l} × ${num(u.q)}: ${inr(u.amt)}`),
-    `• Overheads & margin: ${inr(c.over)}`,`• Contingency: ${inr(c.cont)}`,...c.ex.map(x=>`• ${x.nm}: ${inr(x.amt)}`),'',
-    `Sub-total: ${inr(c.sub)}`,E2.gst?`GST 18%: ${inr(c.gst)}`:'',`*Total: ${inr(c.total)}* (${inr(c.per)}/sq.ft)`,'',
+  const c=e2Calc(),v=c.v;
+  return [`*${orgName()} — cost estimate*`,E2.name?`Project: ${E2.name}`:'',`Date: ${fd(today())} · ${E2.tier} · ${E2_CITY[E2.city][0]}`,
+    `BUA: ${num(v.B)} sq.ft (${E2.floors.filter(f=>n(f.a)).map(f=>`${f.n} ${num(n(f.a))}`).join(', ')}${v.HD?', headroom 150':''})`,
+    `Rooms ${num(v.R)} · Toilets ${num(v.T)} · Kitchens ${num(v.K)}${v.L?` · Lift ${num(v.L)}`:''}`,'',
+    ...E2_SECS.flatMap(([sn,st])=>{const hs=c.heads.filter(h=>h.sec===sn&&h.amt);return hs.length?[`*${sn}. ${st}*`,...hs.map(h=>`• ${h.hd}: ${inr(h.amt)} (${inr(h.amt/v.B)}/sft)`)]:[];}),
+    `• Overheads & margin ${c.overP}%: ${inr(c.over)}`,`• Contingencies ${c.contP}%: ${inr(c.cont)}`,'',
+    `TOTAL: ${inr(c.sub)} (${inr(c.perEx)}/sft)`,E2.gst?`GST 18%: ${inr(c.gst)}`:'',`*GRAND TOTAL: ${inr(c.total)}* (${inr(c.per)}/sft)`,'',
     'Excludes land, approvals, interiors & furniture. Valid for 30 days.'].filter(x=>x!=='').join('\n');
 }
+async function e2Xls(){   // Excel in the same layout as the office estimates: Abstract + BOQ
+  try{await loadSheetJS();}catch(_){toast('Could not load the Excel tool. Check the connection.');return;}
+  const c=e2Calc(),v=c.v,org=orgName();
+  const A=[[`PROJECT: ${(E2.name||'').toUpperCase()}`],['BUA:',Math.round(v.B),'sqft','',`${E2.tier} · ${E2_CITY[E2.city][0]}`],[],['Sl.no','Description','Amount','Rate/BUA','Remarks']];
+  E2_SECS.forEach(([sn,st])=>{const hs=c.heads.filter(h=>h.sec===sn&&(h.amt||h.rows.some(r=>r.note&&r.q&&!r.r)));if(!hs.length)return;A.push([sn,st]);hs.forEach((h,i)=>{const z=h.rows.find(r=>r.note&&r.q&&!r.r);A.push([i+1,h.hd.toUpperCase(),Math.round(h.amt),Math.round(h.amt/v.B*100)/100,z&&!h.amt?z.note:''])});});
+  A.push(['','Overheads & contractor margin ('+c.overP+'%)',Math.round(c.over),Math.round(c.over/v.B*100)/100],['','Contingencies ('+c.contP+'%)',Math.round(c.cont),Math.round(c.cont/v.B*100)/100],['TOTAL','',Math.round(c.sub),Math.round(c.perEx*100)/100]);
+  if(E2.gst)A.push(['','Add GST (18%)',Math.round(c.gst),Math.round(c.gst/v.B*100)/100]);A.push(['GRAND TOTAL','',Math.round(c.total),Math.round(c.per*100)/100]);
+  const B=[[`${org} — ${E2.name||'Costing'}`],['Sl No','Particulars','Unit','Quantity','Rate','Amount']];
+  let sl=0;c.heads.forEach(h=>{if(!h.rows.length&&!h.amt)return;sl++;B.push([sl,h.hd.toUpperCase()]);h.rows.forEach((r,i)=>B.push([`${sl}.${i+1}`,r.d+(r.note?` (${r.note})`:''),r.u,Math.round(r.q*100)/100,r.r,Math.round(r.amt)]));
+    if(!h.rows.length)c.ex.forEach((x,i)=>B.push([`${sl}.${i+1}`,x.nm,x.u,x.q,x.r,Math.round(x.amt)]));B.push(['',`Sub total for ${h.hd}`,'','','',Math.round(h.amt)]);});
+  B.push([],['','Built-up area','','','',''],...E2.floors.filter(f=>n(f.a)).map(f=>['',f.n,'Sft',n(f.a)]),...(v.HD?[['','Staircase headroom','Sft',150]]:[]),['','Total BUA','Sft',v.B]);
+  const P=[['Stage','%','Amount'],...c.stages.map(([s,p])=>[s,p,Math.round(c.total*p/100)])];
+  const wb=XLSX.utils.book_new();const ws1=XLSX.utils.aoa_to_sheet(A),ws2=XLSX.utils.aoa_to_sheet(B),ws3=XLSX.utils.aoa_to_sheet(P);
+  ws1['!cols']=[{wch:8},{wch:42},{wch:14},{wch:10},{wch:34}];ws2['!cols']=[{wch:7},{wch:62},{wch:7},{wch:11},{wch:11},{wch:14}];ws3['!cols']=[{wch:40},{wch:6},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Abstract');XLSX.utils.book_append_sheet(wb,ws2,'BOQ');XLSX.utils.book_append_sheet(wb,ws3,'Payment stages');
+  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  await saveFile(`Estimate-${(E2.name||E2.tier).replace(/[^\w-]+/g,'-')}.xlsx`,new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+}
 async function e2Doc(){
-  const c=e2Calc(),e=esc,org=D.org.find(o=>o.id==='main')||{};
-  const tr=(a,b,s)=>`<tr${s?' class="s"':''}><td>${a}</td><td class="n">${b}</td></tr>`;
-  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Estimate ${e(E2.name||'')}</title><style>body{font-family:Segoe UI,Arial,sans-serif;max-width:820px;margin:28px auto;padding:0 22px;color:#1a2420;font-size:14px}h1{margin:0;font-size:22px}h2{font-size:17px;margin:22px 0 6px}table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #ccd6d2;padding:7px 9px;text-align:left;vertical-align:top}th{background:#eef3f1}.n{text-align:right;white-space:nowrap}.s td{background:#f4f7f6;font-weight:600}.muted{color:#5d6c66;font-size:12.5px}</style></head><body>
-  <h1>${e(org.name||orgName())}</h1><div class="muted">${e(org.address||'')}</div>
-  <h2>Construction estimate — ${e(E2.tier)} specification</h2>
-  <p>${E2.name?`For: <b>${e(E2.name)}</b><br>`:''}Date: ${fd(today())} · Location: ${e(c.R.city[E2.city][0])} · Valid for 30 days<br>
-  Floors: ${E2.floors.filter(f=>n(f.a)).map(f=>`${e(f.n)} ${num(n(f.a))} sq.ft`).join(', ')}${E2.head?' + staircase headroom 150 sq.ft':''} · <b>Built-up ${num(c.built)} sq.ft</b><br>
-  Rooms ${num(n(E2.rooms))} · Toilets ${num(n(E2.toilets))} · Kitchens ${num(n(E2.kitchens))} · Balconies ${num(n(E2.balconies))}</p>
-  <table><tr><th>Work</th><th class="n">Amount</th></tr>
-  ${c.heads.map(h=>tr(`${e(h.l)}<div class="muted">${inr(h.rate)}/sq.ft × ${num(c.built)} sq.ft</div>`,inr(h.amt))).join('')}
-  ${c.units.map(u=>tr(`${e(u.l)}<div class="muted">${num(u.q)} × ${inr(u.rate)}</div>`,inr(u.amt))).join('')}
-  ${tr(`Supervision, overheads & contractor margin (${c.R.over}%)`,inr(c.over))}${tr(`Contingency (${c.R.cont}%)`,inr(c.cont))}
-  ${c.ex.map(x=>tr(`${e(x.nm)} · ${num(x.q)} ${x.u}`,inr(x.amt))).join('')}
-  ${tr('Sub-total',inr(c.sub),1)}${E2.gst?tr('GST 18%',inr(c.gst)):''}${tr('Total estimate',inr(c.total),1)}${tr('All-in rate per sq.ft',inr(c.per))}</table>
-  <h2>What's included</h2><table>${c.heads.map(h=>`<tr><td style="width:34%"><b>${e(h.l)}</b></td><td>${e(h.spec)}</td></tr>`).join('')}${c.R.units.map(([k,l,rt,sp])=>`<tr><td><b>${e(l)}</b></td><td>${e(sp[c.t])}</td></tr>`).join('')}</table>
+  const c=e2Calc(),v=c.v,e=esc,org=D.org.find(o=>o.id==='main')||{};
+  const rb=x=>inr(x/v.B);
+  const absRows=E2_SECS.map(([sn,st])=>{const hs=c.heads.filter(h=>h.sec===sn&&h.amt);if(!hs.length)return '';return `<tr class="s"><td>${sn}</td><td colspan="3">${st}</td></tr>`+hs.map((h,i)=>`<tr><td>${i+1}</td><td>${e(h.hd)}</td><td class="n">${inr(h.amt)}</td><td class="n">${rb(h.amt)}</td></tr>`).join('');}).join('');
+  const boqRows=c.heads.filter(h=>h.rows.length).map(h=>`<tr class="s"><td colspan="5">${e(h.sec)} · ${e(h.hd)}</td></tr>`+h.rows.filter(r=>r.q).map(r=>`<tr><td>${e(r.d)}${r.note?`<div class="m">${e(r.note)}</div>`:''}</td><td>${r.u}</td><td class="n">${fq(r.q)}</td><td class="n">${inr(r.r)}</td><td class="n">${inr(r.amt)}</td></tr>`).join('')).join('');
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Estimate ${e(E2.name||'')}</title><style>body{font-family:Segoe UI,Arial,sans-serif;max-width:900px;margin:26px auto;padding:0 22px;color:#1a2420;font-size:13px}h1{margin:0;font-size:21px}h2{font-size:16px;margin:22px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0}td,th{border:1px solid #ccd6d2;padding:6px 8px;text-align:left;vertical-align:top}th{background:#eef3f1}.n{text-align:right;white-space:nowrap}.s td{background:#f1f5f3;font-weight:700}.m{color:#5d6c66;font-size:11.5px}</style></head><body>
+  <h1>${e(org.name||orgName())}</h1><div class="m">${e(org.address||'')}</div><h2>Cost estimate — ${e(E2.tier)} specification</h2>
+  <p>${E2.name?`Project: <b>${e(E2.name)}</b><br>`:''}Date: ${fd(today())} · ${e(E2_CITY[E2.city][0])} · Valid for 30 days<br>BUA: <b>${num(v.B)} sq.ft</b> (${E2.floors.filter(f=>n(f.a)).map(f=>`${e(f.n)} ${num(n(f.a))}`).join(', ')}${v.HD?', headroom 150':''}) · Rooms ${num(v.R)} · Toilets ${num(v.T)} · Kitchens ${num(v.K)}${v.L?' · Lift '+num(v.L):''}</p>
+  <h2>Abstract</h2><table><tr><th>Sl.no</th><th>Description</th><th class="n">Amount</th><th class="n">Rate/BUA</th></tr>${absRows}
+  <tr><td></td><td>Overheads & contractor margin (${c.overP}%)</td><td class="n">${inr(c.over)}</td><td class="n">${rb(c.over)}</td></tr><tr><td></td><td>Contingencies (${c.contP}%)</td><td class="n">${inr(c.cont)}</td><td class="n">${rb(c.cont)}</td></tr>
+  <tr class="s"><td colspan="2">TOTAL</td><td class="n">${inr(c.sub)}</td><td class="n">${rb(c.sub)}</td></tr>${E2.gst?`<tr><td></td><td>Add GST (18%)</td><td class="n">${inr(c.gst)}</td><td class="n">${rb(c.gst)}</td></tr>`:''}<tr class="s"><td colspan="2">GRAND TOTAL</td><td class="n">${inr(c.total)}</td><td class="n">${rb(c.total)}</td></tr></table>
+  <h2>BOQ</h2><table><tr><th>Particulars</th><th>Unit</th><th class="n">Quantity</th><th class="n">Rate</th><th class="n">Amount</th></tr>${boqRows}${c.ex.map(x=>`<tr><td>${e(x.nm)}</td><td>${x.u}</td><td class="n">${fq(x.q)}</td><td class="n">${inr(x.r)}</td><td class="n">${inr(x.amt)}</td></tr>`).join('')}</table>
+  <h2>What's included</h2><table>${Object.entries(E2_SPEC).map(([k,s])=>`<tr><td style="width:28%"><b>${e(k)}</b></td><td>${e(s[c.t])}</td></tr>`).join('')}</table>
   <h2>Payment stages</h2><table><tr><th>Stage</th><th class="n">%</th><th class="n">Amount</th></tr>${c.stages.map(([s,p])=>`<tr><td>${e(s)}</td><td class="n">${p}%</td><td class="n">${inr(c.total*p/100)}</td></tr>`).join('')}</table>
-  <h2>Main materials (planning quantities)</h2><table><tr><th>Material</th><th class="n">Quantity</th></tr>${c.mat.map(m=>`<tr><td>${e(m.m)}</td><td class="n">${num(Math.round(m.q))} ${m.u}</td></tr>`).join('')}</table>
-  <p class="muted">Excludes land, approvals and fees, interiors and furniture. Quantities are thumb rules for planning; the final quotation follows the approved drawings, structural design and site survey. Press Ctrl+P → Save as PDF to share.</p></body></html>`;
+  <p class="m">Excludes land, approvals and fees, interiors and furniture. Quantities are worked out from the slab areas and room counts; the final quotation follows the approved drawings, structural design and site survey. Press Ctrl+P → Save as PDF to share.</p></body></html>`;
   await saveFile(`Estimate-${(E2.name||E2.tier).replace(/[^\w-]+/g,'-')}.html`,new Blob([html],{type:'text/html'}));
 }
 async function e2SaveRates(f){
-  const R=E2_DEF,g=k=>Number((f.elements[k]||{}).value),o={h:{},u:{},over:g('over'),cont:g('cont')};
-  R.heads.forEach(([k])=>o.h[k]=[0,1,2].map(i=>g(`h_${k}_${i}`)||0));R.units.forEach(([k])=>o.u[k]=[0,1,2].map(i=>g(`u_${k}_${i}`)||0));
-  const ok=await write(()=>db.doc('org/main').update({estRates:o}),'Rate card saved');if(ok){E2.edit=false;render();}
+  const g=k=>Number((f.elements[k]||{}).value),o={r:{},over:g('over'),cont:g('cont')};
+  E2_EL.forEach(([,,k,,,,rt])=>{const r=[0,1,2].map(i=>{const x=g(`${k}_${i}`);return isNaN(x)?rt[i]:x;});if(r.some((x,i)=>x!==rt[i]))o.r[k]=r;});
+  const ok=await write(()=>db.doc('org/main').update({estRates2:o}),'Rate card saved');if(ok){E2.edit=false;render();}
 }
 function e2Rerender(sel,pos){render();const x=document.querySelector(sel);if(x){x.focus();try{x.setSelectionRange(pos,pos);}catch(_){}}}
 document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!t.closest||!t.closest('#view'))return;
   if(d.e2!==undefined){const k=d.e2,pos=t.selectionStart;if(/^fa\d+$/.test(k))E2.floors[+k.slice(2)].a=t.value;else E2[k]=t.value;e2Rerender(`[data-e2="${k}"]`,pos);return;}
   if(d.e2x!==undefined){E2.extras[d.e2x]=t.value;e2Rerender(`[data-e2x="${d.e2x}"]`,t.selectionStart);return;}
-  if(d.e2f!==undefined){E2.floors[+d.e2f].n=t.value;}   // floor name: no redraw needed while typing
+  if(d.e2q!==undefined||d.e2r!==undefined){const k=d.e2q||d.e2r,f=d.e2q!==undefined?'q':'r';E2.ov[k]=Object.assign({},E2.ov[k],{[f]:t.value});
+    if(E2.ov[k].q===undefined&&E2.ov[k].r==='')delete E2.ov[k];e2Rerender(`[data-e2${f}="${k}"]`,t.selectionStart);return;}
+  if(d.e2f!==undefined){E2.floors[+d.e2f].n=t.value;}
 },true);
-document.addEventListener('change',e=>{const t=e.target;if(!t.id)return;
-  if(t.id==='e2-tier'){E2.tier=t.value;render();}else if(t.id==='e2-city'){E2.city=+t.value;render();}
+document.addEventListener('change',e=>{const t=e.target;if(!t.id&&!(t.dataset&&t.dataset.e2f!==undefined))return;
+  if(t.id==='e2-tier'){E2.tier=t.value;E2.ov={};render();}else if(t.id==='e2-city'){E2.city=+t.value;render();}
   else if(t.id==='e2-gst'){E2.gst=t.checked;render();}else if(t.id==='e2-head'){E2.head=t.checked;render();}
   else if(t.id==='e2-lead'){E2.lead=t.value;const l=D.leads.find(x=>x.id===t.value);if(l&&!E2.name)E2.name=l.name+(l.place?', '+l.place:'');render();}
   else if(t.dataset&&t.dataset.e2f!==undefined)render();
@@ -3914,16 +3989,19 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.id)return;
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-estmode]');if(b){EST.mode=b.dataset.estmode;render();return;}}
   {const b=e.target.closest('[data-e2del]');if(b){E2.floors.splice(+b.dataset.e2del,1);render();return;}}
+  {const b=e.target.closest('[data-e2open]');if(b){const k=b.dataset.e2open;E2.open[k]=!E2.open[k];render();return;}}
   const id=(e.target.closest('button')||{}).id;
-  if(id==='e2Add'){const names=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor'];E2.floors.push({n:names[E2.floors.length]||`Floor ${E2.floors.length}`,a:(E2.floors[E2.floors.length-1]||{}).a||''});render();return;}
+  if(id==='e2Add'){const names=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor'];E2.floors.push({n:names[E2.floors.length]||`Floor ${E2.floors.length}`,a:(E2.floors[E2.floors.length-1]||{}).a||''});render();return;}
   if(id==='e2Edit'){E2.edit=!E2.edit;render();scrollTo(0,0);return;}
-  if(id==='e2Reset'){write(()=>db.doc('org/main').update({estRates:null}),'Back to the 2026 default rates').then(()=>render());return;}
+  if(id==='e2Reset'){write(()=>db.doc('org/main').update({estRates2:null}),'Back to the default rates').then(()=>render());return;}
+  if(id==='e2ResetOv'){E2.ov={};render();return;}
+  if(id==='e2Xls'){e2Xls();return;}
   if(id==='e2Doc'){e2Doc();return;}
   if(id==='e2Share'){shareSheet(`Estimate${E2.name?' — '+E2.name:''}`,e2Text());return;}
   if(id==='e2Save'){const c=e2Calc(),l=D.leads.find(x=>x.id===E2.lead);if(!l)return;
-    write(()=>db.doc('leads/'+l.id).update({budget:Math.round(c.total),estimate:{pkg:E2.tier,area:c.built,floors:E2.floors.length,rooms:n(E2.rooms),toilets:n(E2.toilets),total:Math.round(c.total),date:today()}}),'Estimate saved to '+l.name);return;}
+    write(()=>db.doc('leads/'+l.id).update({budget:Math.round(c.total),estimate:{pkg:E2.tier,area:c.v.B,floors:c.v.F,rooms:c.v.R,toilets:c.v.T,total:Math.round(c.total),date:today()}}),'Estimate saved to '+l.name);return;}
   if(id==='e2Quote'){const c=e2Calc(),l=D.leads.find(x=>x.id===E2.lead)||{};const cl=D.clients.find(x=>x.phone&&l.phone&&waNum(x.phone)===waNum(l.phone));
-    openForm('invoices',null,{kind:'Quotation',client:cl?cl.id:'',date:today(),desc:`Construction of ${E2.floors.length}-floor house (${E2.tier}), ${num(c.built)} sq.ft built-up, ${num(n(E2.rooms))} rooms, ${num(n(E2.toilets))} toilets — as per estimate dated ${fd(today())}`,amount:Math.round(c.sub),gst:E2.gst?'GST 18%':'',status:'Unpaid'});return;}
+    openForm('invoices',null,{kind:'Quotation',client:cl?cl.id:'',date:today(),desc:`Construction (${E2.tier}) — ${num(c.v.B)} sq.ft BUA, ${c.v.F} floors, ${num(c.v.R)} rooms, ${num(c.v.T)} toilets — as per estimate dated ${fd(today())}`,amount:Math.round(c.sub),gst:E2.gst?'GST 18%':'',status:'Unpaid'});return;}
 },true);
 document.addEventListener('submit',e=>{if(e.target.id==='e2RateForm'){e.preventDefault();e2SaveRates(e.target);}},true);
 
