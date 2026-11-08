@@ -3544,8 +3544,10 @@ async function aiAskGemini(q){
   }finally{AI.busy=false;send.textContent='Send';aiRender();}
 }
 /* show an answer: copy button, long answers fold open */
+/* show Gemini's simple markdown (bold, code, bullets, headings) safely: text is escaped first */
+function aiMd(t){return esc(t).replace(/^#{1,4} +(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<span class="code">$1</span>').replace(/^(\s*)[*-] +/gm,'$1• ');}
 function aiFill(out,text){
-  out.classList.remove('think');out.textContent='';const body=document.createElement('div');body.className='ai-body';body.textContent=text;out.appendChild(body);
+  out.classList.remove('think');out.textContent='';const body=document.createElement('div');body.className='ai-body';body.innerHTML=aiMd(text);out.appendChild(body);
   const bar=document.createElement('div');bar.className='ai-acts';
   if(text.length>700){out.classList.add('ai-long');const more=document.createElement('button');more.className='linkish';more.textContent='Show full answer';more.dataset.aimore='1';bar.appendChild(more);}
   const cp=document.createElement('button');cp.className='linkish';cp.textContent='Copy';cp.dataset.aicopy='1';bar.appendChild(cp);out.appendChild(bar);
