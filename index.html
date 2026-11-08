@@ -184,6 +184,19 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .note svg.i{color:var(--accent);margin-top:2px}
 
 .gantt{min-width:760px;position:relative}
+.pl-scope{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:12px 16px}
+.pl-chk{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0}.pl-chk input{width:auto}
+.pl-warn{display:grid;gap:6px;padding:12px 16px}.pl-w{display:flex;gap:8px;align-items:flex-start;font-size:13px;border-radius:8px;padding:8px 12px}
+.pl-w.high{background:var(--red);color:var(--red-ink)}.pl-w.med{background:var(--amber);color:var(--amber-ink)}.pl-w.low{background:var(--blue);color:var(--blue-ink)}.pl-w svg{flex:none;width:16px;height:16px;margin-top:2px}
+.pl-tbl td{vertical-align:top}.pl-tbl input{font-size:13px;padding:6px 8px}.pl-off td{opacity:.45}.pl-off td:first-child{opacity:1}
+.pl-rain{position:absolute;top:0;bottom:0;background:rgba(56,132,220,.08);pointer-events:none}.pl-rain.hv{background:rgba(56,132,220,.17)}
+.pl-hol{position:absolute;top:0;bottom:0;width:2px;background:rgba(220,120,40,.45);pointer-events:none}
+.g-bar.pl-wet{border-color:#3884dc;background:rgba(56,132,220,.22)}
+.pl-key{display:inline-block;width:12px;height:10px;border-radius:2px;vertical-align:middle;margin:0 3px 0 10px}.pl-key.rain{background:rgba(56,132,220,.12)}.pl-key.hv{background:rgba(56,132,220,.3)}.pl-key.hol{background:rgba(220,120,40,.6);width:3px}
+.pl-months{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:14px 16px}.pl-mon{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pl-mh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}.pl-mon ul{margin:6px 0 0;padding-left:18px;font-size:13px}.pl-mon li{margin:3px 0}
+.pl-cm{border-left:3px solid var(--accent);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:4px}
+.g-cm{font-size:12px;margin-left:6px}
 .g-row{display:grid;grid-template-columns:240px 1fr;align-items:center;border-bottom:1px solid var(--line);min-height:46px}
 .g-lab{padding:6px 14px;min-width:0}.g-lab b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.g-lab span{font-size:12px;color:var(--muted)}
 .g-track{position:relative;height:100%;min-height:46px;margin-right:14px}
@@ -686,7 +699,7 @@ const NAV=[
   {g:'Content & reviews',items:[['content','images','Content library','ఫోటో లైబ్రరీ'],['reviews'],['referrals'],['portfolio']]},
   {g:'Sales',items:[['invoices']]},
   {g:'Library',items:[['clients'],['vendors'],['documents']]},
-  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్']]},
+  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
   {g:'Progress & quality',items:[['tasks'],['issues'],['dpr']]},
   {g:'Site cameras',items:[['cctv','cctv','Live cameras','లైవ్ కెమెరాలు'],['cameras']]},
   {g:'Material',items:[['inventory','warehouse','Inventory','స్టాక్'],['po'],['received'],['requests'],['issue'],['returned'],['consumed']]},
@@ -1294,7 +1307,7 @@ function vSchedule(){
   const tdy=day(today());
   const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
-    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)}</span></div>
+    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)} <button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button></span></div>
       <div class="g-track"><div class="g-bar ${late?'late':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
@@ -4109,9 +4122,276 @@ async function schedMake(f){
 }
 document.addEventListener('click',e=>{if(!e.target.closest)return;const b=e.target.closest('button');if(!b)return;
   if(b.id==='e2Proj'){e2MakeProject();return;}
-  if(b.id==='schedGen'){schedDialog();return;}
+  if(b.id==='schedGen'){plOpen(S.proj!=='all'?S.proj:'');return;}
 },true);
 document.addEventListener('submit',e=>{if(e.target.id==='schedForm'){e.preventDefault();schedMake(e.target);}},true);
+
+/* ================= Schedule planner =================
+ * Builds an editable activity schedule from: scope checklist (civil + interiors), floors and their areas, rooms,
+ * toilets, lifts, a time limit, the local monsoon season and the holiday calendar. Durations are WORKING days
+ * (Sundays and holidays skipped); weather-sensitive works get extra time in the rainy months of the chosen city.
+ * Every activity can be switched off, renamed, given other days, a fixed start date and a comment. */
+Object.assign(ICONS,{'calendar-range':'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M17 14h-6"/><path d="M13 18H7"/><path d="M7 14h.01"/><path d="M17 18h.01"/>'});
+/* scope checklist: key, label, group, on by default */
+const PL_SCOPE=[
+ ['pre','Site clearance, setting out & mobilisation','Civil',1],['soil','Soil test, approvals & drawings sign-off','Civil',0],['exc','Excavation','Civil',1],['ftg','PCC & footings','Civil',1],
+ ['plinth','Plinth beams & back-filling','Civil',1],['struct','Columns & roof slabs (each floor)','Civil',1],['head','Headroom, parapet & terrace','Civil',1],['sump','Sump & septic tank','Civil',1],
+ ['bw','Block / brick work','Civil',1],['mep','Electrical & plumbing rough-in','Civil',1],['ipl','Internal plastering','Civil',1],['epl','External plastering','Civil',1],
+ ['twp','Toilet & balcony waterproofing','Civil',1],['terwp','Terrace waterproofing','Civil',1],['floor','Flooring & tiling','Civil',1],['granite','Granite — staircase, sills, kitchen','Civil',1],
+ ['dw','Doors & windows','Civil',1],['rail','Railings & grills','Civil',1],['paint','Painting','Civil',1],['fit','Electrical & sanitary fittings','Civil',1],
+ ['elev','Elevation cladding / facade features','Civil',0],['cwall','Compound wall & gate','Civil',0],['solar','Solar heater / panels','Civil',0],['land','Landscaping & paving','Civil',0],
+ ['fc','False ceiling','Interiors',0],['mk','Modular kitchen','Interiors',0],['ward','Wardrobes & storage','Interiors',0],['tv','TV unit & wall panelling','Interiors',0],
+ ['light','Decorative lighting & fans','Interiors',0],['wallp','Wallpaper / texture finishes','Interiors',0],['furn','Loose furniture & soft furnishing','Interiors',0],['clean','Deep cleaning, snag list & handover','Civil',1]];
+/* rainy months per location: 0..11 -> extra-time factor for weather-sensitive works */
+const PL_RAIN={Hyderabad:{5:1.15,6:1.35,7:1.35,8:1.15,9:1.05},Bangalore:{5:1.15,6:1.15,7:1.15,8:1.35,9:1.35,10:1.15},'Tier-2 town (Guntur, Vijayawada…)':{5:1.15,6:1.35,7:1.35,8:1.35,9:1.35,10:1.15}};
+const PL_HOT=[3,4];   // April–May: hot — longer curing, avoid noon pours
+/* site holidays (tentative — check against the official list; sites usually close 3–4 days for Sankranti) */
+const PL_HOL_DEFAULT=`2026-01-14 Bhogi
+2026-01-15 Sankranti
+2026-01-16 Kanuma
+2026-01-26 Republic Day
+2026-03-03 Holi
+2026-03-19 Ugadi
+2026-03-21 Ramzan
+2026-08-15 Independence Day
+2026-09-14 Vinayaka Chavithi
+2026-10-02 Gandhi Jayanti
+2026-10-20 Dussehra
+2026-10-21 Day after Dussehra
+2026-11-08 Deepavali
+2026-12-25 Christmas
+2027-01-13 Bhogi
+2027-01-14 Sankranti
+2027-01-15 Sankranti
+2027-01-16 Kanuma
+2027-01-26 Republic Day
+2027-03-09 Ramzan
+2027-03-22 Holi
+2027-04-07 Ugadi
+2027-05-01 May Day
+2027-05-17 Bakrid
+2027-09-04 Vinayaka Chavithi
+2027-10-02 Gandhi Jayanti
+2027-10-09 Dussehra
+2027-10-29 Deepavali
+2027-12-25 Christmas`;
+const PL={pid:'',start:'',months:'6',city:0,sun:true,floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],rooms:'4',toilets:'3',kitchens:'1',lifts:'0',scope:{},hol:'',ed:{},showHol:false};
+PL_SCOPE.forEach(([k,,,on])=>PL.scope[k]=!!on);
+const plCities=()=>Object.keys(PL_RAIN);
+const isoD=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const dOf=s=>new Date(s+'T00:00');
+function plHolidays(){const m={};String(PL.hol||PL_HOL_DEFAULT).split('\n').forEach(l=>{const x=l.trim().match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(x)m[x[1]]=x[2]||'Holiday';});return m;}
+/* the activity network (before the calendar): key, title, scope, working days, after [keys], lag (calendar days), wet, floor */
+function plNetwork(){
+  const fl=PL.floors.filter(f=>n(f.a)),F=fl.length,A=fl.map(f=>n(f.a)),AT=A.reduce((s,x)=>s+x,0),GF=A[0]||0,TOP=A[F-1]||0;
+  const T=n(PL.toilets),R=n(PL.rooms),L=n(PL.lifts),Tf=F?T/F:0,on=k=>PL.scope[k],acts=[];
+  const add=(key,title,sc,wd,after,o)=>{if(!on(sc))return null;acts.push({key,title,sc,wd:Math.max(1,Math.round(wd)),after:(after||[]).filter(Boolean),lag:(o&&o.lag)||0,wet:!!(o&&o.wet),res:(o&&o.res)||''});return key;};
+  const pre=add('pre','Site clearance, setting out & mobilisation','pre',3,[],{res:'Civil gang'});
+  const soil=add('soil','Soil test, approvals & drawings sign-off','soil',7,[pre],{res:'Site engineer'});
+  const exc=add('exc','Excavation for footings','exc',3+GF/400,[pre,soil],{wet:1,res:'Excavator + civil gang'});
+  const ftg=add('ftg','PCC & RCC footings','ftg',8+GF/200,[exc],{wet:1,res:'Structure contractor'});
+  const plb=add('plinth','Columns to plinth, plinth beams & back-filling','plinth',5+GF/300,[ftg],{wet:1,res:'Structure contractor'});
+  const sump=add('sump','Sump & septic tank','sump',10,[ftg],{wet:1,res:'Structure contractor'});
+  const cw=add('cwall','Compound wall & gate','cwall',10,[plb],{wet:1,res:'Masonry gang'});
+  const slab=[];let prev=plb||ftg||exc||pre;
+  fl.forEach((f,i)=>{const c=add('col'+i,`Columns — ${f.n}`,'struct',4+A[i]/400,[prev],{lag:i?7:0,res:'Structure contractor'});
+    const s=add('slab'+i,`Beams & roof slab — ${f.n}`,'struct',8+A[i]/150,[c],{wet:1,res:'Structure contractor'});slab.push(s);if(s)prev=s;});
+  const head=add('head','Headroom, parapet & terrace works','head',6,[prev],{lag:7,wet:1,res:'Structure contractor'});
+  const bw=[],ip=[],flr=[];
+  fl.forEach((f,i)=>{const b=add('bw'+i,`Block-work — ${f.n}`,'bw',Math.max(6,A[i]/80),[slab[i]],{lag:14,res:'Masonry gang'});bw.push(b);
+    const m=add('mep'+i,`Electrical & plumbing rough-in — ${f.n}`,'mep',4+A[i]/300,[b],{res:'Electrician + plumber'});
+    const p=add('ipl'+i,`Internal plastering — ${f.n}`,'ipl',Math.max(6,A[i]/70),[m||b],{res:'Plastering gang'});ip.push(p);
+    const w=add('twp'+i,`Toilet & balcony waterproofing — ${f.n}`,'twp',2+Tf,[p],{res:'Waterproofing contractor'});
+    flr.push(add('fl'+i,`Flooring, skirting & toilet tiling — ${f.n}`,'floor',Math.max(6,A[i]/80+Tf*2),[w||p],{res:'Tiling gang'}));});
+  const lastB=bw.filter(Boolean).pop(),lastP=ip.filter(Boolean).pop(),lastF=flr.filter(Boolean).pop();
+  const frames=add('frames','Door & window frames, lintels','dw',3+R*0.3,[bw[0]],{lag:3,res:'Carpenter'});
+  const terwp=add('terwp','Terrace waterproofing & screed','terwp',4+TOP/600,[head],{lag:7,wet:1,res:'Waterproofing contractor'});
+  const epl=add('epl','External plastering','epl',10+AT/150,[head,lastB],{wet:1,res:'Plastering gang'});
+  const elev=add('elev','Elevation cladding / facade features','elev',8+AT/600,[epl],{wet:1,res:'Facade contractor'});
+  const lift=L?add('lift','Lift installation & commissioning','struct',25,[head],{lag:10,res:'Lift vendor'}):null;
+  const fc=add('fc','False ceiling','fc',Math.max(6,AT/150),[lastP],{res:'Interior contractor'});
+  const gr=add('granite','Staircase granite, sills & kitchen platform','granite',4+F*1.5,[lastF],{lag:-3,res:'Granite contractor'});
+  const sh=add('shutters','Door shutters, windows & glass','dw',3+R*0.5,[lastF],{res:'Carpenter / window vendor'});
+  const rl=add('rail','Staircase & balcony railing, grills','rail',3+F,[gr||lastF],{res:'Fabricator'});
+  const p1=add('paint1','Painting — putty, primer & first coat','paint',10+AT/150,[epl,lastP,fc],{res:'Painter'});
+  const solar=add('solar','Solar heater / panels','solar',3,[terwp],{res:'Solar vendor'});
+  const mk=add('mk','Modular kitchen','mk',8+Math.max(1,n(PL.kitchens))*4,[lastF,p1],{res:'Interior contractor'});
+  const wd=add('ward','Wardrobes & storage','ward',6+R*1.5,[p1],{res:'Interior contractor'});
+  const tv=add('tv','TV unit & wall panelling','tv',5,[p1],{res:'Interior contractor'});
+  const fit=add('fit','Electrical fixtures, CP & sanitary fittings','fit',6+T*1.5,[lastF,p1],{res:'Electrician + plumber'});
+  const lt=add('light','Decorative lighting & fans','light',4,[fit,fc],{res:'Electrician'});
+  const p2=add('paint2','Final painting coat','paint',6+AT/300,[fit,sh,rl,wd,mk,tv],{res:'Painter'});
+  const wp=add('wallp','Wallpaper / texture finishes','wallp',4,[p2],{res:'Interior contractor'});
+  const land=add('land','Landscaping & paving','land',8,[epl,cw],{wet:1,res:'Landscape contractor'});
+  const furn=add('furn','Loose furniture & soft furnishing','furn',5,[p2,wp,lt],{res:'Interior contractor'});
+  add('clean','Deep cleaning, snag list & handover','clean',4,[p2,lift,terwp,land,furn,wp,lt,solar,sump,elev],{res:'Site engineer'});
+  const keys=new Set(acts.map(a=>a.key));acts.forEach(a=>a.after=a.after.filter(k=>keys.has(k)));   // drop links to unticked works
+  return {acts,F,AT,fl};
+}
+/* place the network on the calendar; s = speed factor (<1 compresses, >1 stretches) */
+function plPlace(acts,start,s,hol,rain){
+  const out={},isWork=d=>!(PL.sun&&d.getDay()===0)&&!hol[isoD(d)];
+  const nextWork=d=>{const x=new Date(d);while(!isWork(x))x.setDate(x.getDate()+1);return x;};
+  acts.forEach(a=>{const e=PL.ed[a.key]||{};if(e.off)return;
+    let st=dOf(start);a.after.forEach(k=>{const p=out[k];if(!p)return;const x=dOf(p.due);x.setDate(x.getDate()+1+(a.lag||0));if(x>st)st=x;});
+    if(e.fix&&dOf(e.fix)>st)st=dOf(e.fix);st=nextWork(st);
+    const base=e.d!==undefined&&e.d!==''?Math.max(1,+e.d):Math.max(1,Math.round(a.wd*s));
+    const f=a.wet?(rain[st.getMonth()]||1):1,wd=Math.max(1,Math.round(base*f));
+    let d=new Date(st),left=wd;while(true){if(isWork(d)){left--;if(!left)break;}d.setDate(d.getDate()+1);}
+    out[a.key]={...a,title:e.t||a.title,start:isoD(st),due:isoD(d),days:wd,base,f,comment:e.c||'',fixed:e.fix||''};});
+  return out;
+}
+function plCalc(){
+  const N=plNetwork(),hol=plHolidays(),city=plCities()[PL.city]||'Hyderabad',rain=PL_RAIN[city];
+  const start=PL.start||today();if(!N.acts.length||!N.fl.length)return {N,rows:[],warn:[]};
+  const endOf=pl=>Object.values(pl).reduce((m,r)=>r.due>m?r.due:m,start);
+  const natural=plPlace(N.acts,start,1,hol,rain),natEnd=endOf(natural);
+  const months=+PL.months||0;let s=1,pl=natural,feasible=true,minEnd=null;
+  if(months){const target=isoD(new Date(dOf(start).setMonth(dOf(start).getMonth()+months))),tgtT=dOf(target).getTime();
+    let lo=0.55,hi=2.5;for(let k=0;k<22;k++){const mid=(lo+hi)/2;const e=endOf(plPlace(N.acts,start,mid,hol,rain));if(dOf(e).getTime()<=tgtT)lo=mid;else hi=mid;}
+    s=lo;pl=plPlace(N.acts,start,s,hol,rain);if(dOf(endOf(pl)).getTime()>tgtT){feasible=false;minEnd=endOf(plPlace(N.acts,start,0.55,hol,rain));}
+    PL._target=target;}else PL._target='';
+  const rows=N.acts.map(a=>pl[a.key]?pl[a.key]:{...a,off:true,title:(PL.ed[a.key]||{}).t||a.title,comment:(PL.ed[a.key]||{}).c||''});
+  const end=endOf(pl),warn=[];
+  if(months&&!feasible)warn.push(['high',`${months} months is too short for this scope. Even with extra gangs (about 45% faster) it needs until ${fd(minEnd)} — about ${Math.ceil((dOf(minEnd)-dOf(start))/864e5/30.4)} months.`]);
+  if(months&&feasible&&s<0.8)warn.push(['med',`To finish in ${months} months the works run about ${Math.round((1-s)*100)}% faster than normal — plan extra gangs / double shifts for structure and finishes.`]);
+  rows.filter(r=>!r.off&&r.wet&&r.f>1).forEach(r=>warn.push([r.f>=1.3?'high':'med',`${r.title} starts ${fd(r.start)} in ${r.f>=1.3?'heavy':'moderate'} monsoon (${city}) — ${Math.round((r.f-1)*100)}% extra time added. ${/slab|footing/i.test(r.title)?'Pour on dry days, keep tarpaulins and a dewatering pump ready.':/plaster|paint|facade|elevation/i.test(r.title)?'Keep external work for dry spells; cover fresh plaster.':/waterproof/i.test(r.title)?'Waterproofing needs a dry surface — check the forecast before starting.':'Keep pumps and cover sheets ready.'}`]));
+  rows.filter(r=>!r.off&&/slab|footing|plinth/i.test(r.title)&&PL_HOT.includes(dOf(r.start).getMonth())).forEach(r=>warn.push(['low',`${r.title} is in hot weather (${dOf(r.start).toLocaleDateString(LOC(),{month:'long'})}) — cure at least 10 days, avoid noon pours.`]));
+  const hs=Object.entries(hol).filter(([d])=>d>=start&&d<=end);
+  return {N,rows,warn,start,end,natEnd,s,feasible,minEnd,city,rain,hol,hs};
+}
+/* ---- page ---- */
+function vPlanner(){
+  if(!isAdmin())return header('Schedule planner')+`<div class="box hero-empty">${ico('shield')}<h2>Only the admin or project manager can plan schedules</h2></div>`;
+  const c=plCalc(),L=esc,cities=plCities();
+  const inp=(k,v,ph,w)=>`<input data-pl="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" ${w?`style="width:${w}"`:''} inputmode="decimal">`;
+  const left=`<div class="box"><div class="box-h"><h2>Project & time</h2></div><div class="fhead">
+    <label>Project<select id="pl-pid"><option value="">— choose to save later —</option>${PJ().map(p=>`<option value="${p.id}" ${PL.pid===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
+    <label>Start date<input id="pl-start" type="date" value="${esc(PL.start||today())}"></label>
+    <label>Complete in (months)<input data-pl="months" value="${esc(PL.months)}" placeholder="blank = normal pace" inputmode="decimal"></label>
+    <label>Location (season)<select id="pl-city">${cities.map((x,i)=>`<option value="${i}" ${+PL.city===i?'selected':''}>${esc(x)}</option>`).join('')}</select></label></div>
+    <div class="srow"><label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="pl-sun" ${PL.sun?'checked':''} style="width:auto">Sundays off</label>
+      <button type="button" class="linkish" id="plHolBtn">${PL.showHol?'Hide':'Edit'} holidays (${Object.keys(c.hol||plHolidays()).length})</button></div>
+    ${PL.showHol?`<div style="padding:0 16px 12px"><textarea id="pl-hol" rows="8" style="width:100%;font-family:var(--f-mono,monospace);font-size:12.5px">${esc(PL.hol||PL_HOL_DEFAULT)}</textarea><div class="code">One per line: YYYY-MM-DD Name. Dates are tentative — check the official list.</div></div>`:''}
+    <div class="box-h"><h2>Floors & area</h2><span class="code">Slab area of each floor (sq.ft)</span></div>
+    <div class="tbl-wrap"><table><tbody>${PL.floors.map((f,i)=>`<tr><td><input data-plf="${i}" value="${esc(f.n)}" style="width:100%"></td><td style="width:120px">${inp('fa'+i,f.a,'sq.ft','110px')}</td><td style="width:44px">${PL.floors.length>1?`<button type="button" class="btn sm ghost" data-pldel="${i}" aria-label="Remove floor">${ico('x')}</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="srow"><button type="button" class="btn sm" id="plAdd">${ico('plus')}<span>Add floor</span></button></div>
+    <div class="fhead"><label>Rooms${inp('rooms',PL.rooms,'nos')}</label><label>Toilets${inp('toilets',PL.toilets,'nos')}</label><label>Kitchens${inp('kitchens',PL.kitchens,'nos')}</label><label>Lifts${inp('lifts',PL.lifts,'nos')}</label></div>
+    <div class="box-h"><h2>Scope of works</h2><span class="code">Tick what this project includes</span></div>
+    <div class="pl-scope">${['Civil','Interiors'].map(g=>`<div><div class="code" style="margin-bottom:6px"><b>${g.toUpperCase()}</b></div>${PL_SCOPE.filter(x=>x[2]===g).map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-plsc="${k}" ${PL.scope[k]?'checked':''} ${k==='struct'?'disabled':''}>${L(l)}</label>`).join('')}</div>`).join('')}</div></div>`;
+  const on=c.rows.filter(r=>!r.off),wdTot=c.end?Math.round((dOf(c.end)-dOf(c.start))/864e5)+1:0;
+  const sumry=`<div class="box"><div class="box-h"><h2>Timeline</h2>${c.end?`<span class="code">${fd(c.start)} → ${fd(c.end)}</span>`:''}</div>
+    ${on.length?`<div class="tiles"><div class="tile"><b>${(wdTot/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${on.length}</b><span>Activities</span></div>
+      <div class="tile"><b>${c.hs.length}</b><span>Holidays inside</span></div><div class="tile"><b style="color:${c.feasible?'inherit':'var(--red-ink)'}">${PL.months?(c.feasible?'Fits':'Too short'):'Normal pace'}</b><span>${PL.months?`Target ${PL.months} months`:`Normal finish ${fd(c.natEnd)}`}</span></div></div>
+    ${c.warn.length?`<div class="pl-warn">${c.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${L(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>No season or time problems found.</span></div>`}
+    <div class="srow">${CANW?`<button class="btn pri" id="plSave" ${PL.pid?'':'disabled'}>${ico('check')}<span>Save to project</span></button>`:''}<label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="pl-ms" ${PL.ms!==false?'checked':''} style="width:auto">Add payment stages linked to activities</label>
+      <button class="btn" id="plShare">${ico('share-2')}<span>Share</span></button>${PL.pid?'':'<span class="code">Choose a project to save.</span>'}</div>`:`<div class="empty">Enter the slab area of each floor to see the schedule.</div>`}</div>`;
+  const table=on.length||c.rows.length?`<div class="box"><div class="box-h"><h2>Activities</h2><span class="code">Days = working days · ☂ = monsoon extra · change anything; blank = automatic ${Object.keys(PL.ed).length?`<button type="button" class="linkish" id="plUndo">Undo my changes</button>`:''}</span></div>
+    <div class="tbl-wrap"><table class="pl-tbl"><thead><tr><th></th><th>Activity</th><th class="num">Days</th><th>Fixed start</th><th>Start</th><th>Finish</th><th>Comment</th></tr></thead><tbody>
+    ${c.rows.map(r=>{const e=PL.ed[r.key]||{};return `<tr class="${r.off?'pl-off':''}"><td><input type="checkbox" data-plon="${r.key}" ${r.off?'':'checked'} aria-label="Include"></td>
+      <td><input data-plt="${r.key}" value="${esc(e.t||r.title)}" style="min-width:230px;width:100%">${r.res?`<div class="code">${L(r.res)}</div>`:''}</td>
+      <td class="num"><input data-pld="${r.key}" value="${esc(e.d!==undefined?e.d:'')}" placeholder="${r.off?r.wd:r.days}" inputmode="numeric" style="width:64px;text-align:right">${!r.off&&r.f>1?` <span title="Monsoon extra time" class="pill p-blue">☂ +${Math.round((r.f-1)*100)}%</span>`:''}</td>
+      <td><input type="date" data-plfix="${r.key}" value="${esc(e.fix||'')}" style="width:140px"></td>
+      <td class="code">${r.off?'—':fd(r.start)}</td><td class="code">${r.off?'—':fd(r.due)}</td>
+      <td><input data-plc="${r.key}" value="${esc(e.c||'')}" placeholder="Add a comment" style="min-width:160px;width:100%"></td></tr>`;}).join('')}
+    </tbody></table></div></div>`:'';
+  return header('Schedule planner')+`<div class="grid2">${left}${sumry}</div>`+(on.length?plGantt(c)+plMonths(c):'')+table;
+}
+/* Gantt with monsoon months shaded and holidays marked */
+function plGantt(c){
+  const on=c.rows.filter(r=>!r.off),day=s=>dOf(s).getTime()/864e5,min=day(c.start)-2,max=day(c.end)+3,span=max-min,pos=d=>((d-min)/span*100).toFixed(2)+'%';
+  const bands=[];const d0=dOf(c.start);d0.setDate(1);for(let d=new Date(d0);day(isoD(d))<=max;d.setMonth(d.getMonth()+1)){const f=c.rain[d.getMonth()];if(f>1){const a=Math.max(min,day(isoD(d))),e=new Date(d);e.setMonth(e.getMonth()+1);const b=Math.min(max,day(isoD(e)));bands.push(`<span class="pl-rain ${f>=1.3?'hv':''}" style="left:${pos(a)};width:${((b-a)/span*100).toFixed(2)}%"></span>`);}}
+  const ticks=[];for(let d=new Date(d0);day(isoD(d))<=max;d.setMonth(d.getMonth()+1)){const v=day(isoD(d));if(v>=min)ticks.push(`<span class="g-tick" style="left:${pos(v)}">${d.toLocaleDateString(LOC(),{month:'short',year:'2-digit'})}</span>`);}
+  const hl=c.hs.map(([d,nm_])=>`<span class="pl-hol" style="left:${pos(day(d))}" title="${esc(fd(d)+' '+nm_)}"></span>`).join('');
+  return `<div class="box"><div class="box-h"><h2>Calendar view</h2><span class="code"><span class="pl-key rain"></span> monsoon <span class="pl-key hv"></span> heavy monsoon <span class="pl-key hol"></span> holiday</span></div><div class="tbl-wrap"><div class="gantt">
+    <div class="g-row g-head"><div class="g-lab"></div><div class="g-track">${bands.join('')}${ticks.join('')}</div></div>
+    ${on.map(r=>`<div class="g-row"><div class="g-lab"><b>${esc(r.title)}${r.comment?' 💬':''}</b><span>${fd(r.start)} → ${fd(r.due)} · ${r.days} days</span></div><div class="g-track">${bands.join('')}${hl}<div class="g-bar ${r.f>1?'pl-wet':''}" style="left:${pos(day(r.start))};width:${Math.max(.8,(day(r.due)-day(r.start)+1)/span*100).toFixed(2)}%" title="${esc(r.title)}"></div></div></div>`).join('')}
+  </div></div></div>`;
+}
+/* month by month: what runs, holidays, season */
+function plMonths(c){
+  const on=c.rows.filter(r=>!r.off),out=[];const d=dOf(c.start);d.setDate(1);
+  while(isoD(d)<=c.end){const a=isoD(d),e=new Date(d);e.setMonth(e.getMonth()+1);e.setDate(0);const b=isoD(e);
+    const acts=on.filter(r=>r.start<=b&&r.due>=a),hs=c.hs.filter(([x])=>x>=a&&x<=b),f=c.rain[d.getMonth()]||1;
+    out.push(`<div class="pl-mon"><div class="pl-mh"><b>${d.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</b>${f>1?`<span class="pill ${f>=1.3?'p-red':'p-amber'}">☂ ${f>=1.3?'heavy':'moderate'} monsoon</span>`:''}${PL_HOT.includes(d.getMonth())?'<span class="pill p-amber">hot</span>':''}</div>
+      ${hs.length?`<div class="code">Holidays: ${hs.map(([x,nm_])=>esc(`${dOf(x).getDate()} ${nm_}`)).join(', ')}</div>`:''}
+      <ul>${acts.map(r=>`<li>${esc(r.title)} <span class="code">${fd(r.start)} → ${fd(r.due)}</span>${r.comment?`<div class="code">💬 ${esc(r.comment)}</div>`:''}</li>`).join('')||'<li class="code">—</li>'}</ul></div>`);
+    d.setMonth(d.getMonth()+1);}
+  return `<div class="box"><div class="box-h"><h2>Month by month</h2></div><div class="pl-months">${out.join('')}</div></div>`;
+}
+function plText(){const c=plCalc(),on=c.rows.filter(r=>!r.off);
+  return [`*${orgName()} — work schedule*`,PL.pid?pname(PL.pid):'',`${fd(c.start)} → ${fd(c.end)} (${((dOf(c.end)-dOf(c.start))/864e5/30.4).toFixed(1)} months) · ${c.city}`,'',
+    ...on.map(r=>`• ${r.title}: ${fd(r.start)} → ${fd(r.due)}${r.comment?` — ${r.comment}`:''}`),'',...c.warn.map(([,t])=>'⚠ '+t)].filter(Boolean).join('\n');}
+async function plSave(){
+  const c=plCalc(),p=proj(PL.pid);if(!p||!c.rows.length)return;
+  const on=c.rows.filter(r=>!r.off),nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const ids={},recs=[],now=Date.now();on.forEach(r=>ids[r.key]=nid());
+  const wbs={};let grp={pre:1,soil:1,exc:2,ftg:2,plinth:2,sump:2,cwall:2,struct:3,head:3,bw:4,mep:4,ipl:4,dw:4};const cnt={};
+  on.forEach(r=>{const g=grp[r.sc]||(['fc','mk','ward','tv','light','wallp','furn'].includes(r.sc)?6:r.sc==='clean'?7:5);cnt[g]=(cnt[g]||0)+1;wbs[r.key]=`${g}.${cnt[g]}`;});
+  on.forEach(r=>recs.push(['tasks',ids[r.key],{project:p.id,wbs:wbs[r.key],title:r.title,resource:r.res,start:r.start,due:r.due,progress:0,status:'Not started',
+    pred:r.after.filter(k=>ids[k]).map(k=>wbs[k]).join(', '),source:`BuildMitr planner (${c.city}${PL.months?', '+PL.months+' months':''})`,notes:[r.comment,r.f>1?`Monsoon: ${Math.round((r.f-1)*100)}% extra time included.`:''].filter(Boolean).join(' '),
+    comments:r.comment?[{t:r.comment,by:ME.name||ME.email,at:now}]:[],by:ME.id,at:now}]));
+  if(document.getElementById('pl-ms')&&document.getElementById('pl-ms').checked){
+    const k=x=>ids[x]?x:null,slabs=on.filter(r=>/^slab\d+$/.test(r.key)),se=slabs.length?+(30/slabs.length).toFixed(1):0;
+    const lastOf=pre=>{const xs=on.filter(r=>r.key.startsWith(pre));return xs.length?xs[xs.length-1].key:null;};
+    const ms=[['Booking / agreement',5,null],['Foundation & footings',10,k('ftg')],['Plinth beam',5,k('plinth')],...slabs.map(r=>[r.title.replace('Beams & roof slab — ','')+' roof slab',se,r.key]),
+      ['Brickwork / blockwork',10,lastOf('bw')],['Plastering',10,k('epl')||lastOf('ipl')],['Flooring & tiling',10,lastOf('fl')],['Doors, windows, electrical & plumbing',10,k('fit')],['Painting & handover',10,k('clean')]];
+    const tot=ms.reduce((s,m)=>s+m[1],0);ms.forEach(([st,pc,key])=>recs.push(['milestones',nid(),{project:p.id,stage:st,pct:+(pc*100/tot).toFixed(1),...(key?{task:ids[key]}:{due:c.start}),by:ME.id,at:now}]));}
+  const ok=await write(async()=>{await dbBatch(recs);await db.doc('projects/'+p.id).update({start:c.start,end:c.end});},`Schedule saved: ${on.length} activities, ${fd(c.start)} → ${fd(c.end)}`);
+  if(ok){S.proj=p.id;try{localStorage.setItem('bm-proj',p.id);}catch(_){}S.view='schedule';render();scrollTo(0,0);}
+}
+/* open the planner, optionally filled from a project / estimate */
+function plOpen(pid,o){
+  PL.pid=pid||PL.pid;const p=proj(PL.pid),est=(p&&p.estimate)||{};
+  if(o){Object.assign(PL,o);}else if(est.floors&&est.floors.length){PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
+  if(p&&p.start&&!PL.start)PL.start=p.start;PL.ed={};S.view='planner';render();scrollTo(0,0);
+}
+/* comments on saved activities (Activity schedule) */
+function taskComments(id){
+  const t=D.tasks.find(x=>x.id===id);if(!t)return;const cs=t.comments||[];
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="tcForm" data-task="${esc(id)}">
+    <div class="pane-h"><h2>Comments</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><p><b data-notr>${esc(t.title)}</b><br><span class="code">${esc(pname(t.project))} · ${fd(t.start)} → ${fd(t.due)}</span></p>
+      ${cs.length?cs.map(x=>`<div class="pl-cm"><div>${esc(x.t)}</div><span class="code">${esc(x.by||'')} · ${new Date(x.at).toLocaleString(LOC())}</span></div>`).join(''):'<div class="code">No comments yet.</div>'}
+      ${CANW?`<label>Add a comment<textarea name="t" rows="3" required placeholder="e.g. Shuttering material delayed by 2 days"></textarea></label>`:''}</div>
+    <div class="pane-f"><button type="button" class="btn" data-close>Close</button>${CANW?`<button class="btn pri">${ico('check')}<span>Add comment</span></button>`:''}</div></form></div>`;
+}
+async function taskCommentAdd(f){
+  const id=f.dataset.task,t=D.tasks.find(x=>x.id===id),txt=(f.elements.t.value||'').trim();if(!t||!txt)return;
+  const cs=[...(t.comments||[]),{t:txt,by:ME.name||ME.email,at:Date.now()}];
+  const ok=await write(()=>db.doc('tasks/'+id).update({comments:cs}),'Comment added');if(ok){t.comments=cs;taskComments(id);}
+}
+/* ---- events ---- */
+function plRe(sel,pos){render();const x=document.querySelector(sel);if(x){x.focus();try{x.setSelectionRange(pos,pos);}catch(_){}}}
+const plEd=k=>PL.ed[k]||(PL.ed[k]={});
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!t.closest||!t.closest('#view')||S.view!=='planner')return;const pos=t.selectionStart;
+  if(d.pl!==undefined){const k=d.pl;if(/^fa\d+$/.test(k))PL.floors[+k.slice(2)].a=t.value;else PL[k]=t.value;plRe(`[data-pl="${k}"]`,pos);return;}
+  if(d.plf!==undefined){PL.floors[+d.plf].n=t.value;return;}
+  if(d.pld!==undefined){const x=plEd(d.pld);if(t.value==='')delete x.d;else x.d=t.value;plRe(`[data-pld="${d.pld}"]`,pos);return;}
+  if(d.plt!==undefined){plEd(d.plt).t=t.value;return;}       // names and comments: saved without redrawing while typing
+  if(d.plc!==undefined){plEd(d.plc).c=t.value;return;}
+  if(t.id==='pl-hol'){PL.hol=t.value;return;}
+},true);
+document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};if(S.view!=='planner')return;
+  if(t.id==='pl-pid'){PL.pid=t.value;const p=proj(t.value);if(p){const est=p.estimate||{};if(est.floors&&est.floors.length)PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));if(p.start)PL.start=p.start;}render();return;}
+  if(t.id==='pl-start'){PL.start=t.value;render();return;}if(t.id==='pl-city'){PL.city=+t.value;render();return;}
+  if(t.id==='pl-sun'){PL.sun=t.checked;render();return;}if(t.id==='pl-ms'){PL.ms=t.checked;return;}
+  if(t.id==='pl-hol'||d.plf!==undefined||d.plt!==undefined||d.plc!==undefined){render();return;}
+  if(d.plsc!==undefined){PL.scope[d.plsc]=t.checked;render();return;}
+  if(d.plon!==undefined){const x=plEd(d.plon);if(t.checked)delete x.off;else x.off=true;render();return;}
+  if(d.plfix!==undefined){const x=plEd(d.plfix);if(t.value)x.fix=t.value;else delete x.fix;render();return;}
+},true);
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-pldel]');if(b){PL.floors.splice(+b.dataset.pldel,1);render();return;}}
+  {const b=e.target.closest('[data-tcm]');if(b){e.stopPropagation();taskComments(b.dataset.tcm);return;}}
+  const id=(e.target.closest('button')||{}).id;if(!id)return;
+  if(id==='plAdd'){const nm_=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor'];PL.floors.push({n:nm_[PL.floors.length]||`Floor ${PL.floors.length}`,a:(PL.floors[PL.floors.length-1]||{}).a||''});render();return;}
+  if(id==='plHolBtn'){PL.showHol=!PL.showHol;render();return;}
+  if(id==='plUndo'){PL.ed={};render();return;}
+  if(id==='plSave'){plSave();return;}
+  if(id==='plShare'){shareSheet('Work schedule',plText());return;}
+},true);
+document.addEventListener('submit',e=>{if(e.target.id==='tcForm'){e.preventDefault();taskCommentAdd(e.target);}},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
@@ -4142,7 +4422,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
