@@ -678,7 +678,7 @@ const MOD={
 const MAT_KEYS=['received','requests','issue','returned','consumed','po'];
 const MAN_KEYS=['labour','attendance','vlabour','workupd','advances'];
 const NAV=[
-  {g:'',items:[['client','home','My home','నా ఇల్లు'],['cphotos','images','Progress photos','ప్రగతి ఫోటోలు'],['cpay','indian-rupee','Payments','చెల్లింపులు'],['cdocs','folder-open','Drawings & documents','డ్రాయింగ్‌లు'],['sitehome','home','Site home','సైట్ హోమ్'],['desk','pencil-ruler','Design desk','డిజైన్ డెస్క్'],['dashboard','layout-dashboard','Dashboard','డాష్‌బోర్డ్'],['messages','message-circle','Messages','సందేశాలు'],['alerts','bell','Alerts','అలర్ట్‌లు'],['projects','building-2','Projects','ప్రాజెక్టులు'],['adminpanel','shield','Admin panel','అడ్మిన్ ప్యానెల్'],['team'],['roleaccess','shield','Role access','పాత్ర అనుమతులు']]},
+  {g:'',items:[['client','home','My home','నా ఇల్లు'],['cphotos','images','Progress photos','ప్రగతి ఫోటోలు'],['cpay','indian-rupee','Payments','చెల్లింపులు'],['cdocs','folder-open','Drawings & documents','డ్రాయింగ్‌లు'],['sitehome','home','Site home','సైట్ హోమ్'],['desk','pencil-ruler','Design desk','డిజైన్ డెస్క్'],['dashboard','layout-dashboard','Dashboard','డాష్‌బోర్డ్'],['orgs','building','Organisations','సంస్థలు'],['messages','message-circle','Messages','సందేశాలు'],['alerts','bell','Alerts','అలర్ట్‌లు'],['projects','building-2','Projects','ప్రాజెక్టులు'],['adminpanel','shield','Admin panel','అడ్మిన్ ప్యానెల్'],['team'],['roleaccess','shield','Role access','పాత్ర అనుమతులు']]},
   {g:'Leads & pipeline',items:[['pipeline','kanban','Pipeline board','పైప్‌లైన్'],['leads'],['visits'],['leadimp','file-up','Import leads','లీడ్స్ దిగుమతి']]},
   {g:'Follow-ups',items:[['followups','calendar-clock','Follow-ups due','ఫాలో-అప్‌లు'],['wtpl']]},
   {g:'Estimates',items:[['estimator','calculator','Estimate builder','అంచనా తయారీ'],['packages']]},
@@ -1052,7 +1052,7 @@ function vProjects(){
 
 /* ================= Dashboard ================= */
 function vDashboard(){
-  if(!PJ().length)return header(label('dashboard'))+`<div class="box hero-empty">${ico('hard-hat')}<h2>Welcome to BuildMitr</h2><p>Create a project first. Then your team can log daily reports, tasks, issues, material and labour from site — on phone or computer.</p><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${CANW?`<button class="btn pri" data-add="projects">${ico('plus')}Create first project</button>`:''}<button class="btn" data-demo="on">${ico('flask-conical')}See a demo with sample data</button></div></div>`;
+  if(!PJ().length)return header(label('dashboard'))+orgsBox()+`<div class="box hero-empty">${ico('hard-hat')}<h2>Welcome to BuildMitr</h2><p>Create a project first. Then your team can log daily reports, tasks, issues, material and labour from site — on phone or computer.</p><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${CANW?`<button class="btn pri" data-add="projects">${ico('plus')}Create first project</button>`:''}<button class="btn" data-demo="on">${ico('flask-conical')}See a demo with sample data</button></div></div>`;
   const t=today(),f=a=>a.filter(inProj);
   const tasks=f(D.tasks),issues=f(D.issues),pay=f(D.payments);
   const openT=tasks.filter(x=>x.status!=='Completed'),late=openT.filter(x=>x.due&&x.due<t);
@@ -1066,7 +1066,7 @@ function vDashboard(){
   const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
-  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+siteBox+alBox+ownerBox()+mktBox()+`
+  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+orgsBox()+siteBox+alBox+ownerBox()+mktBox()+`
   ${S.stale?`<div class="note">${ico('wifi-off')}<span>Can't reach the server right now — figures may be out of date.</span></div>`:''}
   <div class="box tiles">
     <div class="tile"><b>${openT.length}</b><span>Open tasks${late.length?` · <span style="color:var(--red-ink)">${late.length} late</span>`:''}</span></div>
@@ -1728,7 +1728,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings')return true;const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings')return true;if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -2524,7 +2524,7 @@ async function raSet(role,changes){
   if(ok)audit('edited','roleaccess',ROLE_KEY(role),`${role}: ${Object.entries(changes).map(([k,v])=>`${label(k)} → ${{h:'hidden',v:'view only',e:'add & edit'}[v]}`).join(', ').slice(0,300)}`);
 }
 
-Object.assign(HI,{roleaccess:'रोल एक्सेस',adminpanel:'एडमिन पैनल'});
+Object.assign(HI,{roleaccess:'रोल एक्सेस',adminpanel:'एडमिन पैनल',orgs:'संगठन'});
 /* ================= Messages (group chat with mentions & read ticks) ================= */
 const CAT_OF={'Admin':'owner','Project manager':'owner','Site engineer':'site','Supervisor':'site','Storekeeper':'site','Sub-contractor':'site',
   'Architect':'design','Structural engineer':'design','Client':'client','Marketing':'marketing','Accountant':'accounts'};
@@ -3613,6 +3613,7 @@ async function aiAdminLoad(set){
 
 /* ================= Organisations, sharing & fast start ================= */
 Object.assign(ICONS,{
+  'building':'<rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
   'share-2':'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/>',
   'mail':'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
   'message-square':'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
@@ -3757,7 +3758,7 @@ document.addEventListener('click',e=>{
   {const b=e.target.closest('[data-aishare]');if(b){const t=b.closest('.ai-m').querySelector('.ai-body').textContent;shareSheet('BuildMitr AI answer',t);return;}}
   {const b=e.target.closest('[data-orgopen]');if(b){orgOpen(b.dataset.orgopen);return;}}
   {const b=e.target.closest('[data-orgedit]');if(b){const f=document.querySelector(`[data-orgform="${CSS.escape(b.dataset.orgedit)}"]`);if(f)f.hidden=!f.hidden;return;}}
-  {const b=e.target.closest('[data-orgswitch]');if(b){S.view='adminpanel';render();setTimeout(()=>{const x=document.getElementById('orgsList');x&&x.scrollIntoView({block:'center'});},300);return;}}
+  {const b=e.target.closest('[data-orgswitch]');if(b){S.view='orgs';render();scrollTo(0,0);return;}}
 },true);
 document.addEventListener('submit',e=>{
   if(e.target.id==='orgNewForm'){e.preventDefault();orgCreate(e.target);return;}
@@ -3793,12 +3794,12 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
   if(v==='adminpanel'&&S.cloud&&isAdmin())aiAdminLoad();
-  if(v==='adminpanel'&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
+  if(['adminpanel','orgs','dashboard'].includes(v)&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
   if(v==='messages'&&S.ready){const box=document.getElementById('chatMsgs');if(box&&box.scrollTo)box.scrollTop=box.scrollHeight;if(S.chatFocus){const ta=document.getElementById('chatText');if(ta&&ta.focus){ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);}catch(_){}}}chatMarkSeen();}
   const qi=document.getElementById('q');
   if(qi)qi.oninput=e=>{S.q=e.target.value;const pos=e.target.selectionStart;render();const n=document.getElementById('q');if(n){n.focus();n.setSelectionRange(pos,pos);}};
