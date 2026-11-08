@@ -2,8 +2,8 @@
   "name": "BuildMitr",
   "short_name": "BuildMitr",
   "description": "Construction project management \u2014 projects, site reports, materials, labour, payments and team chat.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1f3a2e",
@@ -28,7 +28,7 @@
       "purpose": "maskable"
     }
   ],
-  "id": "/",
+  "id": "./",
   "lang": "en",
   "dir": "ltr",
   "categories": [
