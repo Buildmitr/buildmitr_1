@@ -344,6 +344,10 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .share-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.share-opt{justify-content:flex-start}
 .share-prev{margin:14px 0 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:13px/1.5 var(--f-body);white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
 .e2edit{border-top:1px solid var(--line)}.e2form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px 16px;align-items:end}.e2form label{font-size:12px;color:var(--muted);display:grid;gap:3px}.e2form .wide{grid-column:span 2}.e2form label.pl-chk{display:flex;font-size:13px;color:inherit}@media(max-width:560px){.e2form .wide{grid-column:auto}}
+.dm-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}.dm-side{position:sticky;top:12px}
+.dm-prev{display:grid;gap:12px;padding:12px 16px 16px;max-height:calc(100vh - 210px);overflow:auto;background:var(--bg)}.dm-page{width:100%;height:auto;box-shadow:0 1px 6px rgba(0,0,0,.18);border-radius:2px;background:#fff}
+.dm-acts{gap:8px}.lh-wrap{display:flex;gap:16px;padding:12px 16px;flex-wrap:wrap;align-items:flex-start}.lh-thumb{width:150px;flex:none}.lh-thumb img{width:150px;border:1px solid var(--line);border-radius:4px;display:block}
+@media(max-width:900px){.dm-grid{grid-template-columns:1fr}.dm-side{position:static}.dm-prev{max-height:none}}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -698,7 +702,7 @@ const NAV=[
   {g:'Estimates',items:[['estimator','calculator','Estimate builder','అంచనా తయారీ'],['packages']]},
   {g:'Campaigns',items:[['mktdash','target','Marketing dashboard','మార్కెటింగ్ డాష్‌బోర్డ్'],['campaigns']]},
   {g:'Content & reviews',items:[['content','images','Content library','ఫోటో లైబ్రరీ'],['reviews'],['referrals'],['portfolio']]},
-  {g:'Sales',items:[['invoices']]},
+  {g:'Sales',items:[['docmaker','file-text','Quotations & invoices','కోటేషన్లు & ఇన్వాయిస్‌లు'],['invoices']]},
   {g:'Library',items:[['clients'],['vendors'],['documents']]},
   {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
   {g:'Progress & quality',items:[['tasks'],['issues'],['dpr']]},
@@ -1157,6 +1161,7 @@ function vSettings(){
     <label class="code">Brochure link (Drive / website PDF)<input id="o-broch" value="${esc(org.brochure||'')}" ${admin?'':'disabled'} placeholder="https://…"></label>
     <label class="code">Google review link<input id="o-review" value="${esc(org.reviewLink||'')}" ${admin?'':'disabled'} placeholder="https://g.page/r/…/review"></label>
     ${admin?`<div><button class="btn pri">${ico('check')}Save</button></div>`:'<p class="code">Only the admin or editors can change company details.</p>'}</form></div>`:''}
+  ${admin?letterheadBox():''}
   ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="pwSet">${ico('lock')}<span>${LG.hasPw?'Change password':'Set password'}</span></button><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
   <div class="box"><div class="box-h">${ico('eye')}<h2>Colour theme</h2></div><div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     ${[['light','Light'],['dark','Dark'],['auto','Automatic (same as phone)']].map(([k,l])=>`<button class="btn ${THEME===k?'pri':''}" data-settheme="${k}">${l}</button>`).join('')}</div></div>
@@ -1742,7 +1747,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings')return true;if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings')return true;if(v==='docmaker')v='invoices';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -4078,7 +4083,10 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
   if(id==='e2Save'){const c=e2Calc(),l=D.leads.find(x=>x.id===E2.lead);if(!l)return;
     write(()=>db.doc('leads/'+l.id).update({budget:Math.round(c.total),estimate:{pkg:E2.tier,area:c.v.B,floors:c.v.F,rooms:c.v.R,toilets:c.v.T,total:Math.round(c.total),date:today()}}),'Estimate saved to '+l.name);return;}
   if(id==='e2Quote'){const c=e2Calc(),l=D.leads.find(x=>x.id===E2.lead)||{};const cl=D.clients.find(x=>x.phone&&l.phone&&waNum(x.phone)===waNum(l.phone));
-    openForm('invoices',null,{kind:'Quotation',client:cl?cl.id:'',date:today(),desc:`Construction (${E2.tier}) — ${num(c.v.B)} sq.ft BUA, ${c.v.F} floors, ${num(c.v.R)} rooms, ${num(c.v.T)} toilets — as per estimate dated ${fd(today())}`,amount:Math.round(c.sub),gst:E2.gst?'GST 18%':'',status:'Unpaid'});return;}
+    docNew('Quotation',{client:cl?cl.id:'',toName:cl?cl.name:(l.name||E2.name||''),toAddr:cl?cl.address:(l.place||''),toPhone:cl?cl.phone:(l.phone||''),gst:E2.gst?'GST 18%':'No GST',
+      details:[['Project',E2.name||'Residence'],['Specification',E2.tier],['Built-up area',`${num(c.v.B)} sq.ft · ${c.v.F} floors · ${num(c.v.R)} rooms · ${num(c.v.T)} toilets`],['Rate',`${inr(c.perEx)} per sq.ft (before GST)`]],
+      items:[...c.heads.filter(h=>h.amt).map(h=>({d:`${h.sec}. ${h.hd}`,amt:String(Math.round(h.amt))})),{d:`Overheads & contractor margin (${c.overP}%)`,amt:String(Math.round(c.over))},{d:`Contingencies (${c.contP}%)`,amt:String(Math.round(c.cont))}],
+      stages:c.stages.map(([st,pc])=>[st,String(pc)])});return;}
 },true);
 document.addEventListener('submit',e=>{if(e.target.id==='e2RateForm'){e.preventDefault();e2SaveRates(e.target);}},true);
 
@@ -4472,6 +4480,292 @@ document.addEventListener('submit',e=>{if(e.target.id==='tcForm'){e.preventDefau
   if(e.target.id==='plItemForm'){e.preventDefault();const f=e.target,g=k=>(f.elements[k].value||'').trim(),key='cu'+Date.now().toString(36);
     PL.custom=[...plCus(),{key,title:g('title'),grp:g('grp'),wd:Math.max(1,Math.round(n(g('wd')))),after:g('after'),wet:f.elements.wet.checked}];PL.scope[key]=true;render();toast('Added to the schedule');}},true);
 
+/* ================= Quotation & invoice maker (on each organisation's own letterhead) =================
+ * One layout (A4, mm) feeds three outputs: the on-screen preview (canvas), the PDF and an editable PowerPoint,
+ * so they always match. Letterhead = a full-page A4 image uploaded in Settings; without one, a plain header is drawn. */
+Object.assign(ICONS,{'file-text':'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  'presentation':'<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>'});
+const DOC_DEF={
+  Quotation:{title:'QUOTATION',salute:'Dear Sir / Madam,',intro:'We are pleased to submit our quotation for the work detailed below:',details:[['Project',''],['Location',''],['Services','']],
+    items:[],terms:'This quotation is valid for 30 days from the date above.\nGST extra as applicable.',scopeTitle:'SCOPE OF WORK',scope:'',stagesTitle:'SCHEDULE OF PAYMENT',stages:[],newPage:true,closing:'Thanking you,'},
+  Invoice:{title:'TAX INVOICE',subject:'',items:[{d:'',amt:''}],terms:'',showBank:true}};
+const docIsQ=k=>k==='Quotation';
+const docTplKey=k=>docIsQ(k)?'Quotation':'Invoice';
+const orgMain=()=>D.org.find(o=>o.id==='main')||{};
+const inr2=x=>'₹'+(+x||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fdLong=s=>s?new Date(s+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'';
+function inWords(v){v=Math.round(+v||0);if(!v)return 'Zero';
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two=x=>x<20?a[x]:b[Math.floor(x/10)]+(x%10?' '+a[x%10]:''),three=x=>(x>=100?a[Math.floor(x/100)]+' Hundred'+(x%100?' ':''):'')+(x%100?two(x%100):'');
+  const p=[[1e7,'Crore'],[1e5,'Lakh'],[1e3,'Thousand']];let out=[];for(const [d,nm_] of p){if(v>=d){out.push(three(Math.floor(v/d))+' '+nm_);v%=d;}}if(v)out.push(three(v));return out.join(' ');}
+function docNextNo(kind){
+  const q=docIsQ(kind),y=new Date().getFullYear(),pre=q?'QT':(orgVal('invPrefix')||'INV');
+  const same=D.invoices.filter(r=>docIsQ(r.kind)===q&&String(r.no||'').includes(String(y)));
+  const mx=same.reduce((m,r)=>{const x=+(String(r.no).match(/(\d+)\s*$/)||[])[1]||0;return Math.max(m,x);},0);
+  return `${pre}-${y}-${String(mx+1).padStart(3,'0')}`;
+}
+function docTpl(kind){const t=(orgMain().docT||{})[docTplKey(kind)]||{};return JSON.parse(JSON.stringify({...DOC_DEF[docTplKey(kind)],...t}));}
+let DM=null;   // the document being edited
+function docBlank(kind,preset){
+  const t=docTpl(kind);
+  return {kind,no:docNextNo(kind),date:today(),project:S.proj!=='all'?S.proj:'',client:'',toName:'',toAddr:'',toPhone:'',toEmail:'',gst:'No GST',got:'',status:docIsQ(kind)?'Sent':'Unpaid',...t,...(preset||{})};
+}
+function docFromRec(r){
+  const t=r.tpl||{},c=D.clients.find(x=>x.id===r.client)||{};
+  const base=docBlank(r.kind);
+  return {...base,...t,kind:r.kind,no:r.no,date:r.date,project:r.project||'',client:r.client||'',gst:r.gst||'No GST',got:r.got||'',status:r.status||base.status,
+    toName:t.toName??c.name??'',toAddr:t.toAddr??c.address??'',toPhone:t.toPhone??c.phone??'',toEmail:t.toEmail??c.email??'',
+    items:t.items||[{d:r.desc||'',amt:r.amount||''}]};
+}
+function docOpen(id){const r=D.invoices.find(x=>x.id===id);if(!r)return;DM={id,d:docFromRec(r)};S.view='docmaker';render();scrollTo(0,0);}
+function docNew(kind,preset){DM={id:null,d:docBlank(kind||'Tax invoice',preset)};if(DM.d.client)docClient(DM.d.client);S.view='docmaker';render();scrollTo(0,0);}
+function docClient(id){const c=D.clients.find(x=>x.id===id)||{};Object.assign(DM.d,{client:id,toName:c.name||'',toAddr:c.address||'',toPhone:c.phone||'',toEmail:c.email||''});}
+const docSub=d=>(d.items||[]).reduce((s,x)=>s+n(x.amt),0);
+function docTotals(d){const sub=docSub(d),rate=GST[d.gst]||0,c=D.clients.find(x=>x.id===d.client)||{},os=orgVal('state'),cs=c.state||'',inter=!!(os&&cs&&os!==cs);
+  const tax=sub*rate;return {sub,rate,tax,inter,total:sub+tax,got:n(d.got)};}
+
+/* ---------- layout ---------- */
+let MCTX=null;
+function mW(t,s,b){if(!MCTX)MCTX=document.createElement('canvas').getContext('2d');MCTX.font=`${b?'bold ':''}${s}px Arial, Helvetica, sans-serif`;return MCTX.measureText(t).width*0.3528;}
+function wrap(t,w,s,b){const out=[];String(t??'').split('\n').forEach(par=>{if(!par.trim()){out.push('');return;}if(mW(par,s,b)<=w){out.push(par);return;}let line='';par.split(/\s+/).forEach(word=>{const x=line?line+' '+word:word;if(mW(x,s,b)<=w||!line)line=x;else{out.push(line);line=word;}});out.push(line);});return out;}
+function docLayout(d,org){
+  const lh=org.lh&&org.lh.id?org.lh:null,top=lh?+lh.top||45:36,bot=lh?+lh.bottom||40:22,X=20,R=190,W=170,pages=[];let pg,y;
+  const head=()=>{if(lh)return;pg.push({k:'p',x:X,y:12,w:W,s:16,b:1,lines:[org.name||'Your company'],c:'1f3a2e'});
+    const ct=[org.address,org.phone,org.email].filter(Boolean).join('  ·  ');if(ct)pg.push({k:'p',x:X,y:20,w:W,s:8.5,lines:wrap(ct,W,8.5),c:'555555'});
+    pg.push({k:'l',x1:X,y1:29,x2:R,y2:29,c:'2f6b4f',t:0.6});pg.push({k:'l',x1:X,y1:297-14,x2:R,y2:297-14,c:'cccccc',t:0.3});
+    if(org.gstin)pg.push({k:'p',x:X,y:297-12,w:W,s:7.5,lines:['GSTIN: '+org.gstin],c:'777777'});};
+  const page=()=>{pg=[];pages.push(pg);y=top;head();};page();
+  const lhOf=s=>s*0.3528*1.35;
+  const need=h=>{if(y+h>297-bot)page();};
+  const P=(t,o={})=>{const s=o.s||10,w=o.w||W,lines=wrap(t,w,s,o.b);need(Math.min(lines.length,2)*lhOf(s));
+    let i=0;while(i<lines.length){const fit=Math.max(1,Math.floor((297-bot-y)/lhOf(s)));const part=lines.slice(i,i+fit);
+      pg.push({k:'p',x:o.al==='c'?105:o.al==='r'?(o.x||R):(o.x||X),y,w,s,b:o.b,al:o.al,lines:part,c:o.c});y+=part.length*lhOf(s);i+=fit;if(i<lines.length)page();}
+    y+=o.after??1.5;return lines.length;};
+  const gap=mm=>{y+=mm;};
+  const line=(c,t)=>pg.push({k:'l',x1:X,y1:y,x2:R,y2:y,c:c||'999999',t:t||0.3});
+  const row=(cols,o={})=>{const s=o.s||10;const ls=cols.map(c=>wrap(c.t,c.w,c.s||s,c.b||o.b));const h=Math.max(...ls.map(l=>l.length))*lhOf(s);need(h+2);
+    cols.forEach((c,i)=>{if(ls[i].length&&ls[i].join(''))pg.push({k:'p',x:c.x,y,w:c.w,s:c.s||s,b:c.b||o.b,al:c.al,lines:ls[i],c:c.c});});y+=h+(o.after??1.5);};
+  const kv=(l,v,o={})=>row([{t:l,x:X,w:38},{t:':',x:X+38,w:4},{t:v,x:X+44,w:W-44,b:o.b}],{s:o.s||10,after:2.2});
+  const t=docTotals(d),q=docIsQ(d.kind);
+  const table=()=>{const its=(d.items||[]).filter(x=>String(x.d||'').trim()||n(x.amt));if(!its.length)return;
+    gap(2);line('555555',0.4);gap(1.5);row([{t:'#',x:X,w:8,b:1},{t:'Description',x:X+10,w:118,b:1},{t:'Amount',x:R,w:40,al:'r',b:1}],{s:9.5,after:1});line('555555',0.4);gap(2);
+    its.forEach((x,i)=>row([{t:String(i+1),x:X,w:8},{t:x.d,x:X+10,w:118},{t:x.amt!==''?inr2(x.amt):'',x:R,w:40,al:'r'}],{s:10,after:2}));
+    line('bbbbbb');gap(2);
+    if(t.rate){row([{t:'Sub-total',x:X+10,w:118},{t:inr2(t.sub),x:R,w:40,al:'r'}],{after:1.2});
+      if(t.inter)row([{t:`IGST @ ${t.rate*100}%`,x:X+10,w:118},{t:inr2(t.tax),x:R,w:40,al:'r'}],{after:1.2});
+      else{row([{t:`CGST @ ${t.rate*50}%`,x:X+10,w:118},{t:inr2(t.tax/2),x:R,w:40,al:'r'}],{after:1.2});row([{t:`SGST @ ${t.rate*50}%`,x:X+10,w:118},{t:inr2(t.tax/2),x:R,w:40,al:'r'}],{after:1.2});}}
+    row([{t:'Total',x:X+10,w:118,b:1},{t:inr2(t.total),x:R,w:40,al:'r',b:1}],{s:11,after:1.2});
+    if(!q&&t.got){row([{t:'Received',x:X+10,w:118},{t:inr2(t.got),x:R,w:40,al:'r'}],{after:1.2});row([{t:'Balance due',x:X+10,w:118,b:1},{t:inr2(t.total-t.got),x:R,w:40,al:'r',b:1}],{s:11,after:1.2});}
+    P(`(Rupees ${inWords(q||!t.got?t.total:t.total-t.got)} only)`,{s:9,c:'555555',after:2});};
+  const sign=(client)=>{const sh=org.sig&&org.sig.id?16:0;need(26+sh);gap(8);const y0=y;
+    if(client)pg.push({k:'p',x:X,y:y0+sh+8,w:70,s:10,lines:["Client's signature"]});
+    pg.push({k:'p',x:R,y:y0,w:80,s:10,b:1,al:'r',lines:['For '+(org.name||'')]});
+    if(sh)pg.push({k:'i',key:'sig',x:R-38,y:y0+5,w:38,h:sh});
+    pg.push({k:'p',x:R,y:y0+sh+8,w:80,s:10,al:'r',lines:[org.person||'Authorised signatory']});
+    if(org.person)pg.push({k:'p',x:R,y:y0+sh+12.8,w:80,s:8.5,al:'r',c:'555555',lines:['Authorised signatory']});y=y0+sh+20;};
+  P(d.title||'',{s:14,b:1,al:'c',after:5});
+  if(q){
+    row([{t:d.no?`Ref: ${d.no}`:'',x:X,w:85,s:9},{t:`Date: ${fdLong(d.date)}`,x:R,w:85,s:9,al:'r'}],{after:4});
+    kv('From',org.name||'',{b:1});kv('To',[d.toName,d.toAddr].filter(Boolean).join('\n'),{b:0});gap(3);
+    if(d.salute)P(d.salute,{after:2.5});if(d.intro)P(d.intro,{after:3});
+    (d.details||[]).filter(x=>String(x[0]||'').trim()&&String(x[1]||'').trim()).forEach(([l,v])=>kv(l,v));
+    table();gap(2);
+    String(d.terms||'').split('\n').filter(s=>s.trim()).forEach(s=>P(s,{after:2.5}));
+    if(d.closing){gap(2);P(d.closing,{after:1});}
+    sign(true);
+    const sc=String(d.scope||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    if(sc.length){if(d.newPage)page();else gap(6);P(d.scopeTitle||'SCOPE OF WORK',{b:1,s:11,after:3});sc.forEach(s=>{const lines=wrap(s.replace(/^[-•*]\s*/,''),W-8,10);need(lhOf(10));pg.push({k:'p',x:X+2,y,w:5,s:10,lines:['•']});P(s.replace(/^[-•*]\s*/,''),{x:X+8,w:W-8,after:1.8});});}
+    const st=(d.stages||[]).filter(x=>String(x[0]||'').trim());
+    if(st.length){if(d.newPage)page();else gap(6);P(d.stagesTitle||'SCHEDULE OF PAYMENT',{b:1,s:11,after:3});
+      const roman=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];line('555555',0.4);gap(1.5);
+      row([{t:'Stage',x:X,w:18,b:1},{t:'Description',x:X+20,w:100,b:1},{t:'%',x:R-42,w:14,al:'r',b:1},{t:'Amount',x:R,w:28,al:'r',b:1}],{s:9.5,after:1});line('555555',0.4);gap(2);
+      st.forEach((x,i)=>row([{t:'Stage '+(roman[i]||i+1),x:X,w:18},{t:x[0],x:X+20,w:100},{t:n(x[1])?n(x[1])+'%':'',x:R-42,w:14,al:'r'},{t:t.sub&&n(x[1])?inr2(t.sub*n(x[1])/100):'',x:R,w:28,al:'r'}],{after:2}));
+      const pc=st.reduce((s,x)=>s+n(x[1]),0);line('bbbbbb');gap(2);row([{t:'Total',x:X+20,w:100,b:1},{t:pc+'%',x:R-42,w:14,al:'r',b:1},{t:t.sub?inr2(t.sub*pc/100):'',x:R,w:28,al:'r',b:1}],{after:2});}
+  }else{
+    const from=[org.person,org.phone,[org.name,org.address].filter(Boolean).join(', '),org.email,org.gstin?'GSTIN: '+org.gstin:''].filter(Boolean).join('\n');
+    const meta=[`No: ${d.no||''}`,`Date: ${fdLong(d.date)}`,d.project?`Project: ${pname(d.project)}`:''].filter(Boolean).join('\n');
+    row([{t:from,x:X,w:100,s:9.5},{t:meta,x:R,w:65,s:9.5,al:'r'}],{after:4});
+    P('Bill To:',{s:9.5,c:'555555',after:0.5});P(d.toName||'',{b:1,after:0.5});if(d.toAddr)P(d.toAddr,{s:9.5,after:0.5});if(d.toPhone)P(d.toPhone,{s:9.5,after:0.5});
+    gap(3);if(d.subject)P(d.subject,{b:1,after:2});
+    table();
+    const bank=[org.acc?`Account number : ${org.acc}`:'',org.bank?`Bank name : ${org.bank}`:'',org.acctype?`Account type : ${org.acctype}`:'',org.holder?`Holder's name : ${org.holder}`:'',org.ifsc?`IFSC code : ${org.ifsc}`:'',org.upi?`UPI ID : ${org.upi}`:''].filter(Boolean);
+    if(d.showBank&&bank.length){gap(4);P('Bank details:',{b:1,s:10,after:1});bank.forEach(s=>P(s,{s:9.5,after:0.6}));}
+    String(d.terms||'').split('\n').filter(s=>s.trim()).forEach((s,i)=>{if(!i)gap(3);P(s,{s:9,c:'444444',after:1.5});});
+    sign(false);
+  }
+  return {pages,lh};
+}
+/* ---------- images (letterhead / signature) ---------- */
+const DOCIMG={};
+function docImg(id){if(!id)return Promise.resolve(null);if(DOCIMG[id])return DOCIMG[id];
+  DOCIMG[id]=bmBlob(id).then(r=>r.blob()).then(b=>new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.onerror=no;fr.readAsDataURL(b);}))
+    .then(url=>new Promise(ok=>{const im=new Image();im.onload=()=>ok({url,im});im.onerror=()=>ok(null);im.src=url;})).catch(()=>{delete DOCIMG[id];return null;});return DOCIMG[id];}
+async function docDraw(pages,org,PX){
+  const lh=await docImg(org.lh&&org.lh.id),sig=await docImg(org.sig&&org.sig.id);
+  return pages.map(items=>{const cv=document.createElement('canvas');cv.width=210*PX;cv.height=297*PX;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);
+    if(lh)g.drawImage(lh.im,0,0,cv.width,cv.height);g.textBaseline='top';
+    items.forEach(it=>{if(it.k==='l'){g.strokeStyle='#'+(it.c||'999999');g.lineWidth=(it.t||0.3)*PX;g.beginPath();g.moveTo(it.x1*PX,it.y1*PX);g.lineTo(it.x2*PX,it.y2*PX);g.stroke();return;}
+      if(it.k==='i'){if(it.key==='sig'&&sig){const r=Math.min(it.w/sig.im.width,it.h/sig.im.height);const w=sig.im.width*r,h=sig.im.height*r;g.drawImage(sig.im,(it.x+it.w-w)*PX,(it.y+it.h-h)*PX,w*PX,h*PX);}return;}
+      g.fillStyle='#'+(it.c||'1a1a1a');g.font=`${it.b?'bold ':''}${it.s*0.3528*PX}px Arial, Helvetica, sans-serif`;g.textAlign=it.al==='c'?'center':it.al==='r'?'right':'left';
+      it.lines.forEach((l,i)=>g.fillText(l,it.x*PX,(it.y+i*it.s*0.3528*1.35)*PX+it.s*0.3528*0.12*PX));});
+    return cv;});
+}
+let DMT=0;
+async function docPreview(){const box=document.getElementById('dmPrev');if(!box||!DM)return;const my=++DMT;const org=orgMain();
+  const {pages}=docLayout(DM.d,org);const cvs=await docDraw(pages,org,4);if(my!==DMT)return;
+  box.innerHTML='';cvs.forEach((c,i)=>{c.className='dm-page';c.setAttribute('aria-label',`Page ${i+1}`);box.appendChild(c);});
+  const t=docTotals(DM.d),s=document.getElementById('dmTot');if(s)s.textContent=`${pages.length} page${pages.length>1?'s':''} · Total ${inr2(t.total)}`;}
+const docQ=()=>{clearTimeout(docQ.t);docQ.t=setTimeout(docPreview,220);};
+/* ---------- outputs ---------- */
+function loadJs(src,ok){if(ok())return Promise.resolve();return new Promise((res,rej)=>{const j=document.createElement('script');j.src=src;j.onload=res;j.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(j);});}
+const docFile=d=>`${(d.title||d.kind)} ${d.no||''} ${d.toName||''}`.replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'document';
+async function docPdfBlob(){
+  await loadJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',()=>window.jspdf);
+  const org=orgMain(),{pages}=docLayout(DM.d,org),cvs=await docDraw(pages,org,7);const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});
+  cvs.forEach((c,i)=>{if(i)pdf.addPage();pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',0,0,210,297);});
+  pdf.setProperties({title:`${DM.d.title||DM.d.kind} ${DM.d.no||''}`,author:org.name||''});return pdf.output('blob');
+}
+async function docPdf(){try{toast('Making the PDF…');const b=await docPdfBlob();await saveFile(docFile(DM.d)+'.pdf',b);}catch(e){toast(e.message||'Could not make the PDF');}}
+async function docPptx(){
+  try{toast('Making the PowerPoint…');await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js',()=>window.PptxGenJS);
+  const org=orgMain(),{pages}=docLayout(DM.d,org),lh=await docImg(org.lh&&org.lh.id),sig=await docImg(org.sig&&org.sig.id);
+  const P=new window.PptxGenJS();P.defineLayout({name:'A4P',width:8.27,height:11.69});P.layout='A4P';P.title=`${DM.d.title} ${DM.d.no}`;P.company=org.name||'';
+  const I=mm=>mm/25.4;
+  pages.forEach(items=>{const s=P.addSlide();if(lh)s.background={data:lh.url.replace(/^data:/,'')};else s.background={color:'FFFFFF'};
+    items.forEach(it=>{
+      if(it.k==='l'){s.addShape(P.ShapeType.line,{x:I(it.x1),y:I(it.y1),w:I(it.x2-it.x1),h:0,line:{color:it.c||'999999',width:Math.max(0.5,(it.t||0.3)*2.83)}});return;}
+      if(it.k==='i'){if(sig){const r=Math.min(it.w/sig.im.width,it.h/sig.im.height);const w=sig.im.width*r,h=sig.im.height*r;s.addImage({data:sig.url.replace(/^data:/,''),x:I(it.x+it.w-w),y:I(it.y+it.h-h),w:I(w),h:I(h)});}return;}
+      const w=it.w+3,x=it.al==='c'?it.x-w/2:it.al==='r'?it.x-w:it.x;
+      s.addText(it.lines.join('\n'),{x:I(x),y:I(it.y),w:I(w),h:I(it.lines.length*it.s*0.3528*1.35+1),fontFace:'Arial',fontSize:it.s,bold:!!it.b,color:it.c||'1A1A1A',
+        align:it.al==='c'?'center':it.al==='r'?'right':'left',valign:'top',margin:0,lineSpacingMultiple:1.05,fit:'none'});});});
+  const b=await P.write({outputType:'blob'});await saveFile(docFile(DM.d)+'.pptx',b);}catch(e){toast(e.message||'Could not make the PowerPoint');}
+}
+function docText(){const d=DM.d,t=docTotals(d),org=orgMain(),q=docIsQ(d.kind);
+  return [`Dear ${d.toName||'Sir/Madam'},`,'',q?`Please find our ${d.title?d.title.toLowerCase():'quotation'} (${d.no}) dated ${fdLong(d.date)}.`:`Please find ${d.title?d.title.toLowerCase():'invoice'} ${d.no} dated ${fdLong(d.date)}${d.subject?' — '+d.subject.replace(/\.+$/,''):''}.`,
+    ...(d.items||[]).filter(x=>x.d).map(x=>`• ${x.d}${x.amt!==''?': '+inr2(x.amt):''}`),`*Total: ${inr2(t.total)}*${t.rate?` (incl. GST ${t.rate*100}%)`:''}`,
+    !q&&t.got?`Received: ${inr2(t.got)} · Balance: ${inr2(t.total-t.got)}`:'',!q&&org.upi?`UPI: ${org.upi}`:'','',`Thank you,`,org.person||'',org.name||'',org.phone||''].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n').trim();}
+async function docShareFile(){
+  try{const b=await docPdfBlob();const f=new File([b],docFile(DM.d)+'.pdf',{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:`${DM.d.title} ${DM.d.no}`,text:docText()});return;}
+    await saveFile(f.name,b);toast('PDF saved — attach it in WhatsApp or email');}catch(e){if(e&&e.name!=='AbortError')toast(e.message||'Could not share');}
+}
+async function docSave(){
+  const d=DM.d,t=docTotals(d);if(!d.no||!d.date){toast('Enter the number and date.');return false;}
+  let client=d.client;
+  if(!client&&d.toName.trim()){const ex=D.clients.find(x=>(x.name||'').trim().toLowerCase()===d.toName.trim().toLowerCase());
+    if(ex)client=ex.id;else{const ok=await write(async()=>{const ref=await db.collection('clients').add({name:d.toName.trim(),address:d.toAddr,phone:d.toPhone,email:d.toEmail,by:ME.id,at:Date.now()});client=ref.id;});if(!ok)return false;}d.client=client;}
+  const {kind,no,date,project,gst,got,status,...rest}=d;
+  const body={kind,no,date,project:project||'',client:client||'',gst,got:n(got)||'',status,amount:t.sub,desc:(d.items||[]).filter(x=>x.d).map(x=>x.d).join('\n')||d.title,tpl:rest,by:ME.id,at:Date.now()};
+  const ok=await write(async()=>{if(DM.id)await db.doc('invoices/'+DM.id).update(body);else{const ref=await db.collection('invoices').add(body);DM.id=ref.id;}},`${kind} ${no} saved`);
+  if(ok)render();return ok;
+}
+/* ---------- page ---------- */
+function vDocMaker(){
+  if(!DM)DM={id:null,d:docBlank('Tax invoice')};const d=DM.d,q=docIsQ(d.kind),L=esc,org=orgMain();
+  const fi=(k,l,ph,o={})=>`<label${o.wide?' class="wide"':''}>${l}${o.ta?`<textarea data-dm="${k}" rows="${o.ta}" placeholder="${esc(ph||'')}">${esc(d[k]??'')}</textarea>`:`<input data-dm="${k}" value="${esc(d[k]??'')}" placeholder="${esc(ph||'')}" ${o.type?`type="${o.type}"`:''}>`}</label>`;
+  const quotes=D.invoices.filter(r=>docIsQ(r.kind)&&r.project&&r.project===d.project&&((r.tpl||{}).stages||[]).length);
+  const stageOpts=quotes.flatMap(r=>r.tpl.stages.map((s,i)=>({r,i,s,amt:n(r.amount)*n(s[1])/100})));
+  const left=`<div class="box"><div class="box-h"><h2>${q?'Quotation':'Invoice'} details</h2>${DM.id?'<span class="pill p-green">Saved</span>':'<span class="pill p-amber">Not saved yet</span>'}</div>
+   <div class="srow">${['Quotation','Tax invoice','Proforma invoice','RA bill'].map(k=>`<button type="button" class="btn sm ${d.kind===k?'pri':''}" data-dmkind="${k}">${k}</button>`).join('')}</div>
+   <div class="e2form">
+    ${fi('title','Heading on the page','e.g. ARCHITECTURAL INVOICE',{wide:1})}${fi('no','Number','')}${fi('date','Date','',{type:'date'})}
+    <label>Project<select id="dm-proj"><option value="">—</option>${PJ().map(p=>`<option value="${p.id}" ${d.project===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
+    <label>Client<select id="dm-client"><option value="">— type below —</option>${D.clients.map(c=>`<option value="${c.id}" ${d.client===c.id?'selected':''}>${esc(c.name||'')}</option>`).join('')}</select></label>
+    ${fi('toName',q?'To (name)':'Bill to (name)','e.g. Mrs. Voggu Srilatha',{wide:1})}${fi('toAddr','Address','',{wide:1,ta:2})}${fi('toPhone','Client phone (WhatsApp)','')}${fi('toEmail','Client email','')}
+    ${q?fi('salute','Greeting','Dear Sir,',{wide:1})+fi('intro','Opening paragraph','',{wide:1,ta:3}):fi('subject','Subject line','e.g. Stage 2 payment.',{wide:1})}
+   </div>
+   ${q?`<div class="box-h"><h2>Details</h2><span class="code">e.g. Project : Residence · Fees : 77/- per sqft</span></div><div class="tbl-wrap"><table><tbody>${(d.details||[]).map((x,i)=>`<tr><td style="width:34%"><input data-dmdl="${i}" value="${esc(x[0])}" placeholder="Label"></td><td><input data-dmdv="${i}" value="${esc(x[1])}" placeholder="Value"></td><td style="width:44px"><button type="button" class="btn sm ghost" data-dmrm="details:${i}" aria-label="Remove line">${ico('x')}</button></td></tr>`).join('')}</tbody></table></div>
+     <div class="srow"><button type="button" class="btn sm" data-dmadd="details">${ico('plus')}<span>Add detail line</span></button></div>`:''}
+   <div class="box-h"><h2>${q?'Amounts (optional)':'Items'}</h2><span class="code" id="dmTot"></span></div>
+   <div class="tbl-wrap"><table><thead><tr><th>Description</th><th class="num">Amount (₹)</th><th></th></tr></thead><tbody>${(d.items||[]).map((x,i)=>`<tr><td><textarea data-dmid="${i}" rows="1" style="width:100%;min-width:200px" placeholder="e.g. Stage 2 payment (Final plan & 3D with execution drawings)">${esc(x.d)}</textarea></td><td class="num"><input data-dmia="${i}" value="${esc(x.amt)}" inputmode="decimal" style="width:120px;text-align:right"></td><td style="width:44px"><button type="button" class="btn sm ghost" data-dmrm="items:${i}" aria-label="Remove item">${ico('x')}</button></td></tr>`).join('')}</tbody></table></div>
+   <div class="srow"><button type="button" class="btn sm" data-dmadd="items">${ico('plus')}<span>Add item</span></button>
+     ${!q&&stageOpts.length?`<select id="dm-stage"><option value="">Bill a payment stage from the quotation…</option>${stageOpts.map(o=>`<option value="${o.r.id}:${o.i}">Stage ${o.i+1} — ${esc(o.s[0])} (${o.s[1]}%${o.amt?' = '+inr(o.amt):''})</option>`).join('')}</select>`:''}
+     <label class="code">GST<select data-dm="gst">${['No GST','GST 18%','GST 12%','GST 5%'].map(g=>`<option ${d.gst===g?'selected':''}>${g}</option>`).join('')}</select></label>
+     ${!q?`<label class="code">Received so far (₹)<input data-dm="got" value="${esc(d.got)}" inputmode="decimal" style="width:120px"></label>`:''}</div>
+   ${q?`<div class="box-h"><h2>Scope of services</h2><label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="dm-np" ${d.newPage?'checked':''} style="width:auto">Scope & payment on new pages</label></div>
+     <div class="e2form">${fi('scopeTitle','Heading','SCOPE OF WORK',{wide:1})}${fi('scope','One item per line','',{wide:1,ta:6})}</div>
+     <div class="box-h"><h2>Schedule of payment</h2><span class="code">${(d.stages||[]).reduce((s,x)=>s+n(x[1]),0)}% in total</span></div>
+     <div class="tbl-wrap"><table><tbody>${(d.stages||[]).map((x,i)=>`<tr><td class="code" style="width:60px">Stage ${i+1}</td><td><input data-dmsn="${i}" value="${esc(x[0])}" placeholder="e.g. Advance"></td><td style="width:90px"><input data-dmsp="${i}" value="${esc(x[1])}" inputmode="decimal" placeholder="%" style="width:70px;text-align:right"></td><td style="width:44px"><button type="button" class="btn sm ghost" data-dmrm="stages:${i}" aria-label="Remove stage">${ico('x')}</button></td></tr>`).join('')}</tbody></table></div>
+     <div class="srow"><button type="button" class="btn sm" data-dmadd="stages">${ico('plus')}<span>Add stage</span></button></div>`:''}
+   <div class="e2form">${fi('terms',q?'Closing paragraphs (one per line)':'Notes / terms (one per line)','',{wide:1,ta:3})}${q?fi('closing','Sign-off','Thanking you,'):''}
+     ${!q?`<label class="pl-chk" style="align-self:end"><input type="checkbox" id="dm-bank" ${d.showBank?'checked':''}>Show bank details</label>`:''}
+     <label>Status<select data-dm="status">${(q?['Sent','Accepted','Rejected']:['Unpaid','Part paid','Paid','Sent']).map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select></label></div>
+   ${isAdmin()?`<div class="srow"><button type="button" class="btn sm" id="dmTplSave">${ico('check')}<span>Use this layout as my ${q?'quotation':'invoice'} template</span></button><span class="code">Heading, text, details, scope, stages and terms become the start of every new ${q?'quotation':'invoice'}.</span></div>`:''}
+  </div>`;
+  const right=`<div class="box dm-side"><div class="box-h"><h2>Preview</h2><span class="code">${org.lh&&org.lh.id?'On your letterhead':`<a href="#" data-go="settings">Add your letterhead in Settings</a>`}</span></div>
+    <div class="srow dm-acts">${CANW?`<button class="btn pri" id="dmSave">${ico('check')}<span>Save</span></button>`:''}
+      <button class="btn" id="dmPdf">${ico('file-down')}<span>PDF</span></button><button class="btn" id="dmPptx">${ico('presentation')}<span>PowerPoint (editable)</span></button></div>
+    <div class="srow dm-acts"><button class="btn" id="dmWa">${ico('message-circle')}<span>WhatsApp</span></button><button class="btn" id="dmMail">${ico('mail')}<span>Email</span></button>
+      <button class="btn" id="dmFile">${ico('share-2')}<span>Send PDF file</span></button><button class="btn ghost" id="dmMore">More…</button></div>
+    <div id="dmPrev" class="dm-prev"><div class="empty">Preparing preview…</div></div></div>`;
+  setTimeout(docPreview,0);
+  const list=D.invoices.filter(r=>inProj(r)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.at||0)-(a.at||0)).slice(0,12);
+  const recent=`<div class="box"><div class="box-h"><h2>Recent quotations & invoices</h2></div>${list.length?`<div class="tbl-wrap"><table><tbody>${list.map(r=>`<tr${DM.id===r.id?' class="e2ed"':''}><td>${esc(r.kind)}<div class="code">${esc(r.no||'')}</div></td><td>${esc(cname(r.client))}<div class="code">${fd(r.date)}</div></td><td class="num">${inr(invTotal(r))}</td><td><span class="pill p-grey">${esc(r.status||'')}</span></td><td><button class="btn sm" data-dmopen="${r.id}">${ico('pencil')}<span>Open</span></button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">None yet.</div>'}</div>`;
+  return header('Quotations & invoices',`<button class="btn" data-dmnew="Quotation">${ico('plus')}<span>New quotation</span></button><button class="btn pri" data-dmnew="Tax invoice">${ico('plus')}<span>New invoice</span></button>`)+`<div class="dm-grid">${left}${right}</div>`+recent;
+}
+/* ---------- settings: letterhead, signature, billing details ---------- */
+function letterheadBox(){
+  if(!isAdmin())return '';const o=orgMain(),lh=o.lh||{};
+  return `<div class="box" id="lhBox"><div class="box-h">${ico('file-text')}<h2>Letterhead for quotations & invoices</h2></div>
+   <div class="lh-wrap"><div class="lh-thumb">${lh.id?`<img src="/_blob/${esc(lh.id)}" alt="Your letterhead">`:'<div class="code">No letterhead yet — a plain header with your company name is used.</div>'}</div>
+   <form id="lhForm" class="e2form" style="flex:1">
+    <label class="wide">Letterhead — full A4 page image (PNG or JPG, portrait)<input type="file" id="lh-file" accept="image/png,image/jpeg"></label>
+    <label>Space at top (mm)<input id="lh-top" value="${esc(lh.top||45)}" inputmode="decimal"></label><label>Space at bottom (mm)<input id="lh-bot" value="${esc(lh.bottom||40)}" inputmode="decimal"></label>
+    <label class="wide">Signature or stamp (optional, PNG)<input type="file" id="lh-sig" accept="image/png,image/jpeg"></label>
+    <label>Contact person on documents<input id="lh-person" value="${esc(o.person||'')}" placeholder="e.g. Asresha Reddy"></label><label>Email on documents<input id="lh-email" value="${esc(o.email||'')}" placeholder="name@gmail.com"></label>
+    <label>Account holder's name<input id="lh-holder" value="${esc(o.holder||'')}"></label><label>Account type<input id="lh-acctype" value="${esc(o.acctype||'')}" placeholder="Current / Savings"></label>
+    <div class="srow" style="grid-column:1/-1;padding:0;border:0"><button class="btn pri">${ico('check')}<span>Save letterhead</span></button>${lh.id?`<button type="button" class="btn ghost" id="lhDel">Remove letterhead</button>`:''}${o.sig&&o.sig.id?`<button type="button" class="btn ghost" id="sigDel">Remove signature</button>`:''}
+      <button type="button" class="btn" data-go="docmaker">${ico('file-text')}<span>Open quotations & invoices</span></button></div>
+    <div class="code" style="grid-column:1/-1">Bank name, account number, IFSC and UPI are taken from the Company box above. Top and bottom space keep the text clear of your logo and footer.</div>
+   </form></div></div>`;
+}
+async function lhSave(f){
+  const g=id=>document.getElementById(id),A=window.STORE||null;const up=async inp=>{const file=inp&&inp.files&&inp.files[0];if(!file)return null;
+    if(!/^image\/(png|jpe?g)$/.test(file.type)){toast('Use a PNG or JPG image.');throw new Error('type');}const r=await gasApi('upload',{b64:await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=no;fr.readAsDataURL(file);}),name:file.name,type:file.type});return r.id;};
+  const o=orgMain();let lhId,sigId;try{toast('Saving…');lhId=await up(g('lh-file'));sigId=await up(g('lh-sig'));}catch(e){if(e.message!=='type')toast('Upload failed: '+(e.message||''));return;}
+  const patch={lh:{id:lhId||(o.lh||{}).id||'',top:n(g('lh-top').value)||45,bottom:n(g('lh-bot').value)||40},person:g('lh-person').value.trim(),email:g('lh-email').value.trim(),holder:g('lh-holder').value.trim(),acctype:g('lh-acctype').value.trim()};
+  if(sigId)patch.sig={id:sigId};
+  const ok=await write(()=>db.doc('org/main').update(patch),'Letterhead saved');if(ok)render();
+}
+/* ---------- events ---------- */
+document.addEventListener('input',e=>{if(S.view!=='docmaker'||!DM)return;const t=e.target,d=t.dataset||{},D_=DM.d;
+  if(d.dm!==undefined){D_[d.dm]=t.value;docQ();return;}
+  if(d.dmdl!==undefined){D_.details[+d.dmdl][0]=t.value;docQ();return;}if(d.dmdv!==undefined){D_.details[+d.dmdv][1]=t.value;docQ();return;}
+  if(d.dmid!==undefined){D_.items[+d.dmid].d=t.value;t.style.height='auto';t.style.height=t.scrollHeight+'px';docQ();return;}if(d.dmia!==undefined){D_.items[+d.dmia].amt=t.value;docQ();return;}
+  if(d.dmsn!==undefined){D_.stages[+d.dmsn][0]=t.value;docQ();return;}if(d.dmsp!==undefined){D_.stages[+d.dmsp][1]=t.value;docQ();return;}
+},true);
+document.addEventListener('change',e=>{if(S.view!=='docmaker'||!DM)return;const t=e.target,D_=DM.d;
+  if(t.id==='dm-proj'){D_.project=t.value;const p=proj(t.value);if(p&&p.client&&!D_.client)docClient(p.client);render();return;}
+  if(t.id==='dm-client'){if(t.value)docClient(t.value);else D_.client='';render();return;}
+  if(t.id==='dm-np'){D_.newPage=t.checked;docQ();return;}if(t.id==='dm-bank'){D_.showBank=t.checked;docQ();return;}
+  if(t.id==='dm-stage'&&t.value){const [rid,i]=t.value.split(':');const r=D.invoices.find(x=>x.id===rid);const s=r&&r.tpl.stages[+i];if(!s)return;
+    const amt=Math.round(n(r.amount)*n(s[1])/100);D_.items=(D_.items||[]).filter(x=>String(x.d||'').trim()||n(x.amt));D_.items.push({d:`Stage ${+i+1} payment (${s[0]})`,amt:String(amt)});
+    if(!D_.subject)D_.subject=`Stage ${+i+1} payment.`;if(!D_.client&&r.client)docClient(r.client);render();return;}
+  if(t.dataset&&t.dataset.dm==='gst'||t.dataset&&t.dataset.dm==='status'){DM.d[t.dataset.dm]=t.value;docQ();}
+},true);
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-doc^="invoices:"]');if(b){e.preventDefault();e.stopPropagation();docOpen(b.dataset.doc.split(':')[1]);return;}}
+  {const b=e.target.closest('[data-dmnew]');if(b){docNew(b.dataset.dmnew);return;}}
+  {const b=e.target.closest('[data-dmopen]');if(b){docOpen(b.dataset.dmopen);return;}}
+  if(S.view==='docmaker'&&DM){
+    {const b=e.target.closest('[data-dmkind]');if(b){const k=b.dataset.dmkind;if(docIsQ(k)!==docIsQ(DM.d.kind)){const keep={project:DM.d.project,client:DM.d.client,toName:DM.d.toName,toAddr:DM.d.toAddr,toPhone:DM.d.toPhone,toEmail:DM.d.toEmail};DM={id:null,d:docBlank(k,keep)};}else DM.d.kind=k;render();return;}}
+    {const b=e.target.closest('[data-dmadd]');if(b){const k=b.dataset.dmadd;DM.d[k]=DM.d[k]||[];DM.d[k].push(k==='items'?{d:'',amt:''}:['','']);render();return;}}
+    {const b=e.target.closest('[data-dmrm]');if(b){const [k,i]=b.dataset.dmrm.split(':');DM.d[k].splice(+i,1);render();return;}}
+  }
+  const id=(e.target.closest('button')||{}).id;if(!id)return;
+  if(id==='dmSave'){docSave();return;}if(id==='dmPdf'){docPdf();return;}if(id==='dmPptx'){docPptx();return;}
+  if(id==='dmWa'){const ph=DM.d.toPhone;const u='https://wa.me/'+(ph?waNum(ph):'')+'?text='+encodeURIComponent(docText());const w=window.open(u,'_blank');if(w){try{w.opener=null;}catch(_){}}toast('Tip: “Send PDF file” attaches the PDF on a phone');return;}
+  if(id==='dmMail'){location.href='mailto:'+encodeURIComponent(DM.d.toEmail||'')+'?subject='+encodeURIComponent(`${DM.d.title||DM.d.kind} ${DM.d.no} — ${orgName()}`)+'&body='+encodeURIComponent(docText().replace(/\*/g,'')+'\n\n(PDF attached)');docPdf();return;}
+  if(id==='dmFile'){docShareFile();return;}
+  if(id==='dmMore'){shareSheet(`${DM.d.title||DM.d.kind} ${DM.d.no}`,docText(),DM.d.toPhone);return;}
+  if(id==='dmTplSave'){const d=DM.d,k=docTplKey(d.kind),keys=docIsQ(d.kind)?['title','salute','intro','details','terms','closing','scopeTitle','scope','stagesTitle','stages','newPage']:['title','terms','showBank'];
+    const t={};keys.forEach(x=>t[x]=d[x]);if(docIsQ(d.kind))t.details=(d.details||[]).map(([l,v])=>[l,v]);
+    write(()=>db.doc('org/main').update({docT:{...(orgMain().docT||{}),[k]:t}}),`Saved as your ${docIsQ(d.kind)?'quotation':'invoice'} template`);return;}
+  if(id==='lhDel'){write(()=>db.doc('org/main').update({lh:null}),'Letterhead removed').then(()=>render());return;}
+  if(id==='sigDel'){write(()=>db.doc('org/main').update({sig:null}),'Signature removed').then(()=>render());return;}
+},true);
+document.addEventListener('submit',e=>{if(e.target.id==='lhForm'){e.preventDefault();lhSave(e.target);}},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -4501,7 +4795,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='docmaker'?vDocMaker():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
@@ -4652,7 +4946,7 @@ document.addEventListener('click',e=>{
   if(el.id==='estSave'){const c=estCalc();const l=D.leads.find(x=>x.id===EST.lead);if(!l)return;write(()=>db.doc('leads/'+l.id).update({budget:Math.round(c.total),estimate:{pkg:c.p.name,area:c.area,floors:EST.floors,total:Math.round(c.total),date:today()}}),'Estimate saved to '+l.name).then(ok=>{if(ok)audit('edited','leads',l.id,`Estimate ${inr(c.total)} (${c.p.name})`);});return;}
   if(el.id==='estQuote'){const c=estCalc();const l=D.leads.find(x=>x.id===EST.lead)||{};const cl=D.clients.find(x=>x.phone&&waNum(x.phone)===waNum(l.phone));openForm('invoices',null,{kind:'Quotation',client:cl?cl.id:'',date:today(),desc:`Construction of ${EST.floors} house, ${num(c.area)} sq.ft — ${c.p.name} package${l.name?' for '+l.name:''}`,amount:Math.round(c.sub),gst:EST.gst?'GST 18%':'',status:'Unpaid'});return;}
   if(el.id==='limpGo'){runLeadImport();return;}
-  if(d.doc){const[k,id]=d.doc.split(':');if(k==='portfolio'){portfolioDoc(id);return;}downloadDoc(k,id);return;}
+  if(d.doc){const[k,id]=d.doc.split(':');if(k==='portfolio'){portfolioDoc(id);return;}if(k==='invoices'){docOpen(id);return;}downloadDoc(k,id);return;}
 });
 document.addEventListener('change',e=>{
   if(e.target&&e.target.dataset&&e.target.dataset.adrole){adminSetRole(e.target.dataset.adrole,e.target.value);return;}
@@ -4726,7 +5020,7 @@ document.addEventListener('submit',async e=>{
   if(e.target.id==='aiCfgForm'){const g=id=>document.getElementById(id);aiAdminLoad({dailyLimit:+g('ai-lim').value,maxInputChars:+g('ai-in').value,maxOutputTokens:+g('ai-out').value,model:g('ai-model').value.trim(),enabled:g('ai-on').checked}).then(()=>toast('AI settings saved'));return;}
   if(e.target.id==='aiForm'){const t=document.getElementById('aiText');const v=t.value;t.value='';aiAsk(v);return;}
   if(e.target.id==='orgForm'){const g=id=>document.getElementById(id).value.trim();const gst=g('o-gst').toUpperCase().replace(/\s/g,'');if(gst&&!GSTIN_RE.test(gst)){toast('GSTIN format looks wrong — it has 15 characters, like 36ABCDE1234F1Z5.');return;}
-    write(()=>db.doc('org/main').set({name:g('o-name'),gstin:gst,address:g('o-addr'),state:g('o-state'),invPrefix:g('o-pre')||'INV',sac:g('o-sac'),bank:g('o-bank'),acc:g('o-acc'),ifsc:g('o-ifsc').toUpperCase(),upi:g('o-upi'),phone:g('o-phone'),website:g('o-web'),brochure:g('o-broch'),reviewLink:g('o-review')}),'Company details saved').then(ok=>{if(ok)audit('edited','org','main','Company details');});return;}
+    write(()=>db.doc('org/main').update({name:g('o-name'),gstin:gst,address:g('o-addr'),state:g('o-state'),invPrefix:g('o-pre')||'INV',sac:g('o-sac'),bank:g('o-bank'),acc:g('o-acc'),ifsc:g('o-ifsc').toUpperCase(),upi:g('o-upi'),phone:g('o-phone'),website:g('o-web'),brochure:g('o-broch'),reviewLink:g('o-review')}),'Company details saved').then(ok=>{if(ok)audit('edited','org','main','Company details');});return;}
   if(e.target.id!=='entryForm')return;
   if(S.ready&&!canEditView(DRAFT.k)){toast('The admin has given you view-only access here.');return;}
   const body={};
