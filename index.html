@@ -4559,7 +4559,7 @@ function docLayout(d,org){
   const table=()=>{const its=(d.items||[]).filter(x=>String(x.d||'').trim()||n(x.amt));if(!its.length)return;
     gap(2);line('555555',0.4);gap(1.5);row([{t:'#',x:X,w:8,b:1},{t:'Description',x:X+10,w:118,b:1},{t:'Amount',x:R,w:40,al:'r',b:1}],{s:9.5,after:1});line('555555',0.4);gap(2);
     its.forEach((x,i)=>row([{t:String(i+1),x:X,w:8},{t:x.d,x:X+10,w:118},{t:x.amt!==''?inr2(x.amt):'',x:R,w:40,al:'r'}],{s:10,after:2}));
-    line('bbbbbb');gap(2);
+    line('bbbbbb');gap(2);if(!t.sub)return;
     if(t.rate){row([{t:'Sub-total',x:X+10,w:118},{t:inr2(t.sub),x:R,w:40,al:'r'}],{after:1.2});
       if(t.inter)row([{t:`IGST @ ${t.rate*100}%`,x:X+10,w:118},{t:inr2(t.tax),x:R,w:40,al:'r'}],{after:1.2});
       else{row([{t:`CGST @ ${t.rate*50}%`,x:X+10,w:118},{t:inr2(t.tax/2),x:R,w:40,al:'r'}],{after:1.2});row([{t:`SGST @ ${t.rate*50}%`,x:X+10,w:118},{t:inr2(t.tax/2),x:R,w:40,al:'r'}],{after:1.2});}}
