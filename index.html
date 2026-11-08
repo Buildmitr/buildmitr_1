@@ -7,7 +7,8 @@
 </head><body>
 <title>BuildMitr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Telugu:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap">
+<link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://script.googleusercontent.com" crossorigin><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: grouped vertical menu (Projects, Library, Progress, Manage, Money) + project switcher bar + work area */
 :root{
@@ -327,6 +328,9 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 /* ---- AI chat extras ---- */
 .ai-m.err{background:var(--red);color:var(--red-ink);border-color:transparent}
 .ai-acts{display:flex;gap:14px;margin-top:6px;font-size:12px}.ai-acts .linkish{font-size:12px}
+.share-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.share-opt{justify-content:flex-start}
+.share-prev{margin:14px 0 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:13px/1.5 var(--f-body);white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
+.org-row{border-bottom:1px solid var(--line)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
 @keyframes aipulse{from{opacity:.2}to{opacity:1}}
@@ -698,7 +702,10 @@ function equipCost(r){const e=D.equipment.find(x=>x.id===r.equip);return (+r.hou
 
 /* ================= Helpers ================= */
 let LANG='en';try{LANG=localStorage.getItem('bm-lang')||'en'}catch(e){}
-let THEME='auto';try{THEME=localStorage.getItem('bm-theme')||'auto';}catch(e){}
+/* Telugu / Hindi fonts are loaded only when that language is chosen (saves time on every open) */
+function loadIndicFont(){if(LANG==='en'||document.getElementById('indicFont'))return;const l=document.createElement('link');l.id='indicFont';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap';document.head.appendChild(l);}
+loadIndicFont();
+let THEME='light';try{THEME=localStorage.getItem('bm-theme')||'light';}catch(e){}   // light is preselected; change it in Settings
 function applyTheme(){const r=document.documentElement;if(THEME==='dark'||THEME==='light')r.setAttribute('data-theme',THEME);else r.removeAttribute('data-theme');
   const dark=THEME==='dark'||(THEME!=='light'&&typeof matchMedia!=='undefined'&&matchMedia('(prefers-color-scheme: dark)').matches);r.style.colorScheme=dark?'dark':'light';
   try{const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',dark?'#101614':'#1f3a2e');}catch(_){}}
@@ -993,7 +1000,7 @@ function vModule(k){
     <span class="code" style="margin-left:auto;align-self:center">${rows.length} ${rows.length===1?'entry':'entries'}</span></div>
   ${rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
   <tbody>${rows.map(r=>`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
-    <td class="acts">${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<a class="btn sm ghost" href="${esc(waLink(k,r))}" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp">${ico('message-circle')}</a>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
+    <td class="acts">${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
   :`<div class="hero-empty">${ico(m.icon)}<h2>No ${esc(m.label.toLowerCase())} yet</h2><p>${S.proj!=='all'&&!m.noProject?'Nothing recorded for this project.':'Add the first entry to start keeping records here.'}</p>${addBtn(k)}</div>`}</div>`;
 }
 
@@ -1059,7 +1066,7 @@ function vDashboard(){
   const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
-  return header(label('dashboard'))+siteBox+alBox+ownerBox()+mktBox()+`
+  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+siteBox+alBox+ownerBox()+mktBox()+`
   ${S.stale?`<div class="note">${ico('wifi-off')}<span>Can't reach the server right now — figures may be out of date.</span></div>`:''}
   <div class="box tiles">
     <div class="tile"><b>${openT.length}</b><span>Open tasks${late.length?` · <span style="color:var(--red-ink)">${late.length} late</span>`:''}</span></div>
@@ -1245,14 +1252,15 @@ async function addFiles(files,fk){
 }
 
 /* ================= WhatsApp sharing ================= */
-function waLink(k,r){
+function waLink(k,r){return 'https://wa.me/?text='+encodeURIComponent(waText(k,r));}
+function waText(k,r){
   let t='';
   if(k==='dpr')t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${r.weather?' · '+r.weather:''}\n\n*Work done:*\n${r.work||''}${r.plan?`\n\n*Tomorrow:*\n${r.plan}`:''}${r.hindrance?`\n\n*Hindrances:*\n${r.hindrance}`:''}\n\n— ${orgName()}`;
   if(k==='invoices')t=`Dear ${cname(r.client)!=='—'?cname(r.client):'Sir/Madam'},\n\n${r.kind} ${r.no} dated ${fd(r.date)} for ${pname(r.project)}\nAmount: ${inr(invTotal(r))}${r.gst&&r.gst!=='No GST'?' (incl. '+r.gst+')':''}${r.got?`\nReceived: ${inr(r.got)}\nBalance: ${inr(invTotal(r)-(+r.got||0))}`:''}\n\nThank you,\n${orgName()}`;
   if(k==='po')t=`*Purchase order ${r.no}* – ${orgName()}\nTo: ${vname(r.vendor)}\nSite: ${pname(r.project)}${proj(r.project)?.address?'\n'+proj(r.project).address:''}${proj(r.project)?.loc?'\nLocation: '+gmaps(proj(r.project).loc):''}\n\n${r.material}: ${num(r.qty)} ${r.unit||''}${r.rate?` @ ${inr(r.rate)} = ${inr(r.qty*r.rate)}`:''}${r.delivery?`\nDeliver by: ${fd(r.delivery)}`:''}${r.terms?`\n\nTerms: ${r.terms}`:''}`;
   if(k==='issues')t=`*${r.kind||'Issue'}: ${r.title}*\nProject: ${pname(r.project)}${r.location?'\nLocation: '+r.location:''}\nPriority: ${r.severity||'—'}${r.who?'\nAssigned to: '+nm(r.who):''}${r.due?'\nFix by: '+fd(r.due):''}${r.details?'\n\n'+r.details:''}`;
   if(k==='changes')t=`*Change order ${r.no}* – ${pname(r.project)}\nDate: ${fd(r.date)}\n\n${r.desc}\n\nCost impact: ${inr(r.amount)}${r.days?'\nTime impact: '+r.days+' days':''}\nStatus: ${r.status||'Requested'}\n\nPlease confirm approval.\n— ${orgName()}`;
-  return 'https://wa.me/?text='+encodeURIComponent(t);
+  return t;
 }
 
 async function convertLead(id){
@@ -1894,7 +1902,7 @@ function computeAlerts(){
 function vAlerts(){
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const txt=`*${orgName()} — daily summary ${fd(today())}*\n\n`+(al.length?al.slice(0,25).map(a=>`${a.sev==='high'?'🔴':a.sev==='med'?'🟠':'⚪'} ${a.txt}${a.pid?` [${(proj(a.pid)||{}).prefix||''}]`:''}`).join('\n'):'All clear — nothing pending.');
-  return header(label('alerts'),`<a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener noreferrer">${ico('message-circle')}Send summary on WhatsApp</a>`)+
+  return header(label('alerts'),`<a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener noreferrer">${ico('message-circle')}Send summary on WhatsApp</a><button type="button" class="btn" data-sharesum="${esc(txt)}">${ico('share-2')}<span>Share or save</span></button>${isAdmin()?`<button type="button" class="btn" data-shareupd>${ico('notebook-pen')}<span>Today's site update</span></button>`:''}`)+
   (al.length?`<div class="box">${['high','med','low'].map(sv=>{const xs=al.filter(a=>a.sev===sv);if(!xs.length)return '';return `<div class="box-h"><span class="pill ${sv==='high'?'p-red':sv==='med'?'p-amber':'p-grey'}">${sv==='high'?'Urgent':sv==='med'?'Needs attention':'For information'}</span><span class="code">${xs.length}</span></div>
     ${xs.map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line)"><span style="flex:1;min-width:200px">${esc(a.txt)}${a.pid?` <span class="code">· ${esc(pname(a.pid))}</span>`:''}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}`;}).join('')}</div>`
   :`<div class="box hero-empty">${ico('check')}<h2>All clear</h2><p>No late tasks, pending approvals, dues or low stock right now.</p></div>`);
@@ -2917,7 +2925,7 @@ function trNode(root){
     for(const a of ['placeholder','title','aria-label']){if(!el.hasAttribute||!el.hasAttribute(a))continue;const k='data-tro-'+a;let o=el.getAttribute(k);if(o==null){o=el.getAttribute(a);el.setAttribute(k,o);}const t=LANG==='en'?o:trS(o);if(el.getAttribute(a)!==t)el.setAttribute(a,t);}}
 }
 try{if(typeof MutationObserver!=='undefined'){new MutationObserver(ms=>{if(LANG==='en'&&!S._trUsed)return;for(const m of ms)for(const n of m.addedNodes)trNode(n);}).observe(document.body,{childList:true,subtree:true});}}catch(_){}
-function setLang(l){LANG=l;try{localStorage.setItem('bm-lang',LANG)}catch(_){}if(l!=='en')S._trUsed=true;render();trNode(document.body);}
+function setLang(l){LANG=l;try{localStorage.setItem('bm-lang',LANG)}catch(_){}loadIndicFont();if(l!=='en')S._trUsed=true;render();trNode(document.body);}
 
 /* ================= Cloud login (Google Drive server) — website / Play Store version ================= */
 const CLOUD={url:'',token:'',org:null,mem:null,user:null,blob:''};
@@ -2946,19 +2954,20 @@ function vLogin(){
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
     <div class="lg-or"><span>first time, or forgot your password?</span></div>
     <button type="button" class="btn" id="lgUseCode">${ico('lock')}<span>Get a login code from the admin</span></button></form>`;
-  else if(step==='email')body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code">Enter your details. A 6-digit login code goes to the BuildMitr admin, who shares it with you — no password needed.</p>
+  else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code">Enter your details. A 6-digit login code goes to your organisation's admin, who shares it with you — no password needed.</p>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Your name (new users)<input id="lgName" autocomplete="name" value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
+    ${(LG.orgList||[]).length>1?`<label>Your organisation (new users)<select id="lgOrg"><option value="">Choose your organisation</option>${LG.orgList.map(o=>`<option value="${esc(o.id)}" ${LG.org===o.id?'selected':''} data-notr>${esc(o.name)}</option>`).join('')}</select></label>`:''}
     <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
     <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
     <p class="code">New here? Choose your role. When you enter the code from the admin you are in straight away — then set your own password for next time.</p>
-    <button type="button" class="btn ghost sm" id="lgUsePw">I already have a password</button></form>`;
+    <button type="button" class="btn ghost sm" id="lgUsePw">I already have a password</button></form>`;}
   else if(step==='wait')body=`<div class="lg-form"><h2>Waiting for approval</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||LG.email)}</b>.</p>
     <div class="note">${ico('history')}<span>The BuildMitr admin has your request and will choose your role. This page opens by itself once you are approved — you can keep it open or come back later.</span></div>${err}
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
     <button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
-  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.toAdmin?`The 6-digit code for <b data-notr>${esc(LG.email)}</b> was sent to the BuildMitr admin. Call or WhatsApp the admin to get it.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder.`}</p>
+  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.toAdmin?`The 6-digit code for <b data-notr>${esc(LG.email)}</b> was sent to your organisation's admin. Call or WhatsApp the admin to get it.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder.`}</p>
     <label>6-digit code<input id="lgCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="••••••" class="lg-code"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
     <div class="lg-row"><button type="button" class="btn ghost sm" id="lgBack">Change email</button><button type="button" class="btn ghost sm" id="lgResend" ${Date.now()-LG.sentAt<60000?'disabled':''}>Send the code again</button></div></form>`;
@@ -2969,7 +2978,7 @@ function vLogin(){
     <label>Company name<input id="lgOrgName" required placeholder="e.g. BuildMitr"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Creating…':'Create my company'}</button>
     <button type="button" class="btn ghost sm" id="lgOut">Sign out</button></form>`;
-  else if(step==='pick')body=`<div class="lg-form"><h2>Choose company</h2>${LG.orgs.map(m=>`<button class="btn lg-org" data-lgorg="${esc(m.org_id)}"><b data-notr>${esc(m.org_name||'Company')}</b><span class="code">${esc(m.role)}</span></button>`).join('')}<button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
+  else if(step==='pick')body=`<div class="lg-form"><h2>Choose organisation</h2>${LG.orgs.map(m=>`<button class="btn lg-org" data-lgorg="${esc(m.org_id)}"><b data-notr>${esc(m.org_name||'Company')}</b><span class="code">${esc(m.role)}</span></button>`).join('')}<button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
   else body=`<div class="lg-form"><h2>Loading…</h2><p class="code">Opening your projects.</p>${err}${err?`<button type="button" class="btn" id="lgRetry">${ico('history')}<span>Try again</span></button><button type="button" class="btn ghost sm" id="lgOut">Sign out</button>`:''}</div>`;
   return `<div class="lg-wrap"><div class="lg-card"><div class="lg-brand">${ico('building-2')}<span data-notr>${brand}</span></div>${langs}${body}</div>
     <p class="lg-foot code">${location.hostname?`<span data-notr>${esc(location.hostname)}</span> · `:''}<button class="linkish" id="lgDemo">Try the demo</button></p></div>`;
@@ -2977,10 +2986,10 @@ function vLogin(){
 function lgSet(step,err){S.authStep=step;LG.err=err||'';LG.busy=false;render();setTimeout(()=>{const i=document.querySelector('#lgEmail,#lgCode,#lgOrgName');i&&i.focus&&i.focus();},30);}
 async function lgSend(){
   const v=(document.getElementById('lgEmail')||{}).value||LG.email;LG.email=v.trim().toLowerCase();
-  const nm=document.getElementById('lgName'),ph=document.getElementById('lgPhone'),rl=document.getElementById('lgRole');if(nm)LG.name=nm.value.trim();if(ph)LG.phone=ph.value.trim();if(rl)LG.role=rl.value;
+  const nm=document.getElementById('lgName'),ph=document.getElementById('lgPhone'),rl=document.getElementById('lgRole'),og=document.getElementById('lgOrg');if(nm)LG.name=nm.value.trim();if(ph)LG.phone=ph.value.trim();if(rl)LG.role=rl.value;if(og)LG.org=og.value;
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Please enter a valid email address.');return;}
   LG.busy=true;render();let j;
-  try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.message);return;}
+  try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role,org:LG.org||''});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.message);return;}
   LG.toAdmin=j.to!=='you';
   LG.sentAt=Date.now();lgSet('code');
 }
@@ -3028,35 +3037,56 @@ async function lgCreateOrg(){
 }
 async function cloudEnter(user,orgId,mems){
   CLOUD.user=user;S.authStep='loading';LG.err='';render();
-  if(!mems){try{const j=await gasApi('me');mems=j.mems;CLOUD.user=user=j.user;LG.owner=!!j.owner;LG.hasPw=j.hasPw!==false;}catch(e){if(e.code==='auth'){cloudForget();lgSet('email',e.message);}else lgSet('loading',e.message);return;}}
+  let pre=null,fromCache=false;
+  const pickSaved=()=>{try{return localStorage.getItem('bm-org');}catch(_){return null;}};
+  if(!mems){
+    const c=bmGet('bm-c-me');
+    if(c&&c.user&&c.mems&&c.mems.length&&(!user||!user.email||c.user.email===user.email)){   // last visit's details: open at once, check in the background
+      mems=c.mems;CLOUD.user=user=c.user;LG.owner=!!c.owner;LG.hasPw=c.hasPw!==false;fromCache=true;}
+    else{
+      try{const j=await gasApi('boot',{org:orgId||pickSaved()||''});mems=j.mems;CLOUD.user=user=j.user;LG.owner=!!j.owner;LG.hasPw=j.hasPw!==false;if(j.data&&j.org){pre=j.data;orgId=j.org;}}
+      catch(e){if(e.code==='auth'){cloudForget();lgSet('email',e.message);}else lgSet('loading',e.message);return;}}
+  }
+  if(!fromCache&&mems&&mems.length)bmSet('bm-c-me',{user,mems,owner:LG.owner,hasPw:LG.hasPw});
   clearTimeout(LG.wait);
   if(!mems||!mems.length){
     if(LG.owner){lgSet('org');return;}
     lgSet('wait');LG.wait=setTimeout(()=>{if(S.authStep==='wait')cloudEnter(CLOUD.user);},15000);return;}
-  let pick=orgId||(()=>{try{return localStorage.getItem('bm-org');}catch(_){return null;}})();
+  let pick=orgId||pickSaved();
   let m=mems.find(x=>x.org_id===pick);
   if(!m&&mems.length>1){LG.orgs=mems;lgSet('pick');return;}
   m=m||mems[0];try{localStorage.setItem('bm-org',m.org_id);}catch(_){}
-  m.organizations={name:m.org_name};CLOUD.org=m.org_id;CLOUD.mem=m;
+  if(pre&&m.org_id!==orgId)pre=null;
+  m.organizations={name:m.org_name};CLOUD.org=m.org_id;CLOUD.mem=m;CLOUD.mems=mems;
   ME={id:user.id,name:m.name||user.email.split('@')[0],email:user.email,isOwner:m.role==='Admin',canEdit:m.role==='Admin'||m.role==='Project manager',avatarUrl:''};
-  db=gasDb(CLOUD.org);A=gasAssets(CLOUD.org);CANW=CANW0=true;
+  if(fromCache)gasApi('me').then(j=>{   // membership may have changed since the last visit
+    if(!j.mems.some(x=>x.org_id===CLOUD.org)){bmClearCache();toast('Your access has changed. Opening again…');setTimeout(()=>location.reload(),1500);return;}
+    bmSet('bm-c-me',{user:j.user,mems:j.mems,owner:!!j.owner,hasPw:j.hasPw!==false});CLOUD.mems=j.mems;LG.owner=!!j.owner;LG.hasPw=j.hasPw!==false;
+    const nm=j.mems.find(x=>x.org_id===CLOUD.org);if(nm&&nm.role!==CLOUD.mem.role){bmClearCache();location.reload();}
+  }).catch(()=>{});
+  db=gasDb(CLOUD.org,pre);A=gasAssets(CLOUD.org);CANW=CANW0=true;
   const loaded=new Set();
   COLS.forEach(c=>db.collection(c).onSnapshot(snap=>{REAL[c]=snap.docs.map(x=>({id:x.id,...x.data()}));D[c]=REAL[c];loaded.add(c);
     if(loaded.size===COLS.length&&!S.ready){S.ready=true;S.authStep=null;S.view=homeView();cloudAfterLoad();AI.gemini=true;{const f=document.getElementById('aiFab');f.hidden=false;document.getElementById('aiFabIco').innerHTML=ico('sparkles');}render();}refresh();}));
 }
 async function cloudAfterLoad(){
   /* make sure the signed-in person has a Team card linked to their login */
-  const me=CLOUD.user;const t=D.team.find(x=>x.account===me.id)||D.team.find(x=>(x.email||'').toLowerCase()===me.email.toLowerCase());
+  const me=CLOUD.user;
+  if(isSuperAdmin()){if(!LG.hasPw&&!LG.pwAsked){LG.pwAsked=true;setTimeout(()=>pwDialog(true),600);}return;}   // the BuildMitr admin is not added to each organisation's team
+  const t=D.team.find(x=>x.account===me.id)||D.team.find(x=>(x.email||'').toLowerCase()===me.email.toLowerCase());
   try{if(t&&t.account!==me.id&&ME.isOwner)await db.doc('team/'+t.id).update({account:me.id,status:'Active'});
     else if(!t&&ME.isOwner)await db.collection('team').add({name:ME.name,email:me.email,phone:'',role:'Admin',access:'Full access',projects:['all'],account:me.id,status:'Active',by:me.id,at:Date.now()});
     await db.doc('members/'+me.id).set({joined:Date.now(),email:me.email});}catch(_){}
   if(!LG.hasPw&&!LG.pwAsked){LG.pwAsked=true;setTimeout(()=>pwDialog(true),600);}
 }
-function cloudForget(){CLOUD.token='';try{localStorage.removeItem('bm-token');localStorage.removeItem('bm-org');}catch(_){}}
+function cloudForget(){CLOUD.token='';bmClearCache();try{localStorage.removeItem('bm-token');localStorage.removeItem('bm-org');}catch(_){}}
 async function cloudSignOut(){cloudForget();location.reload();}
 /* ---- data layer: same interface the app already uses (collection / doc / onSnapshot) ---- */
-function gasDb(org){
+function gasDb(org,pre){
   const store={},ls={};COLS.forEach(c=>store[c]=[]);let ready=false,cursor=0,polling=false,pend=0;
+  const CK='bm-c-data:'+org;let saveT=0;
+  const saveCache=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{const rows=[];Object.keys(store).forEach(c=>(store[c]||[]).forEach(r=>rows.push([c,r.id,JSON.stringify(r.data)])));bmSet(CK,{cursor,rows,at:Date.now()});},1500);};
+  const fill=rows=>{Object.keys(store).forEach(c=>store[c]=[]);(rows||[]).forEach(([c,id,s])=>{(store[c]=store[c]||[]).push({id,data:parse(s)});});};
   const snap=c=>({docs:(store[c]||[]).map(r=>({id:r.id,exists:true,data:()=>r.data})),metadata:{fromCache:false,hasPendingWrites:pend>0}});
   const timers={};const emit=c=>{clearTimeout(timers[c]);timers[c]=setTimeout(()=>(ls[c]||[]).forEach(f=>f(snap(c))),20);};
   const put=(c,id,data)=>{const a=store[c]||(store[c]=[]);const i=a.findIndex(x=>x.id===id);if(i>=0)a[i]={id,data};else a.push({id,data});emit(c);};
@@ -3069,14 +3099,18 @@ function gasDb(org){
   const poll=async()=>{if(polling||!ready)return;polling=true;
     try{const j=await gasApi('since',{ts:cursor});
       (j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>drop(c,id));
-      cursor=Math.max(cursor,(j.now||Date.now())-3000);}catch(_){}
+      cursor=Math.max(cursor,(j.now||Date.now())-3000);if((j.rows||[]).length||(j.gone||[]).length)saveCache();}catch(_){}
     polling=false;};
   const tick=()=>{const hidden=document.visibilityState==='hidden';setTimeout(async()=>{await poll();tick();},hidden?30000:(S.view==='messages'?4000:8000));};
   try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')poll();});}catch(_){}
-  (async()=>{for(let k=0;k<3;k++){try{const j=await gasApi('load');
-        (j.rows||[]).forEach(([c,id,s])=>{(store[c]=store[c]||[]).push({id,data:parse(s)});});cursor=(j.now||Date.now())-3000;ready=true;break;}
-      catch(e){if(e.code==='auth'||e.code==='no_access'){lgSet(e.code==='auth'?'email':'loading',e.message);if(e.code==='auth')cloudForget();return;}
-        if(k===2){lgSet('loading','Could not load your data: '+e.message);return;}await new Promise(r=>setTimeout(r,1500));}}
+  const cached=pre?null:bmGet(CK);
+  if(pre){fill(pre.rows);cursor=(pre.now||Date.now())-3000;ready=true;saveCache();setTimeout(tick,0);}       // came with the sign-in request
+  else if(cached&&cached.rows){fill(cached.rows);cursor=cached.cursor||0;ready=true;}                         // last visit's copy: shown at once
+  (async()=>{if(pre)return;
+    for(let k=0;k<3;k++){try{const j=await gasApi('load');
+        fill(j.rows);cursor=(j.now||Date.now())-3000;ready=true;saveCache();break;}
+      catch(e){if(e.code==='auth'||e.code==='no_access'){bmClearCache();if(!cached){lgSet(e.code==='auth'?'email':'loading',e.message);if(e.code==='auth')cloudForget();}return;}
+        if(k===2){if(!cached)lgSet('loading','Could not load your data: '+e.message);else{toast('Showing saved data — could not reach the server.');tick();}return;}await new Promise(r=>setTimeout(r,1500));}}
     COLS.forEach(c=>(ls[c]||[]).forEach(f=>f(snap(c))));tick();})();
   const docRef=(c,id)=>({
     get:async()=>{const r=(store[c]||[]).find(x=>x.id===id);return {id,exists:!!r,data:()=>r?r.data:undefined};},
@@ -3144,7 +3178,7 @@ function vAdminPanel(){
   const tiles=[[ppl.length,'People in the team'],[joined,'Signed in at least once'],[pendingJoins().length,'Code sent, not signed in yet'],[noProj.length,'Clients without a project']];
   const roles=ALL_ROLES();
   const pname_=t=>(t.projects||[]).includes('all')?'All projects':(t.projects||[]).length?(t.projects||[]).map(id=>(D.projects.find(p=>p.id===id)||{}).name||'—').join(', '):'No project';
-  return header(label('adminpanel'))+
+  return header(label('adminpanel'))+orgsBox()+
   `<div class="box"><div class="tiles">${tiles.map(([n,l])=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`).join('')}</div></div>`+
   (noProj.length?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('info')}<span><b>${noProj.length} client(s) cannot see any project yet.</b> Tap <b>Edit</b> next to them below and choose their project.</span></div>`:'')+
   joinReqBox()+
@@ -3178,7 +3212,9 @@ function myProfileBox(admin){
 const HOME_VIEWS=['dashboard','sitehome','desk','client','mktdash','noaccess'];
 function signOutBar(){
   if(!S.cloud||!S.ready||S.viewAs)return '';
-  return `<div class="box signout-bar"><div class="srow"><span style="flex:1;min-width:180px" class="code">Signed in as <b data-notr>${esc(ME.email||'')}</b> · ${esc(curRole())}</span>
+  const many=(CLOUD.mems||[]).length>1;
+  return `<div class="box signout-bar"><div class="srow"><span style="flex:1;min-width:180px" class="code">Signed in as <b data-notr>${esc(ME.email||'')}</b> · ${esc(curRole())}${CLOUD.mem?` · <b data-notr>${esc(CLOUD.mem.org_name||'')}</b>`:''}</span>
+    ${many?(isSuperAdmin()?`<button class="btn" data-orgswitch>${ico('building-2')}<span>Organisations</span></button>`:`<button class="btn" id="orgPick">${ico('building-2')}<span>Switch organisation</span></button>`):''}
     <button class="btn" data-go="settings">${ico('settings')}<span>Settings</span></button><button class="btn warn" id="signOut">${ico('log-in')}<span>Log out</span></button></div></div>`;
 }
 /* ================= Site cameras ================= */
@@ -3550,7 +3586,8 @@ function aiFill(out,text){
   out.classList.remove('think');out.textContent='';const body=document.createElement('div');body.className='ai-body';body.innerHTML=aiMd(text);out.appendChild(body);
   const bar=document.createElement('div');bar.className='ai-acts';
   if(text.length>700){out.classList.add('ai-long');const more=document.createElement('button');more.className='linkish';more.textContent='Show full answer';more.dataset.aimore='1';bar.appendChild(more);}
-  const cp=document.createElement('button');cp.className='linkish';cp.textContent='Copy';cp.dataset.aicopy='1';bar.appendChild(cp);out.appendChild(bar);
+  const cp=document.createElement('button');cp.className='linkish';cp.textContent='Copy';cp.dataset.aicopy='1';bar.appendChild(cp);
+  const sh=document.createElement('button');sh.className='linkish';sh.textContent='Share';sh.dataset.aishare='1';bar.appendChild(sh);out.appendChild(bar);
   document.getElementById('aiMsgs').scrollTop=1e9;
 }
 function aiUsageLine(){const s=document.getElementById('aiSub');if(!s)return;s.textContent=AI.usage&&AI.usage.limit?`${AI.usage.used}/${AI.usage.limit} questions today`:'Ask about clients, team, projects, money';}
@@ -3563,16 +3600,169 @@ async function aiAdminLoad(set){
   const c=j.cfg;const usd=j.costUSD||0;
   box.innerHTML=`<div class="srow"><span style="flex:1;min-width:200px">${j.hasKey?`<span class="pill p-green">Gemini key added</span>`:`<span class="pill p-red">Gemini key missing</span> <span class="code">Add GEMINI_API_KEY in the server's Script Properties</span>`} ${c.enabled?'':'<span class="pill p-grey">Switched off</span>'}</span><span class="code" data-notr>${esc(c.model)}</span></div>
     <div class="tiles"><div class="tile"><b>${j.today}</b><span>Questions today</span></div><div class="tile"><b>${j.questions}</b><span>Questions this month</span></div><div class="tile"><b>${((j.inTokens+j.outTokens)/1000).toFixed(1)}k</b><span>Tokens this month</span></div><div class="tile"><b>$${usd.toFixed(2)}</b><span>Estimated cost this month (≈ ₹${Math.round(usd*88)})</span></div></div>
-    <form id="aiCfgForm" class="srow" style="align-items:flex-end">
+    ${j.canSet===false?`<div class="srow"><span class="code">Daily limits and the AI model are set by the BuildMitr admin. Usage below is for your organisation only.</span></div>`:`<form id="aiCfgForm" class="srow" style="align-items:flex-end">
       <label class="code">Questions per person per day<input id="ai-lim" type="number" min="0" max="2000" value="${c.dailyLimit}" style="width:110px"></label>
       <label class="code">Longest question (characters)<input id="ai-in" type="number" min="50" max="4000" value="${c.maxInputChars}" style="width:110px"></label>
       <label class="code">Longest answer (tokens)<input id="ai-out" type="number" min="100" max="4000" value="${c.maxOutputTokens}" style="width:110px"></label>
       <label class="code">Model<input id="ai-model" value="${esc(c.model)}" style="width:190px"></label>
       <label class="code" style="display:flex;gap:6px;align-items:center"><input id="ai-on" type="checkbox" ${c.enabled?'checked':''} style="width:auto">AI switched on</label>
-      <button class="btn pri">${ico('check')}<span>Save</span></button></form>
+      <button class="btn pri">${ico('check')}<span>Save</span></button></form>`}
     ${j.people.length?`<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Role</th><th class="num">Today</th><th class="num">This month</th><th class="num">Tokens</th></tr></thead><tbody>${j.people.map(p=>`<tr><td data-notr>${esc(p.email)}</td><td>${esc(p.role)}</td><td class="num">${p.today}</td><td class="num">${p.month}</td><td class="num">${((p.inTokens+p.outTokens)/1000).toFixed(1)}k</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No AI questions this month yet.</div>'}
     <div class="srow"><span class="code" style="white-space:normal">Cost uses the paid prices set on the server ($${c.priceInPerM} per million input tokens, $${c.priceOutPerM} per million output tokens). On Google's free tier it costs nothing but has lower limits.</span></div>`;
 }
+
+/* ================= Organisations, sharing & fast start ================= */
+Object.assign(ICONS,{
+  'share-2':'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/>',
+  'mail':'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'message-square':'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  'copy':'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  'printer':'<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>'
+});
+
+/* ---- small storage helpers for the start-up cache (data of the last visit, kept only on this device) ---- */
+function bmGet(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(_){return null;}}
+function bmSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(_){try{localStorage.removeItem(k);}catch(__){}return false;}}
+function bmClearCache(){try{Object.keys(localStorage).filter(k=>k.indexOf('bm-c-')===0).forEach(k=>localStorage.removeItem(k));}catch(_){}}
+const isSuperAdmin=()=>!!(CLOUD.mem&&CLOUD.mem.super);
+
+/* ---- share sheet: one place for WhatsApp, Telegram, email, SMS, phone share, copy, PDF and text file ---- */
+let SHARE=null;
+function adminPhone(){const a=D.team.find(t=>t.role==='Admin'&&t.phone&&t.account!==ME.id&&t.status!=='Removed');return a?a.phone:'';}
+function shareSheet(title,text,phone){
+  SHARE={title:title||orgName(),text:String(text||''),phone:phone||''};
+  const ap=!isAdmin()?adminPhone():'';
+  const opt=(k,ic,l)=>`<button type="button" class="btn share-opt" data-shareto="${k}">${ico(ic)}<span>${l}</span></button>`;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane">
+    <div class="pane-h"><h2>Share or save</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><div class="share-grid">
+      ${opt('wa','message-circle',SHARE.phone?'WhatsApp to this person':'WhatsApp')}${ap?opt('wa-admin','message-circle','WhatsApp to admin'):''}
+      ${opt('tg','send','Telegram')}${opt('mail','mail','Email')}${opt('sms','message-square','SMS')}
+      ${navigator.share?opt('more','share-2','Other apps'):''}${opt('copy','copy','Copy text')}${opt('pdf','printer','Save as PDF')}${opt('txt','download','Save as text file')}</div>
+      <pre class="share-prev" data-notr>${esc(SHARE.text)}</pre></div></div></div>`;
+}
+function shareTo(k){
+  if(!SHARE)return;const{title,text,phone}=SHARE;const enc=encodeURIComponent;
+  const go=u=>{const w=window.open(u,'_blank');if(w){try{w.opener=null;}catch(_){}}else location.href=u;};
+  if(k==='wa')return go('https://wa.me/'+(phone?waNum(phone):'')+'?text='+enc(text));
+  if(k==='wa-admin')return go('https://wa.me/'+waNum(adminPhone())+'?text='+enc(text));
+  if(k==='tg')return go('https://t.me/share/url?url='+enc(title)+'&text='+enc(text));
+  if(k==='mail'){location.href='mailto:?subject='+enc(title)+'&body='+enc(text.replace(/\*/g,''));return;}
+  if(k==='sms'){location.href='sms:?body='+enc(text.replace(/\*/g,''));return;}
+  if(k==='more'){navigator.share({title,text}).catch(()=>{});return;}
+  if(k==='copy'){(navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast('Copied')).catch(()=>toast('Could not copy'));return;}
+  const file=(title||'BuildMitr').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'BuildMitr';
+  if(k==='txt'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text.replace(/\*/g,'')],{type:'text/plain'}));a.download=file+'.txt';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);toast('Saved '+file+'.txt');return;}
+  if(k==='pdf'){   // print view: choose "Save as PDF" in the print window
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;right:0;bottom:0';document.body.appendChild(f);
+    const body=esc(text).replace(/\*([^*\n]+)\*/g,'<b>$1</b>');
+    f.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(file)}</title><style>body{font:14px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans Telugu","Noto Sans Devanagari",sans-serif;color:#111;margin:28px;white-space:pre-wrap}h1{font-size:18px;margin:0 0 12px;white-space:normal}footer{margin-top:24px;color:#666;font-size:12px}</style></head><body><h1>${esc(title)}</h1>${body}<footer>BuildMitr · ${esc(new Date().toLocaleString())}</footer></body></html>`;
+    f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print();}catch(_){toast('Printing is not available here.');}setTimeout(()=>f.remove(),60000);};return;}
+}
+
+/* ---- daily update for the admin: today's work, people, money and urgent items per project ---- */
+function dailyUpdateText(){
+  const t=today(),L=x=>D[x]||[],ps=PJ().filter(p=>projOK(p.id)&&(S.proj==='all'||p.id===S.proj));
+  const out=[`*${orgName()} — site update ${fd(t)}*`],quiet=[];
+  ps.forEach(p=>{
+    const on=r=>r.project===p.id&&r.date===t;
+    const dp=L('dpr').filter(on);
+    const ppl=L('attendance').filter(r=>on(r)&&r.status!=='Absent').length+L('vlabour').filter(on).reduce((a,r)=>a+n(r.count),0);
+    const got=L('payments').filter(r=>on(r)&&r.dir==='Received from client').reduce((a,r)=>a+n(r.amount),0);
+    const paid=L('payments').filter(r=>on(r)&&r.dir!=='Received from client').reduce((a,r)=>a+n(r.amount),0);
+    const mat=L('received').filter(on);
+    const iss=L('issues').filter(r=>r.project===p.id&&r.status!=='Resolved');
+    const late=L('tasks').filter(x=>x.project===p.id&&x.status!=='Completed'&&x.due&&x.due<t).length;
+    if(!dp.length&&!ppl&&!got&&!paid&&!mat.length&&!iss.length&&!late){quiet.push(pname(p.id));return;}
+    out.push('',`🏗️ *${pname(p.id)}*`);
+    dp.length?dp.forEach(r=>{out.push(`• Work: ${String(r.work||'').replace(/\s+/g,' ').slice(0,280)}`);if(r.hindrance)out.push(`• Hindrance: ${String(r.hindrance).replace(/\s+/g,' ').slice(0,160)}`);}):out.push('• No daily report yet today');
+    if(ppl)out.push(`• Workers on site: ${ppl}`);
+    if(mat.length)out.push(`• Material received: ${mat.slice(0,5).map(r=>`${r.material} ${num(r.qty)} ${r.unit||''}`.trim()).join(', ')}${mat.length>5?' …':''}`);
+    if(got)out.push(`• Received from client: ${inr(got)}`);
+    if(paid)out.push(`• Paid / spent: ${inr(paid)}`);
+    if(iss.length)out.push(`• Open issues: ${iss.length}${iss.some(x=>x.severity==='High')?' (high priority included)':''}`);
+    if(late)out.push(`• Late tasks: ${late}`);
+  });
+  if(quiet.length)out.push('',`No activity today: ${quiet.join(', ')}`);
+  const urgent=computeAlerts().filter(a=>a.sev==='high'&&(S.proj==='all'||!a.pid||a.pid===S.proj)).slice(0,8);
+  if(urgent.length)out.push('','*Needs attention*',...urgent.map(a=>'🔴 '+a.txt));
+  out.push('','— BuildMitr');
+  return out.join('\n');
+}
+
+/* ---- BuildMitr admin: organisations ---- */
+function orgsBox(){
+  if(!isSuperAdmin())return '';
+  return `<div class="box"><div class="box-h">${ico('building-2')}<h2>Organisations</h2><span class="code">Only the BuildMitr admin sees this. Each organisation sees only its own data.</span></div>
+    <div id="orgsList"><div class="srow"><span class="code">Loading…</span></div></div>
+    <form id="orgNewForm" class="srow" style="align-items:flex-end">
+      <label class="code">New organisation<input id="on-name" required maxlength="120" placeholder="e.g. RR Associates"></label>
+      <label class="code">Its admin's email<input id="on-email" type="email" required placeholder="admin@example.com"></label>
+      <label class="code">Admin name<input id="on-aname" maxlength="80" placeholder="e.g. Ravi Kumar"></label>
+      <label class="code">Admin mobile<input id="on-phone" type="tel" inputmode="tel" placeholder="98765 43210"></label>
+      <button class="btn pri">${ico('plus')}<span>Create organisation</span></button></form></div>`;
+}
+let ORGS=[],ORGS_AT=0;
+async function orgsLoad(q){
+  const box=document.getElementById('orgsList');if(!box)return;
+  let j;try{j=await gasApi('orgs',q||{});}catch(e){box.innerHTML=`<div class="srow"><span class="code">${esc(e.message)}</span></div>`;return false;}
+  ORGS=j.orgs||[];ORGS_AT=Date.now();orgsDraw();return true;
+}
+function orgsDraw(){
+  const box=document.getElementById('orgsList');if(!box)return;
+  box.innerHTML=ORGS.length?ORGS.map(o=>`<div class="srow org-row"><span style="flex:1;min-width:210px"><b data-notr>${esc(o.name)}</b>${o.id===CLOUD.org?' <span class="pill p-green">Open now</span>':''}${o.hidden?' <span class="pill p-grey">Hidden from sign-up</span>':''}<br>
+      <span class="code" data-notr>${o.admins.length?o.admins.map(a=>esc(a.email)+(a.joined?'':' (not signed in yet)')).join(', '):'No admin yet'} · ${o.people} people · ${o.projects} projects</span></span>
+      ${o.id!==CLOUD.org?`<button type="button" class="btn sm" data-orgopen="${esc(o.id)}">${ico('log-in')}<span>Open</span></button>`:''}
+      <button type="button" class="btn sm ghost" data-orgedit="${esc(o.id)}">${ico('pencil')}<span>Edit</span></button></div>
+      <form class="srow org-edit" data-orgform="${esc(o.id)}" hidden style="align-items:flex-end">
+      <label class="code">Name<input name="name" value="${esc(o.name)}" maxlength="120"></label>
+      <label class="code">Add / change admin email<input name="email" type="email" placeholder="admin@example.com"></label>
+      <label class="code">Admin name<input name="aname" maxlength="80"></label><label class="code">Admin mobile<input name="phone" type="tel"></label>
+      <label class="code" style="display:flex;gap:6px;align-items:center"><input name="hidden" type="checkbox" ${o.hidden?'checked':''} style="width:auto">Hide from the sign-up list</label>
+      <button class="btn pri">${ico('check')}<span>Save</span></button></form>`).join(''):`<div class="empty">No organisations yet. Create the first one below.</div>`;
+}
+async function orgCreate(f){
+  const v=id=>(f.querySelector('#'+id)||{}).value||'';const btn=f.querySelector('button');btn.disabled=true;
+  try{await gasApi('createOrg',{name:v('on-name').trim(),admin:{email:v('on-email').trim(),name:v('on-aname').trim(),phone:v('on-phone').trim()}});
+    toast(`Organisation created. Its admin signs in with ${v('on-email').trim()} — their login code comes to you.`);f.reset();await orgsLoad();bmSet('bm-c-me',null);}
+  catch(e){toast(e.message);}btn.disabled=false;
+}
+async function orgSave(f){
+  const id=f.dataset.orgform,o=ORGS.find(x=>x.id===id)||{},g=k=>(f.elements[k]||{}).value||'';const q={org:id};
+  if(g('name').trim()&&g('name').trim()!==o.name)q.rename=g('name').trim();
+  if(!!f.elements.hidden.checked!==!!o.hidden)q.hidden=!!f.elements.hidden.checked;
+  if(g('email').trim())q.admin={email:g('email').trim(),name:g('aname').trim(),phone:g('phone').trim()};
+  const btn=f.querySelector('button');btn.disabled=true;
+  if(await orgsLoad(q))toast('Saved');btn.disabled=false;
+}
+function orgOpen(id){try{localStorage.setItem('bm-org',id);}catch(_){}location.reload();}
+
+/* sign-up form: list of organisations a new person can ask to join */
+async function lgLoadOrgs(){
+  if(LG.orgList||LG.orgListBusy)return;LG.orgListBusy=true;
+  try{const j=await gasApi('orgList');LG.orgList=j.orgs||[];}catch(_){LG.orgList=[];}
+  LG.orgListBusy=false;
+  if(S.authStep==='email'&&LG.mode!=='pw'&&LG.orgList.length>1){   // keep what was already typed, then show the organisation list
+    const v=id=>{const x=document.getElementById(id);return x?x.value:null;};
+    [['lgEmail','email'],['lgName','name'],['lgPhone','phone'],['lgRole','role']].forEach(([id,k])=>{const x=v(id);if(x!==null)LG[k]=k==='email'?x.trim():x;});
+    const f=document.activeElement&&document.activeElement.id;render();if(f){const x=document.getElementById(f);x&&x.focus&&x.focus();}}
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest)return;
+  {const b=e.target.closest('[data-shareto]');if(b){shareTo(b.dataset.shareto);return;}}
+  {const b=e.target.closest('[data-shareupd]');if(b){shareSheet(`${orgName()} — site update ${fd(today())}`,dailyUpdateText());return;}}
+  {const b=e.target.closest('[data-sharesum]');if(b){shareSheet(`${orgName()} — daily summary`,b.dataset.sharesum);return;}}
+  {const b=e.target.closest('[data-shrec]');if(b){const[k,id]=b.dataset.shrec.split(':');const r=(D[k]||[]).find(x=>x.id===id);if(r)shareSheet(((MOD[k]||{}).label||'Entry'),waText(k,r));return;}}
+  {const b=e.target.closest('[data-aishare]');if(b){const t=b.closest('.ai-m').querySelector('.ai-body').textContent;shareSheet('BuildMitr AI answer',t);return;}}
+  {const b=e.target.closest('[data-orgopen]');if(b){orgOpen(b.dataset.orgopen);return;}}
+  {const b=e.target.closest('[data-orgedit]');if(b){const f=document.querySelector(`[data-orgform="${CSS.escape(b.dataset.orgedit)}"]`);if(f)f.hidden=!f.hidden;return;}}
+  {const b=e.target.closest('[data-orgswitch]');if(b){S.view='adminpanel';render();setTimeout(()=>{const x=document.getElementById('orgsList');x&&x.scrollIntoView({block:'center'});},300);return;}}
+},true);
+document.addEventListener('submit',e=>{
+  if(e.target.id==='orgNewForm'){e.preventDefault();orgCreate(e.target);return;}
+  if(e.target.dataset&&e.target.dataset.orgform){e.preventDefault();orgSave(e.target);return;}
+},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
@@ -3608,6 +3798,7 @@ function render(){
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
   if(v==='adminpanel'&&S.cloud&&isAdmin())aiAdminLoad();
+  if(v==='adminpanel'&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
   if(v==='messages'&&S.ready){const box=document.getElementById('chatMsgs');if(box&&box.scrollTo)box.scrollTop=box.scrollHeight;if(S.chatFocus){const ta=document.getElementById('chatText');if(ta&&ta.focus){ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);}catch(_){}}}chatMarkSeen();}
   const qi=document.getElementById('q');
   if(qi)qi.oninput=e=>{S.q=e.target.value;const pos=e.target.selectionStart;render();const n=document.getElementById('q');if(n){n.focus();n.setSelectionRange(pos,pos);}};
@@ -3652,6 +3843,7 @@ document.addEventListener('click',e=>{
   if(el.id==='lgDemo'){try{localStorage.setItem('bm-forcedemo','1');}catch(_){}location.reload();return;}
   if(el.id==='lgExitDemo'){try{localStorage.removeItem('bm-forcedemo');}catch(_){}location.reload();return;}
   if(d.lgorg){cloudEnter(CLOUD.user,d.lgorg);return;}
+  if(el.id==='orgPick'){try{localStorage.removeItem('bm-org');}catch(_){}bmClearCache();location.reload();return;}
   if(d.jrok){joinReqAct(d.jrok,true);return;}
   if(el.id==='lgUseCode'){LG.mode='code';const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('email');return;}
   if(el.id==='lgUsePw'){LG.mode='pw';const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('email');return;}
