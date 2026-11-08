@@ -716,7 +716,7 @@ function demoData(){
   X.members=['dm1','dm2','dm3','dm4'].map(id=>({id,joined:T}));
   [['Bala Krishna','9494694690','Admin','Full access',['all'],'dm1','Active'],['Ravi','9000055555','Site engineer','Add & edit entries',null,'dm2','Active'],['Suresh','9000066666','Supervisor','Add & edit entries',null,'dm3','Active'],['Kavya','9000077777','Architect','View only',null,'dm4','Active'],['Anil','9000088888','Accountant','Full access',['all'],'','Invited']]
     .forEach(([name,phone,role,access,projects,account,status])=>X.team.push({id:'tm'+name,name,phone,role,access,projects:projects||['P1'],account,status,by:'dm1',at:T}));
-  X.org=[{id:'main',name:'BuildMitr (demo)',gstin:'36ABCDE1234F1Z5',address:'Banjara Hills, Hyderabad',state:'Telangana',invPrefix:'SDB',sac:'995411',bank:'HDFC Bank, Banjara Hills',acc:'(demo)',ifsc:'HDFC0000000',upi:'buildmitr@hdfcbank',phone:'9494694690',website:'https://app.shelder.in',brochure:'',reviewLink:''}];
+  X.org=[{id:'main',name:'BuildMitr (demo)',gstin:'36ABCDE1234F1Z5',address:'Banjara Hills, Hyderabad',state:'Telangana',invPrefix:'SDB',sac:'995411',bank:'HDFC Bank, Banjara Hills',acc:'(demo)',ifsc:'HDFC0000000',upi:'buildmitr@hdfcbank',phone:'9494694690',website:'https://buildmitr.github.io/buildmitr_1/',brochure:'',reviewLink:''}];
   const c1=add('clients',{name:'Mr. Prasad Reddy',phone:'9876543210',address:'Kondapur, Hyderabad',state:'Telangana'});
   const c2=add('clients',{name:'Mrs. Lakshmi Devi',phone:'9123456780',address:'Guntur',state:'Andhra Pradesh'});
   const p1=add('projects',{prefix:'BM-26-21',name:'Prasad Residence G+2',client:c1,address:'Plot 42, Kondapur, Hyderabad',loc:{lat:17.4632,lng:78.3631},start:dd(-40),end:dd(140),description:'3,600 sft, RCC framed',value:9200000,area:3600,created:T});
@@ -1102,7 +1102,7 @@ function vSettings(){
     <div class="two"><label class="code">Account number<input id="o-acc" value="${esc(org.acc||'')}" ${admin?'':'disabled'} inputmode="numeric"></label><label class="code">IFSC<input id="o-ifsc" value="${esc(org.ifsc||'')}" ${admin?'':'disabled'}></label></div>
     <label class="code">UPI ID (shown on invoices)<input id="o-upi" value="${esc(org.upi||'')}" ${admin?'':'disabled'} placeholder="name@bank"></label>
     <div class="code" style="margin-top:6px"><b>MARKETING</b> — used in WhatsApp messages, estimates and portfolio pages</div>
-    <div class="two"><label class="code">Sales phone<input id="o-phone" value="${esc(org.phone||'')}" ${admin?'':'disabled'} inputmode="tel"></label><label class="code">Website<input id="o-web" value="${esc(org.website||'')}" ${admin?'':'disabled'} placeholder="https://app.shelder.in"></label></div>
+    <div class="two"><label class="code">Sales phone<input id="o-phone" value="${esc(org.phone||'')}" ${admin?'':'disabled'} inputmode="tel"></label><label class="code">Website<input id="o-web" value="${esc(org.website||'')}" ${admin?'':'disabled'} placeholder="https://buildmitr.github.io/buildmitr_1/"></label></div>
     <label class="code">Brochure link (Drive / website PDF)<input id="o-broch" value="${esc(org.brochure||'')}" ${admin?'':'disabled'} placeholder="https://…"></label>
     <label class="code">Google review link<input id="o-review" value="${esc(org.reviewLink||'')}" ${admin?'':'disabled'} placeholder="https://g.page/r/…/review"></label>
     ${admin?`<div><button class="btn pri">${ico('check')}Save</button></div>`:'<p class="code">Only the admin or editors can change company details.</p>'}</form></div>
