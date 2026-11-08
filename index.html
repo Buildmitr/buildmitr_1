@@ -343,6 +343,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .ai-acts{display:flex;gap:14px;margin-top:6px;font-size:12px}.ai-acts .linkish{font-size:12px}
 .share-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.share-opt{justify-content:flex-start}
 .share-prev{margin:14px 0 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:13px/1.5 var(--f-body);white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto}
+.e2edit{border-top:1px solid var(--line)}.e2form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px 16px;align-items:end}.e2form label{font-size:12px;color:var(--muted);display:grid;gap:3px}.e2form .wide{grid-column:span 2}.e2form label.pl-chk{display:flex;font-size:13px;color:inherit}@media(max-width:560px){.e2form .wide{grid-column:auto}}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -3788,7 +3789,7 @@ document.addEventListener('submit',e=>{
  * adjusted for Standard / Premium / Luxury. Every quantity and rate can be changed on the estimate; the admin can
  * change the organisation's rate card. */
 const E2_TIERS=['Standard','Premium','Luxury'];
-const E2_SECS=[['I','SHELL & CORE'],['II','FINISHES'],['III','MEP'],['IV','MACHINERY & SCAFFOLDING'],['V','IDC — SITE & DESIGN COSTS'],['VI','EXTERNAL WORKS & EXTRAS']];
+const E2_SECS=[['I','SHELL & CORE'],['II','FINISHES'],['III','MEP'],['IV','MACHINERY & SCAFFOLDING'],['V','IDC — SITE & DESIGN COSTS'],['VI','EXTERNAL WORKS & EXTRAS'],['VII','INTERIORS']];
 /* element: [section, head, key, description, unit, quantity(v), rates [Standard, Premium, Luxury], note]
  * v = {B built-up incl. headroom, S sum of floor slabs, GF ground-floor slab, TOP top slab (terrace), F floors, R rooms, T toilets, K kitchens, BL balconies, L lifts, M months} */
 const SQM=0.0929;
@@ -3860,6 +3861,19 @@ const E2_SPEC={ // what's included, by specification
  'Electrical':['Finolex / Polycab FR wires, Anchor Roma switches','Havells / Polycab FRLS, Legrand / Schneider modular','FRLS, Legrand Arteor / Schneider premium, automation-ready'],
 };
 const E2={tier:'Standard',floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],head:true,city:0,rooms:'4',toilets:'3',kitchens:'1',balconies:'1',lifts:'0',months:'',extras:{},ov:{},gst:true,lead:'',name:'',edit:false,open:{}};
+/* interiors (optional, added from the BOQ): Hyderabad 2026 indicative rates [Standard, Premium, Luxury] */
+const E2_INT=[
+ ['int_fc','False ceiling','Gypsum false ceiling with framing (about 35% of floor area)','Sqft',v=>v.B*0.35,[85,120,180]],
+ ['int_mk','Modular kitchen','Modular kitchen — base + wall units, per running ft of counter','Rft',v=>Math.max(1,v.K)*12,[9000,13000,18000]],
+ ['int_wd','Wardrobes & storage','Wardrobes, shutter area (about 42 sq.ft per bedroom)','Sqft',v=>Math.max(1,v.R-1)*42,[1300,1900,2800]],
+ ['int_tv','TV unit & wall panelling','TV unit with wall panelling (one per floor) — allowance','Nos',v=>Math.max(1,v.F),[45000,85000,150000]],
+ ['int_lt','Decorative lighting & fans','Decorative lights, profile lights & fans — allowance per sq.ft','Sqft',v=>v.B,[40,70,120]],
+ ['int_wp','Wallpaper / texture finishes','Wallpaper / texture on feature walls — allowance','Sqft',v=>v.R*80,[90,130,200]],
+ ['int_fu','Loose furniture & soft furnishing','Beds, sofa, dining, curtains — allowance per sq.ft','Sqft',v=>v.B,[250,450,800]],
+];
+const e2Std=()=>{const o=(D.org.find(x=>x.id==='main')||{}).estList;return o&&typeof o==='object'?o:{};};
+const e2Off=()=>E2.off||e2Std().off||{};
+const e2Cus=()=>E2.custom||e2Std().add||[];
 const E2_CITY=[['Hyderabad',1],['Bangalore',1.05],['Tier-2 town (Guntur, Vijayawada…)',0.93]];
 function e2Card(){ // organisation rate card: {r:{key:[s,p,l]}, over, cont}
   const o=(D.org.find(x=>x.id==='main')||{}).estRates2;return o&&typeof o==='object'?o:{};}
@@ -3869,11 +3883,13 @@ function e2Calc(){
   const ls=slabs.filter(Boolean);const F=ls.length;
   const v={S,HD,B:S+HD,GF:ls[0]||0,TOP:ls[ls.length-1]||0,F,R:n(E2.rooms),T:n(E2.toilets),K:n(E2.kitchens),BL:n(E2.balconies),L:n(E2.lifts)};
   v.M=n(E2.months)||(F?Math.round(4+1.5*F):0);
-  const rows=E2_EL.map(([sec,hd,k,d,u,qf,rt,note])=>{const ov=E2.ov[k]||{};const base=(card.r&&card.r[k]?card.r[k]:rt)[t];
+  const off=e2Off(),cus=e2Cus().map(x=>{const pr=E2_INT.find(y=>y[0]===x.pre);return [x.sec,x.hd,x.k,x.d,x.u,x.q!==undefined&&x.q!==''?()=>n(x.q):pr?pr[4]:()=>0,(Array.isArray(x.r)?x.r:[n(x.r),n(x.r),n(x.r)]).map(y=>x.pre?y:y/cf),x.note||''];});
+  const rows=[...E2_EL,...cus].filter(r=>!off[r[2]]).map(([sec,hd,k,d,u,qf,rt,note])=>{const ov=E2.ov[k]||{};const base=(card.r&&card.r[k]?card.r[k]:rt)[t];
     const q=ov.q!==undefined&&ov.q!==''?n(ov.q):Math.round(qf(v)*100)/100;const r=ov.r!==undefined&&ov.r!==''?n(ov.r):Math.round(base*cf);
     return {sec,hd,k,d,u,q,r,amt:q*r,note:note||'',edited:ov.q!==undefined&&ov.q!==''||ov.r!==undefined&&ov.r!==''};});
   const ex=EXTRAS.map(([nm_,u,r],i)=>({nm:nm_,u,r,q:n(E2.extras[i]),amt:n(E2.extras[i])*r})).filter(x=>x.q);
   const heads=[];rows.forEach(r=>{let h=heads.find(x=>x.sec===r.sec&&x.hd===r.hd);if(!h)heads.push(h={sec:r.sec,hd:r.hd,amt:0,rows:[]});h.amt+=r.amt;h.rows.push(r);});
+  E2_SECS.forEach(([sn],i)=>heads.forEach(h=>{if(h.sec===sn)h.o=i;}));heads.sort((a,b)=>a.o-b.o);
   const exT=ex.reduce((s,x)=>s+x.amt,0);if(exT)heads.push({sec:'VI',hd:'External works & extras',amt:exT,rows:[]});
   const works=heads.reduce((s,h)=>s+h.amt,0);
   const overP=card.over!==undefined?+card.over:7.5,contP=card.cont!==undefined?+card.cont:5;
@@ -3926,9 +3942,9 @@ function vEstDetailed(){
     :`<div class="empty">Enter the slab area of each floor to see the estimate.</div>`}</div>`;
   const boq=v.B?`<div class="box"><div class="box-h"><h2>BOQ</h2><span class="code">Change any quantity or rate — the totals update. ${Object.keys(E2.ov).length?`<button type="button" class="linkish" id="e2ResetOv">Undo my changes</button>`:''}</span></div>
     ${c.heads.filter(h=>h.rows.length).map(h=>{const key=h.sec+h.hd,open=E2.open[key];return `<div class="e2hd"><button type="button" class="e2hb" data-e2open="${esc(key)}" aria-expanded="${!!open}"><span>${esc(h.sec)} · ${L(h.hd)}</span><span class="num">${inr(h.amt)}</span>${ico('chevron-down','i chev')}</button>
-      ${open?`<div class="tbl-wrap"><table><thead><tr><th>Particulars</th><th>Unit</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${h.rows.map(r=>`<tr${r.edited?' class="e2ed"':''}><td>${L(r.d)}${r.note?`<div class="code">${L(r.note)}</div>`:''}</td><td>${r.u}</td>
+      ${open?`<div class="tbl-wrap"><table><thead><tr><th>Particulars</th><th>Unit</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Amount</th>${CANW?'<th></th>':''}</tr></thead><tbody>${h.rows.map(r=>`<tr${r.edited?' class="e2ed"':''}><td>${L(r.d)}${r.note?`<div class="code">${L(r.note)}</div>`:''}</td><td>${r.u}</td>
         <td class="num"><input data-e2q="${r.k}" value="${(E2.ov[r.k]||{}).q??fq(r.q).replace(/,/g,'')}" inputmode="decimal" style="width:90px;text-align:right"></td>
-        <td class="num"><input data-e2r="${r.k}" value="${(E2.ov[r.k]||{}).r??r.r}" inputmode="decimal" style="width:100px;text-align:right"></td><td class="num">${inr(r.amt)}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`;}).join('')}</div>`:'';
+        <td class="num"><input data-e2r="${r.k}" value="${(E2.ov[r.k]||{}).r??r.r}" inputmode="decimal" style="width:100px;text-align:right"></td><td class="num">${inr(r.amt)}</td>${CANW?`<td><button type="button" class="btn sm ghost" data-e2rm="${esc(r.k)}" title="Remove this item" aria-label="Remove ${esc(r.d)}">${ico('x')}</button></td>`:''}</tr>`).join('')}</tbody></table></div>`:''}</div>`;}).join('')}${e2Editor(c)}</div>`:'';
   const specs=v.B?`<div class="box"><div class="box-h"><h2>What's included — ${esc(E2.tier)}</h2></div><div class="tbl-wrap"><table><tbody>${Object.entries(E2_SPEC).map(([k,s])=>`<tr><td style="width:30%"><b>${L(k)}</b></td><td>${L(s[c.t])}</td></tr>`).join('')}</tbody></table></div></div>`:'';
   const mats=v.B?`<div class="box"><div class="box-h"><h2>Main quantities</h2><span class="code">From the BOQ — check against the structural design</span></div><div class="tbl-wrap"><table><tbody>${c.mat.map(([m,u,q])=>`<tr><td>${L(m)}</td><td class="num">${fq(q)} ${u}</td></tr>`).join('')}<tr><td>Steel per sq.ft of BUA</td><td class="num">${(c.mat[3][2]*1000/v.B).toFixed(2)} kg</td></tr></tbody></table></div></div>`:'';
   const stg=v.B?`<div class="box"><div class="box-h"><h2>Payment stages</h2></div><div class="tbl-wrap"><table><thead><tr><th>Stage</th><th class="num">%</th><th class="num">Amount</th></tr></thead><tbody>${c.stages.map(([s,p])=>`<tr><td>${L(s)}</td><td class="num">${p}%</td><td class="num">${inr(c.total*p/100)}</td></tr>`).join('')}</tbody></table></div></div>`:'';
@@ -3986,6 +4002,47 @@ async function e2Doc(){
   <p class="m">Excludes land, approvals and fees, interiors and furniture. Quantities are worked out from the slab areas and room counts; the final quotation follows the approved drawings, structural design and site survey. Press Ctrl+P → Save as PDF to share.</p></body></html>`;
   await saveFile(`Estimate-${(E2.name||E2.tier).replace(/[^\w-]+/g,'-')}.html`,new Blob([html],{type:'text/html'}));
 }
+/* add / remove BOQ items (civil and interiors); the list can be saved as the company standard */
+function e2Editor(c){
+  if(!CANW)return '';
+  const off=e2Off(),cus=e2Cus(),t=c.t,L=esc;
+  const gone=E2_EL.filter(r=>off[r[2]]);
+  const pres=E2_INT.filter(p=>!cus.some(x=>x.k===p[0]));
+  const heads=[...new Set([...E2_EL.map(r=>r[1]),...E2_INT.map(r=>r[1]),...cus.map(x=>x.hd)])];
+  const changed=!!(E2.off||E2.custom),std=e2Std(),hasStd=!!(std.add||std.off);
+  return `<div class="e2edit">
+    <div class="box-h"><h2>Add or remove items</h2><span class="code">Remove with ✕ on any line above. Add civil or interior items here.</span></div>
+    ${pres.length?`<div class="srow"><span class="code"><b>INTERIORS</b></span>${pres.map(p=>`<button type="button" class="btn sm" data-e2pre="${p[0]}" title="${L(p[2])} — ${inr(p[5][t])}/${p[3]}">${ico('plus')}<span>${L(p[1])}</span></button>`).join('')}</div>`:''}
+    <form id="e2ItemForm" class="e2form">
+      <label>Section<select name="sec">${E2_SECS.map(([sn,st])=>`<option value="${sn}" ${sn==='VI'?'selected':''}>${sn} · ${L(st)}</option>`).join('')}</select></label>
+      <label>Head<input name="hd" list="e2Heads" required placeholder="e.g. Earthwork, Interiors"></label>
+      <label class="wide">Item description<input name="d" required placeholder="e.g. Rainwater harvesting pit"></label>
+      <label>Unit<input name="u" required placeholder="Nos / Sqft / Cum / LS" list="e2Units"></label>
+      <label>Quantity<input name="q" required inputmode="decimal" placeholder="0"></label>
+      <label>Rate (₹)<input name="r" required inputmode="decimal" placeholder="0"></label>
+      <button class="btn pri">${ico('plus')}<span>Add item</span></button>
+      <datalist id="e2Heads">${heads.map(h=>`<option value="${L(h)}">`).join('')}</datalist><datalist id="e2Units">${['Nos','Sqft','Sqm','Rft','Rmt','Cum','MT','Kg','LS','Month'].map(u=>`<option value="${u}">`).join('')}</datalist>
+    </form>
+    ${gone.length?`<div class="srow"><span class="code">Removed:</span>${gone.map(r=>`<button type="button" class="btn sm ghost" data-e2back="${r[2]}" title="Add back">${ico('plus')}<span>${L(r[3])}</span></button>`).join('')}</div>`:''}
+    ${isAdmin()?`<div class="srow"><button type="button" class="btn sm" id="e2StdSave">${ico('check')}<span>Save this item list as company standard</span></button>
+      ${changed&&hasStd?`<button type="button" class="btn sm ghost" id="e2StdUse">Back to company standard</button>`:''}${changed||hasStd?`<button type="button" class="btn sm ghost" id="e2StdOrig">Back to BuildMitr default list</button>`:''}
+      <span class="code">${hasStd?'Company standard list in use for new estimates.':'New estimates use the BuildMitr default list.'}</span></div>`:''}
+  </div>`;
+}
+function e2Touch(){if(!E2.off)E2.off={...e2Off()};if(!E2.custom)E2.custom=e2Cus().map(x=>({...x}));}
+document.addEventListener('click',e=>{if(!e.target.closest||S.view!=='estimator')return;
+  {const b=e.target.closest('[data-e2rm]');if(b){const k=b.dataset.e2rm;e2Touch();if(E2.custom.some(x=>x.k===k))E2.custom=E2.custom.filter(x=>x.k!==k);else E2.off[k]=true;delete E2.ov[k];render();toast('Item removed — add it back below if needed');return;}}
+  {const b=e.target.closest('[data-e2back]');if(b){e2Touch();delete E2.off[b.dataset.e2back];render();return;}}
+  {const b=e.target.closest('[data-e2pre]');if(b){const p=E2_INT.find(x=>x[0]===b.dataset.e2pre);if(!p)return;e2Touch();
+    E2.custom.push({k:p[0],pre:p[0],sec:'VII',hd:p[1],d:p[2],u:p[3],r:p[5].slice()});E2.open['VII'+p[1]]=true;render();toast(p[1]+' added under VII · Interiors');return;}}
+  const id=(e.target.closest('button')||{}).id;
+  if(id==='e2StdSave'){const o={add:e2Cus(),off:e2Off()};write(()=>db.doc('org/main').update({estList:o}),'Saved as your company standard item list').then(ok=>{if(ok){E2.off=null;E2.custom=null;render();}});return;}
+  if(id==='e2StdUse'){E2.off=null;E2.custom=null;E2.ov={};render();return;}
+  if(id==='e2StdOrig'){E2.off={};E2.custom=[];E2.ov={};render();toast('BuildMitr default list for this estimate. Save as company standard to keep it.');return;}
+},true);
+document.addEventListener('submit',e=>{if(e.target.id!=='e2ItemForm')return;e.preventDefault();const f=e.target,g=k=>(f.elements[k].value||'').trim();
+  e2Touch();const r=n(g('r'));E2.custom.push({k:'cx'+Date.now().toString(36),sec:g('sec'),hd:g('hd'),d:g('d'),u:g('u'),q:g('q'),r:[r,r,r]});E2.open[g('sec')+g('hd')]=true;
+  render();toast('Item added');},true);
 async function e2SaveRates(f){
   const g=k=>Number((f.elements[k]||{}).value),o={r:{},over:g('over'),cont:g('cont')};
   E2_EL.forEach(([,,k,,,,rt])=>{const r=[0,1,2].map(i=>{const x=g(`${k}_${i}`);return isNaN(x)?rt[i]:x;});if(r.some((x,i)=>x!==rt[i]))o.r[k]=r;});
@@ -4177,6 +4234,9 @@ const PL_HOL_DEFAULT=`2026-01-14 Bhogi
 2027-12-25 Christmas`;
 const PL={pid:'',start:'',months:'6',city:0,sun:true,floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],rooms:'4',toilets:'3',kitchens:'1',lifts:'0',scope:{},hol:'',ed:{},showHol:false};
 PL_SCOPE.forEach(([k,,,on])=>PL.scope[k]=!!on);
+const plStd=()=>{const o=(D.org.find(x=>x.id==='main')||{}).plStd;return o&&typeof o==='object'?o:{};};
+const plCus=()=>PL.custom||plStd().custom||[];
+function plStdApply(){if(PL._std)return;const o=plStd();if(o.scope)Object.assign(PL.scope,o.scope);PL._std=1;}
 const plCities=()=>Object.keys(PL_RAIN);
 const isoD=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const dOf=s=>new Date(s+'T00:00');
@@ -4185,7 +4245,7 @@ function plHolidays(){const m={};String(PL.hol||PL_HOL_DEFAULT).split('\n').forE
 function plNetwork(){
   const fl=PL.floors.filter(f=>n(f.a)),F=fl.length,A=fl.map(f=>n(f.a)),AT=A.reduce((s,x)=>s+x,0),GF=A[0]||0,TOP=A[F-1]||0;
   const T=n(PL.toilets),R=n(PL.rooms),L=n(PL.lifts),Tf=F?T/F:0,on=k=>PL.scope[k],acts=[];
-  const add=(key,title,sc,wd,after,o)=>{if(!on(sc))return null;acts.push({key,title,sc,wd:Math.max(1,Math.round(wd)),after:(after||[]).filter(Boolean),lag:(o&&o.lag)||0,wet:!!(o&&o.wet),res:(o&&o.res)||''});return key;};
+  const add=(key,title,sc,wd,after,o)=>{if(!on(sc)&&!/^cu/.test(key))return null;acts.push({key,title,sc,wd:Math.max(1,Math.round(wd)),after:(after||[]).filter(Boolean),lag:(o&&o.lag)||0,wet:!!(o&&o.wet),res:(o&&o.res)||''});return key;};
   const pre=add('pre','Site clearance, setting out & mobilisation','pre',3,[],{res:'Civil gang'});
   const soil=add('soil','Soil test, approvals & drawings sign-off','soil',7,[pre],{res:'Site engineer'});
   const exc=add('exc','Excavation for footings','exc',3+GF/400,[pre,soil],{wet:1,res:'Excavator + civil gang'});
@@ -4224,7 +4284,8 @@ function plNetwork(){
   const wp=add('wallp','Wallpaper / texture finishes','wallp',4,[p2],{res:'Interior contractor'});
   const land=add('land','Landscaping & paving','land',8,[epl,cw],{wet:1,res:'Landscape contractor'});
   const furn=add('furn','Loose furniture & soft furnishing','furn',5,[p2,wp,lt],{res:'Interior contractor'});
-  add('clean','Deep cleaning, snag list & handover','clean',4,[p2,lift,terwp,land,furn,wp,lt,solar,sump,elev],{res:'Site engineer'});
+  const cu=plCus().filter(x=>PL.scope[x.key]!==false).map(x=>{const k=add(x.key,x.title,x.key,n(x.wd)||1,[x.after&&x.after!=='start'?x.after:(x.after==='start'?null:pre)],{wet:x.wet,res:x.res||(x.grp==='Interiors'?'Interior contractor':'Civil contractor')});return k;});
+  add('clean','Deep cleaning, snag list & handover','clean',4,[p2,lift,terwp,land,furn,wp,lt,solar,sump,elev,...cu],{res:'Site engineer'});
   const keys=new Set(acts.map(a=>a.key));acts.forEach(a=>a.after=a.after.filter(k=>keys.has(k)));   // drop links to unticked works
   return {acts,F,AT,fl};
 }
@@ -4262,6 +4323,7 @@ function plCalc(){
 }
 /* ---- page ---- */
 function vPlanner(){
+  plStdApply();
   if(!isAdmin())return header('Schedule planner')+`<div class="box hero-empty">${ico('shield')}<h2>Only the admin or project manager can plan schedules</h2></div>`;
   const c=plCalc(),L=esc,cities=plCities();
   const inp=(k,v,ph,w)=>`<input data-pl="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" ${w?`style="width:${w}"`:''} inputmode="decimal">`;
@@ -4278,7 +4340,17 @@ function vPlanner(){
     <div class="srow"><button type="button" class="btn sm" id="plAdd">${ico('plus')}<span>Add floor</span></button></div>
     <div class="fhead"><label>Rooms${inp('rooms',PL.rooms,'nos')}</label><label>Toilets${inp('toilets',PL.toilets,'nos')}</label><label>Kitchens${inp('kitchens',PL.kitchens,'nos')}</label><label>Lifts${inp('lifts',PL.lifts,'nos')}</label></div>
     <div class="box-h"><h2>Scope of works</h2><span class="code">Tick what this project includes</span></div>
-    <div class="pl-scope">${['Civil','Interiors'].map(g=>`<div><div class="code" style="margin-bottom:6px"><b>${g.toUpperCase()}</b></div>${PL_SCOPE.filter(x=>x[2]===g).map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-plsc="${k}" ${PL.scope[k]?'checked':''} ${k==='struct'?'disabled':''}>${L(l)}</label>`).join('')}</div>`).join('')}</div></div>`;
+    <div class="pl-scope">${['Civil','Interiors'].map(g=>`<div><div class="code" style="margin-bottom:6px"><b>${g.toUpperCase()}</b></div>${PL_SCOPE.filter(x=>x[2]===g).map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-plsc="${k}" ${PL.scope[k]?'checked':''} ${k==='struct'?'disabled':''}>${L(l)}</label>`).join('')}
+      ${plCus().filter(x=>x.grp===g).map(x=>`<div class="pl-chk"><input type="checkbox" data-plsc="${x.key}" ${PL.scope[x.key]!==false?'checked':''} aria-label="Include"><span style="flex:1">${L(x.title)} <span class="pill p-blue">added</span><span class="code"> ${x.wd} days</span></span><button type="button" class="btn sm ghost" data-plcdel="${x.key}" title="Delete this item" aria-label="Delete ${L(x.title)}">${ico('x')}</button></div>`).join('')}</div>`).join('')}</div>
+    ${CANW?`<div class="box-h"><h2>Add your own item</h2><span class="code">Untick any item above to remove it</span></div>
+    <form id="plItemForm" class="e2form">
+      <label class="wide">Activity<input name="title" required placeholder="e.g. Borewell, rainwater pit, home automation"></label>
+      <label>Group<select name="grp"><option>Civil</option><option>Interiors</option></select></label>
+      <label>Working days<input name="wd" required inputmode="numeric" placeholder="e.g. 5"></label>
+      <label class="wide">Start after<select name="after"><option value="start">Project start</option>${(c.N?c.N.acts:[]).filter(a=>a.key!=='clean').map(a=>`<option value="${a.key}">${L(a.title)}</option>`).join('')}</select></label>
+      <label class="pl-chk" style="align-self:center"><input type="checkbox" name="wet">Outdoor (affected by rain)</label>
+      <button class="btn pri">${ico('plus')}<span>Add</span></button></form>`:''}
+    ${isAdmin()?`<div class="srow"><button type="button" class="btn sm" id="plStdSave">${ico('check')}<span>Save this list as company standard</span></button>${PL.custom||plStd().scope?`<button type="button" class="btn sm ghost" id="plStdOrig">Back to BuildMitr default list</button>`:''}</div>`:''}</div>`;
   const on=c.rows.filter(r=>!r.off),wdTot=c.end?Math.round((dOf(c.end)-dOf(c.start))/864e5)+1:0;
   const sumry=`<div class="box"><div class="box-h"><h2>Timeline</h2>${c.end?`<span class="code">${fd(c.start)} → ${fd(c.end)}</span>`:''}</div>
     ${on.length?`<div class="tiles"><div class="tile"><b>${(wdTot/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${on.length}</b><span>Activities</span></div>
@@ -4341,9 +4413,11 @@ async function plSave(){
   if(ok){S.proj=p.id;try{localStorage.setItem('bm-proj',p.id);}catch(_){}S.view='schedule';render();scrollTo(0,0);}
 }
 /* open the planner, optionally filled from a project / estimate */
+function plFromEst(est){const hd=(est.heads||[]).filter(h=>h.amt).map(h=>h.hd).join('|');
+  [['fc',/ceiling/i],['mk',/modular kitchen/i],['ward',/wardrobe/i],['tv',/tv unit|panelling/i],['light',/lighting/i],['wallp',/wallpaper|texture/i],['furn',/furniture/i]].forEach(([k,re])=>{if(re.test(hd))PL.scope[k]=true;});}
 function plOpen(pid,o){
   PL.pid=pid||PL.pid;const p=proj(PL.pid),est=(p&&p.estimate)||{};
-  if(o){Object.assign(PL,o);}else if(est.floors&&est.floors.length){PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
+  if(o){Object.assign(PL,o);}else if(est.floors&&est.floors.length){plFromEst(est);PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
   if(p&&p.start&&!PL.start)PL.start=p.start;PL.ed={};S.view='planner';render();scrollTo(0,0);
 }
 /* comments on saved activities (Activity schedule) */
@@ -4373,7 +4447,7 @@ document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!t.clo
   if(t.id==='pl-hol'){PL.hol=t.value;return;}
 },true);
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};if(S.view!=='planner')return;
-  if(t.id==='pl-pid'){PL.pid=t.value;const p=proj(t.value);if(p){const est=p.estimate||{};if(est.floors&&est.floors.length)PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));if(p.start)PL.start=p.start;}render();return;}
+  if(t.id==='pl-pid'){PL.pid=t.value;const p=proj(t.value);if(p){const est=p.estimate||{};plFromEst(est);if(est.floors&&est.floors.length)PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));if(p.start)PL.start=p.start;}render();return;}
   if(t.id==='pl-start'){PL.start=t.value;render();return;}if(t.id==='pl-city'){PL.city=+t.value;render();return;}
   if(t.id==='pl-sun'){PL.sun=t.checked;render();return;}if(t.id==='pl-ms'){PL.ms=t.checked;return;}
   if(t.id==='pl-hol'||d.plf!==undefined||d.plt!==undefined||d.plc!==undefined){render();return;}
@@ -4383,15 +4457,20 @@ document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};if(S.vie
 },true);
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-pldel]');if(b){PL.floors.splice(+b.dataset.pldel,1);render();return;}}
+  {const b=e.target.closest('[data-plcdel]');if(b){PL.custom=plCus().filter(x=>x.key!==b.dataset.plcdel);delete PL.scope[b.dataset.plcdel];render();return;}}
   {const b=e.target.closest('[data-tcm]');if(b){e.stopPropagation();taskComments(b.dataset.tcm);return;}}
   const id=(e.target.closest('button')||{}).id;if(!id)return;
   if(id==='plAdd'){const nm_=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor'];PL.floors.push({n:nm_[PL.floors.length]||`Floor ${PL.floors.length}`,a:(PL.floors[PL.floors.length-1]||{}).a||''});render();return;}
   if(id==='plHolBtn'){PL.showHol=!PL.showHol;render();return;}
   if(id==='plUndo'){PL.ed={};render();return;}
+  if(id==='plStdSave'){const o={scope:PL.scope,custom:plCus()};write(()=>db.doc('org/main').update({plStd:o}),'Saved as your company standard scope list');return;}
+  if(id==='plStdOrig'){PL.custom=[];PL_SCOPE.forEach(([k,,,on])=>PL.scope[k]=!!on);render();toast('BuildMitr default list. Save as company standard to keep it.');return;}
   if(id==='plSave'){plSave();return;}
   if(id==='plShare'){shareSheet('Work schedule',plText());return;}
 },true);
-document.addEventListener('submit',e=>{if(e.target.id==='tcForm'){e.preventDefault();taskCommentAdd(e.target);}},true);
+document.addEventListener('submit',e=>{if(e.target.id==='tcForm'){e.preventDefault();taskCommentAdd(e.target);}
+  if(e.target.id==='plItemForm'){e.preventDefault();const f=e.target,g=k=>(f.elements[k].value||'').trim(),key='cu'+Date.now().toString(36);
+    PL.custom=[...plCus(),{key,title:g('title'),grp:g('grp'),wd:Math.max(1,Math.round(n(g('wd')))),after:g('after'),wet:f.elements.wet.checked}];PL.scope[key]=true;render();toast('Added to the schedule');}},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
