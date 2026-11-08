@@ -923,7 +923,7 @@ function side(){
   NAV.forEach(g=>{if(g.g&&g.items.some(i=>i[0]===S.view)&&!OPENG.has('auto:'+S.view)){OPENG.add(g.g);const sp=SUPER.find(x=>x.groups.includes(g.g));if(sp)OPENG.add(sp.name);OPENG.add('auto:'+S.view);}});
   const navBtn=k=>`<button class="nav ${S.view===k?'on':''}" data-go="${k}" title="${esc(label(k))}">${ico(icon(k))}<span class="lbl">${esc(label(k))}</span>${k==='messages'?(()=>{const c=chatUnread();return c?`<span class="nbadge">${c}</span>`:'';})():''}</button>`;
   let h=`<div class="side-top"><span class="brand">BuildMitr</span><button class="burger" id="burger" title="${COLLAPSED?'Open menu':'Collapse menu'}" aria-label="${COLLAPSED?'Open menu':'Collapse menu'}" aria-expanded="${!COLLAPSED}">${ico('menu')}</button></div><div class="org">${esc(orgName())}</div><div class="uibadge">${esc(UI_NAME[uiOf()])}${S.viewAs?' · preview':''}</div>`;
-  const okItem=k=>UI_ONLY[k]?(uiOf()===UI_ONLY[k]&&canView(k)):k==='dashboard'&&['site','design'].includes(uiOf())?false:canView(k);
+  const okItem=k=>k==='alerts'?false:UI_ONLY[k]?(uiOf()===UI_ONLY[k]&&canView(k)):k==='dashboard'&&['site','design'].includes(uiOf())?false:canView(k);
   const grpHtml=(g0,cls='')=>{const g={...g0,items:g0.items.filter(i=>okItem(i[0]))};if(!g.items.length)return '';const open=OPENG.has(g.g),active=g.items.some(i=>i[0]===S.view);
     return `<button class="gh ${cls} ${open?'open':''} ${active?'has':''}" data-grp="${esc(g.g)}" aria-expanded="${open}" title="${esc(trG(g.g))}">${ico(GROUP_ICON[g.g]||'folder')}<span class="lbl">${esc(trG(g.g))}</span>${ico('chevron-down','i chev')}</button>${open?`<div class="subs">${g.items.map(([k])=>navBtn(k)).join('')}</div>`:''}`;};
   const done=new Set();
