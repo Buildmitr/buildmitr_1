@@ -351,6 +351,8 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .st-tbl input,.st-tbl select{font-size:13px;padding:6px 8px}.st-tbl input[type=date]{width:140px}
 #saveChip{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;font-size:12.5px;padding:6px 12px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.12);display:none}#saveChip.on{display:block}#saveChip.offline{background:var(--amber);color:var(--amber-ink)}
 .fv .fv-pane{width:min(1100px,100%);max-width:100%}
+.qr-box{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1/1;max-height:60vh}.qr-box video{width:100%;height:100%;object-fit:cover}.qr-frame{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.cam-note{position:absolute;left:8px;right:8px;bottom:6px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px}.cam-note a{color:#fff}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -567,7 +569,7 @@ const MOD={
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'name',l:'Camera name (e.g. Main gate)',t:'text',req:1,list:1},{k:'spot',l:'Where on site',t:'text',list:1},
     {k:'brand',l:'Brand',t:'select',o:['CP Plus','EZVIZ','Hikvision','Dahua','Imou','TP-Link Tapo','Qubo','Godrej','Other'],req:1,list:1},
     {k:'model',l:'Model',t:'text'},{k:'serial',l:'Device serial / NVR ID (no passwords)',t:'text'},{k:'channel',l:'NVR channel no.',t:'text'},
-    {k:'live',l:'Live view link (HLS .m3u8 stream or web viewer page)',t:'url'},{k:'app',l:'Link to open in brand app / cloud (optional)',t:'url'},
+    {k:'live',l:'Live link (optional — HLS .m3u8, YouTube Live, MJPEG or web viewer). EZVIZ / Hikvision cameras with a serial play without a link once EZVIZ is connected in Settings',t:'url'},{k:'app',l:'Link to open in brand app / cloud (optional)',t:'url'},
     {k:'clientView',l:'Client can see this camera',t:'select',o:['No','Yes'],req:1,list:1},
     {k:'teamView',l:'Team access',t:'select',o:['All team on this project','Admin & project managers only'],req:1,list:1},
     {k:'status',l:'Status',t:'select',o:['Online','Offline','Not installed yet'],list:1},{k:'installed',l:'Installed on',t:'date'},
@@ -1165,6 +1167,7 @@ function vSettings(){
     <label class="code">Google review link<input id="o-review" value="${esc(org.reviewLink||'')}" ${admin?'':'disabled'} placeholder="https://g.page/r/…/review"></label>
     ${admin?`<div><button class="btn pri">${ico('check')}Save</button></div>`:'<p class="code">Only the admin or editors can change company details.</p>'}</form></div>`:''}
   ${admin?letterheadBox():''}
+  ${admin?camSettingsBox():''}
   ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="pwSet">${ico('lock')}<span>${LG.hasPw?'Change password':'Set password'}</span></button><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
   <div class="box"><div class="box-h">${ico('eye')}<h2>Colour theme</h2></div><div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     ${[['light','Light'],['dark','Dark'],['auto','Automatic (same as phone)']].map(([k,l])=>`<button class="btn ${THEME===k?'pri':''}" data-settheme="${k}">${l}</button>`).join('')}</div></div>
@@ -3289,28 +3292,18 @@ function camAllowed(c){
 }
 let HLSP=null;
 function loadHls(){if(window.Hls)return Promise.resolve();return new Promise((ok,bad)=>{const j=document.createElement('script');j.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js';j.onload=ok;j.onerror=bad;document.head.appendChild(j);});}
-async function playCam(id){
-  const c=D.cameras.find(x=>x.id===id);if(!c||!c.live)return;
-  const box=document.getElementById('cam-'+id);if(!box)return;
-  if(!S.web){toast('Live video plays in the web version. Opening the live link instead.');window.open&&window.open(c.live,'_blank','noopener');return;}
-  if(!/\.m3u8(\?|$)/i.test(c.live)){window.open(c.live,'_blank','noopener');return;}
-  box.innerHTML='<video class="cam-video" controls autoplay muted playsinline></video>';const v=box.querySelector('video');
-  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=c.live;return;}
-  try{await loadHls();if(HLSP)HLSP.destroy();HLSP=new Hls();HLSP.loadSource(c.live);HLSP.attachMedia(v);HLSP.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal){box.innerHTML='<div class="cam-off">Stream not reachable. The camera may be offline or the link expired.</div>';}});}
-  catch(e){box.innerHTML='<div class="cam-off">Player could not load.</div>';}
-}
 function vCctv(){
   const all=D.cameras.filter(inProj),cams=all.filter(camAllowed);
-  const btn=CANW&&isAdmin()?`<button class="btn pri" data-add="cameras">${ico('plus')}Add camera</button>`:'';
-  const intro=`<div class="note">${ico('shield')}<span><b>Admin controls access.</b> For each camera choose <b>Client can see</b> and <b>Team access</b>. Passwords are never stored here — to give someone live access in the brand app, share the device from that app (steps on each camera below).</span></div>`;
+  camStatus();const btn=CANW&&isAdmin()?`<button class="btn" id="camScan">${ico('scan-line')}Scan camera QR</button><button class="btn pri" data-add="cameras">${ico('plus')}Add camera</button>`:'';
+  const intro=`<div class="note">${ico('shield')}<span><b>Live video plays inside BuildMitr.</b> ${isAdmin()?(CAM.ez?'EZVIZ is connected. ':'Connect your EZVIZ account in <a href="#" data-go="settings">Settings</a>, or add an HLS / YouTube Live link to a camera. '):''}The admin decides who sees each camera (<b>Client can see</b>, <b>Team access</b>). No camera passwords are stored.</span></div>`;
   if(!cams.length)return header(label('cctv'),btn)+intro+`<div class="box hero-empty">${ico('cctv')}<h2>${all.length?'No cameras you can view':'No site cameras yet'}</h2><p>${all.length?'The admin has not given you access to the cameras on this project.':'Add each camera installed on site — CP Plus, EZVIZ, Hikvision, Dahua, Imou, Tapo or any other — with where it is and who may watch it.'}</p>${btn}</div>`;
   const on=cams.filter(c=>c.status==='Online').length,off=cams.filter(c=>c.status==='Offline').length;
   return header(label('cctv'),btn)+intro+`<div class="box tiles"><div class="tile"><b>${cams.length}</b><span>Cameras</span></div><div class="tile"><b>${on}</b><span>Online</span></div><div class="tile"><b style="color:${off?'var(--red-ink)':'inherit'}">${off}</b><span>Offline</span></div><div class="tile"><b>${cams.filter(c=>c.clientView==='Yes').length}</b><span>Visible to client</span></div></div>
   <div class="cams">${cams.map(c=>{const b=BRANDS[c.brand]||BRANDS.Other;const snap=(c.photos||[])[0];
-    return `<div class="cam box"><div class="cam-view" id="cam-${c.id}">${snap?`<img src="/_blob/${esc(snap)}" alt="">`:`<div class="cam-off">${ico('cctv')}<span>${c.live?'Tap Watch live':'No live link added'}</span></div>`}<span class="cam-st pill ${STATUS_PILL[c.status]||'p-grey'}">${esc(c.status||'—')}</span></div>
+    return `<div class="cam box"><div class="cam-view" id="cam-${c.id}">${snap?`<img src="/_blob/${esc(snap)}" alt="">`:`<div class="cam-off">${ico('cctv')}<span>${canWatch(c)?'Tap Watch live':'No live view set up'}</span></div>`}<span class="cam-st pill ${STATUS_PILL[c.status]||'p-grey'}">${esc(c.status||'—')}</span></div>
       <div class="cam-b"><b>${esc(c.name)}</b><div class="code">${esc(pname(c.project))}${c.spot?' · '+esc(c.spot):''}</div>
       <div class="meta"><span>${ico('video')}${esc(c.brand)}${c.model?' '+esc(c.model):''}</span><span>${ico(c.clientView==='Yes'?'eye':'eye-off')}Client ${c.clientView==='Yes'?'can view':'hidden'}</span><span>${ico('users')}${c.teamView==='Admin & project managers only'?'Managers only':'All team'}</span></div>
-      <div class="acts" style="display:flex;gap:6px;flex-wrap:wrap">${c.live?`<button class="btn sm pri" data-camplay="${c.id}">${ico('monitor-play')}Watch live</button><a class="btn sm" href="${esc(c.live)}" target="_blank" rel="noopener noreferrer">${ico('external-link')}Open link</a>`:''}
+      <div class="acts" style="display:flex;gap:6px;flex-wrap:wrap">${canWatch(c)?`<button class="btn sm pri" data-camplay="${c.id}">${ico('monitor-play')}Watch live</button><button type="button" class="btn sm" data-camfull="${c.id}" aria-label="Full screen">${ico('maximize')}</button>`:''}${c.live&&camKind(c.live)==='web'?`<a class="btn sm ghost" href="${esc(c.live)}" target="_blank" rel="noopener noreferrer" aria-label="Open link">${ico('external-link')}</a>`:''}
         ${c.app?`<a class="btn sm" href="${esc(c.app)}" target="_blank" rel="noopener noreferrer">${ico('smartphone')}Open in ${esc(b.app.split(' ')[0])}</a>`:`<a class="btn sm" href="${esc(playSearch(c.brand))}" target="_blank" rel="noopener noreferrer">${ico('smartphone')}Get ${esc(b.app.split(' ')[0])} app</a>`}
         ${CANW&&isAdmin()?`<button class="btn sm ghost" data-edit="cameras:${c.id}" aria-label="Edit">${ico('pencil')}</button>`:''}</div>
       ${isAdmin()?`<details class="code"><summary style="cursor:pointer">How to give live access (${esc(c.brand)})</summary><p style="margin:6px 0">${esc(b.share)}</p><p style="margin:6px 0"><b>Live inside BuildMitr:</b> ${esc(b.stream)}</p>${c.serial?`<p style="margin:6px 0">Device / NVR ID: ${esc(c.serial)}${c.channel?' · channel '+esc(c.channel):''}</p>`:''}</details>`:''}</div></div>`;}).join('')}</div>`;
@@ -4908,6 +4901,117 @@ document.addEventListener('click',e=>{if(!e.target.closest||!CLOUD.blob)return;c
   const id=fileIdOf(a.getAttribute('href'));if(!id)return;e.preventDefault();e.stopPropagation();
   const img=/lh3\.googleusercontent/.test(a.href)||!!a.querySelector('img');openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''));},true);
 
+/* ================= Live cameras inside BuildMitr =================
+ * • EZVIZ (and Hikvision cameras on an EZVIZ account): the admin connects the company's EZVIZ account once; live video
+ *   then plays inside the app (short-lived HLS link made on the server — the key and verification codes never reach phones).
+ * • Any HLS (.m3u8), YouTube Live, MJPEG or web-viewer link also plays inside the app.
+ * • "Scan camera QR" reads the QR on the camera / box / a shared QR picture and fills in the camera for you. */
+Object.assign(ICONS,{'scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+  'maximize':'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'});
+const CAM={ez:null,list:null};
+const camEzBrand=c=>['EZVIZ','Hikvision'].includes(c.brand)&&c.serial&&!/demo/i.test(c.serial);
+const camKind=u=>{u=String(u||'');if(/\.m3u8(\?|$)/i.test(u))return 'hls';if(/youtube\.com|youtu\.be/i.test(u))return 'yt';if(/\.mjpe?g(\?|$)|mjpg|\/video(\?|$)|action=stream/i.test(u))return 'mjpeg';if(/^rtsp:/i.test(u))return 'rtsp';if(/^https?:/i.test(u))return 'web';return '';};
+const ytEmbed=u=>{const m=String(u).match(/(?:v=|youtu\.be\/|live\/|embed\/)([\w-]{11})/);return m?`https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&playsinline=1`:'';};
+const canWatch=c=>!!(c.live&&camKind(c.live))||(camEzBrand(c)&&CAM.ez!==false);
+async function camStatus(){if(!S.cloud||CAM.ez!==null)return;try{const j=await gasApi('camStatus');CAM.ez=!!j.connected;}catch(e){CAM.ez=false;if(/Unknown request/i.test(e.message||''))CAM.old=true;}if(S.view==='cctv'||S.view==='settings')render();}
+async function hlsInto(box,url){
+  box.innerHTML='<video class="cam-video" controls autoplay muted playsinline></video>';const v=box.querySelector('video');
+  if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=url;return;}
+  await loadHls();if(HLSP)HLSP.destroy();HLSP=new Hls();HLSP.loadSource(url);HLSP.attachMedia(v);
+  HLSP.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal)box.innerHTML='<div class="cam-off">Stream not reachable. The camera may be offline or the link expired.</div>';});
+}
+async function playCam(id){
+  const c=D.cameras.find(x=>x.id===id);if(!c)return;const box=document.getElementById('cam-'+id);if(!box)return;
+  box.innerHTML='<div class="cam-off"><span>Connecting…</span></div>';
+  try{
+    const k=camKind(c.live);
+    if(!k&&camEzBrand(c)&&S.cloud){const j=await gasApi('camLive',{id});await hlsInto(box,j.url);}
+    else if(k==='hls')await hlsInto(box,c.live);
+    else if(k==='yt')box.innerHTML=`<iframe class="cam-video" src="${esc(ytEmbed(c.live))}" title="${esc(c.name)}" allow="autoplay; fullscreen" allowfullscreen style="border:0"></iframe>`;
+    else if(k==='mjpeg')box.innerHTML=`<img class="cam-video" src="${esc(c.live)}" alt="${esc(c.name)} live" style="object-fit:contain">`;
+    else if(k==='web')box.innerHTML=`<iframe class="cam-video" src="${esc(c.live)}" title="${esc(c.name)}" allow="autoplay; fullscreen" allowfullscreen style="border:0;background:#000"></iframe><div class="cam-note">Blank? This viewer does not allow other apps — <a href="${esc(c.live)}" target="_blank" rel="noopener">open it here</a>.</div>`;
+    else if(k==='rtsp')box.innerHTML='<div class="cam-off"><span>RTSP cannot play in a browser. Ask your installer for an HLS (.m3u8) link from a streaming service (go2rtc / MediaMTX), or connect the camera through EZVIZ.</span></div>';
+    else box.innerHTML='<div class="cam-off"><span>No live view set up for this camera yet.</span></div>';
+  }catch(e){box.innerHTML=`<div class="cam-off"><span>${esc(e.message||'Live view failed')}</span></div>`;}
+}
+function camFull(id){const box=document.getElementById('cam-'+id);const el=box&&(box.querySelector('video,iframe,img')||box);if(!el)return;(el.requestFullscreen||el.webkitRequestFullscreen||el.webkitEnterFullscreen||(()=>{})).call(el);}
+/* ---------- QR scan ---------- */
+let QRS=null;
+function loadJsQR(){if(window.jsQR)return Promise.resolve();return new Promise((ok,bad)=>{const j=document.createElement('script');j.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';j.onload=ok;j.onerror=()=>bad(new Error('QR reader could not load'));document.head.appendChild(j);});}
+async function qrFromCanvas(cv){
+  if('BarcodeDetector' in window){try{const d=new BarcodeDetector({formats:['qr_code']});const r=await d.detect(cv);if(r[0])return r[0].rawValue;}catch(_){}}
+  await loadJsQR();const g=cv.getContext('2d');const im=g.getImageData(0,0,cv.width,cv.height);const r=window.jsQR(im.data,im.width,im.height);return r?r.data:'';
+}
+function camParseQR(t){
+  t=String(t||'').trim();const o={raw:t};
+  const url=t.match(/(https?|rtsp):\/\/\S+/i);if(url){o.url=url[0];if(/ezviz|ys7|hik-?connect|hikvision/i.test(t))o.brand=/hik/i.test(t)?'Hikvision':'EZVIZ';}
+  const parts=t.split(/[\r\n,;|\s]+/).map(s=>s.trim()).filter(Boolean);
+  if(/ys7|ezviz|hik/i.test(t)||parts.length>=3){
+    const ser=parts.find(s=>/^[A-Z0-9]{9}$/.test(s)&&/\d/.test(s))||parts.find(s=>/^[A-Z0-9]{8,14}$/.test(s)&&/\d/.test(s)&&/[A-Z]/.test(s));
+    const code=parts.find(s=>/^[A-Z]{6}$/.test(s)&&s!==ser);const model=parts.find(s=>/^(CS|DS)-[\w-]+/i.test(s));
+    if(ser){o.serial=ser;o.brand=o.brand||(/^DS-/i.test(model||'')||/hik/i.test(t)?'Hikvision':'EZVIZ');}if(code)o.code=code;if(model)o.model=model;}
+  return o;
+}
+function camScanDialog(){
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>Scan camera QR</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><p class="code">Point at the QR code on the camera, its box, or a QR shared from the camera app. Or pick a photo / screenshot of the QR.</p>
+    <div class="qr-box"><video id="qrVid" playsinline muted></video><div class="qr-frame"></div></div>
+    <div class="srow" style="padding:8px 0"><label class="btn">${ico('upload')}<span>Pick a QR photo</span><input type="file" id="qrFile" accept="image/*" hidden></label><span class="code" id="qrMsg">Starting camera…</span></div></div></div></div>`;
+  qrStart();
+}
+async function qrStart(){
+  const v=document.getElementById('qrVid'),msg=t=>{const m=document.getElementById('qrMsg');if(m)m.textContent=t;};
+  try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});QRS=st;v.srcObject=st;await v.play();msg('Looking for a QR code…');}
+  catch(_){msg('Camera not available here — pick a photo of the QR instead.');return;}
+  const cv=document.createElement('canvas');
+  const loop=async()=>{if(!document.getElementById('qrVid')){qrStop();return;}
+    if(v.videoWidth){cv.width=Math.min(960,v.videoWidth);cv.height=Math.round(cv.width*v.videoHeight/v.videoWidth);cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+      try{const t=await qrFromCanvas(cv);if(t){qrStop();camFromQR(t);return;}}catch(e){msg(e.message);}}
+    setTimeout(loop,350);};loop();
+}
+function qrStop(){if(QRS){QRS.getTracks().forEach(t=>t.stop());QRS=null;}}
+async function camFromQR(text){
+  const o=camParseQR(text);
+  if(!o.url&&!o.serial){toast('This QR has no camera details. Try the QR on the camera label, or a shared live link.');return;}
+  let note='';
+  if(o.serial&&['EZVIZ','Hikvision'].includes(o.brand)&&CAM.ez&&isAdmin()){
+    try{const j=await gasApi('camAdd',{serial:o.serial,code:o.code||''});note=j.already?'Already on your EZVIZ account.':'Added to your EZVIZ account.';}catch(e){note='EZVIZ: '+e.message;}}
+  const pre={brand:o.brand||'Other',serial:o.serial||'',model:o.model||'',live:o.url&&camKind(o.url)&&camKind(o.url)!=='web'?o.url:(o.url||''),status:'Online',clientView:'No',teamView:'All team on this project',project:S.proj!=='all'?S.proj:''};
+  openForm('cameras',null,pre);
+  toast(o.serial?`Camera ${o.serial} found. ${note} Add a name and where it is on site.`:'Live link found — add a name and save.');
+}
+/* ---------- settings: connect EZVIZ, import cameras ---------- */
+function camSettingsBox(){
+  if(!isAdmin()||!S.cloud)return '';camStatus();
+  return `<div class="box" id="camBox"><div class="box-h">${ico('cctv')}<h2>Site cameras — watch inside BuildMitr</h2><span class="pill ${CAM.ez?'p-green':'p-grey'}">${CAM.ez?'EZVIZ connected':CAM.ez===false?'Not connected':'Checking…'}</span></div>
+   <div style="padding:12px 16px" class="code">Connect the EZVIZ account your site cameras are in (EZVIZ and Hikvision cameras added in the EZVIZ app). Free key: sign in at <a href="https://open.ezvizlife.com" target="_blank" rel="noopener">open.ezvizlife.com</a> with that same EZVIZ account → <b>My application</b> → copy the <b>AppKey</b> and <b>AppSecret</b>. They are kept only on your BuildMitr server, never on phones. Team members and clients then watch live inside the app — no EZVIZ app or password needed, and you still decide who sees each camera.</div>
+   ${CAM.old?`<div class="note">${ico('info')}<span>The BuildMitr server is being updated for in-app cameras. This will be ready shortly.</span></div>`:''}
+   <form id="ezForm" class="e2form" ${CAM.old?'hidden':''}>
+    <label>AppKey<input name="key" autocomplete="off" placeholder="${CAM.ez?'•••••• (connected — enter to change)':'32 characters'}"></label>
+    <label>AppSecret<input name="secret" type="password" autocomplete="new-password"></label>
+    <label>Region<select name="host"><option value="https://open.ezvizlife.com">Global (auto)</option><option value="https://isgpopen.ezvizlife.com">Asia — India / Singapore</option><option value="https://ieuopen.ezvizlife.com">Europe</option><option value="https://open.ys7.com">China</option></select></label>
+    <div class="srow" style="grid-column:1/-1;padding:0;border:0"><button class="btn pri">${ico('check')}<span>${CAM.ez?'Update':'Connect EZVIZ'}</span></button>${CAM.ez?`<button type="button" class="btn" id="ezList">${ico('download')}<span>Import my EZVIZ cameras</span></button><button type="button" class="btn ghost" id="ezOff">Disconnect</button>`:''}</div>
+   </form>
+   ${CAM.list?`<div class="tbl-wrap"><table><thead><tr><th>Camera</th><th>Serial</th><th>Status</th><th>Add to project</th></tr></thead><tbody>${CAM.list.map(d=>{const have=D.cameras.find(c=>String(c.serial||'').toUpperCase()===d.serial);return `<tr><td>${esc(d.name||'')}<div class="code">${esc(d.model||'')}</div></td><td class="code">${esc(d.serial)}</td><td><span class="pill ${d.online?'p-green':'p-grey'}">${d.online?'Online':'Offline'}</span></td>
+     <td>${have?`<span class="code">In ${esc(pname(have.project))}</span>`:`<select data-ezadd="${esc(d.serial)}"><option value="">Choose project…</option>${PJ().map(p=>`<option value="${p.id}">${esc(pname(p.id))}</option>`).join('')}</select>`}</td></tr>`;}).join('')}</tbody></table></div>`:''}</div>`;
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='ezForm')return;e.preventDefault();const f=e.target;
+  try{toast('Connecting to EZVIZ…');const j=await gasApi('camKeys',{key:f.elements.key.value,secret:f.elements.secret.value,host:f.elements.host.value});CAM.ez=j.connected;toast(j.connected?'EZVIZ connected — cameras now play inside BuildMitr':'Disconnected');render();}
+  catch(err){toast(err.message);}},true);
+document.addEventListener('change',async e=>{const s=e.target.closest&&e.target.closest('[data-ezadd]');if(!s||!s.value)return;const d=(CAM.list||[]).find(x=>x.serial===s.dataset.ezadd);if(!d)return;
+  await write(()=>db.collection('cameras').add({project:s.value,name:d.name||d.serial,brand:'EZVIZ',model:d.model||'',serial:d.serial,status:d.online?'Online':'Offline',clientView:'No',teamView:'All team on this project',by:ME.id,at:Date.now()}),`${d.name||d.serial} added`);render();},true);
+document.addEventListener('click',async e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-camfull]');if(b){camFull(b.dataset.camfull);return;}}
+  const id=(e.target.closest('button')||{}).id;if(!id)return;
+  if(id==='camScan'){camScanDialog();return;}
+  if(id==='ezList'){try{toast('Reading your EZVIZ cameras…');const j=await gasApi('camList');CAM.list=j.devices;render();setTimeout(()=>{const b=document.getElementById('camBox');b&&b.scrollIntoView({block:'start'});},50);}catch(err){toast(err.message);}return;}
+  if(id==='ezOff'){if(!confirm('Disconnect EZVIZ? Cameras will no longer play inside the app.'))return;try{await gasApi('camKeys',{key:''});CAM.ez=false;CAM.list=null;render();}catch(err){toast(err.message);}return;}
+},true);
+document.addEventListener('change',async e=>{if(e.target.id!=='qrFile')return;const f=e.target.files[0];if(!f)return;
+  const im=new Image();im.onload=async()=>{const cv=document.createElement('canvas');const sc=Math.min(1,1400/Math.max(im.width,im.height));cv.width=im.width*sc;cv.height=im.height*sc;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+    try{const t=await qrFromCanvas(cv);if(t){qrStop();camFromQR(t);}else toast('No QR code found in that picture.');}catch(err){toast(err.message);}};im.src=URL.createObjectURL(f);},true);
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-close]'))qrStop();},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -4953,8 +5057,12 @@ function refresh(){clearTimeout(rT);rT=setTimeout(async()=>{
   const ids=new Set(D.members.map(m=>m.id));
   Object.keys(MOD).forEach(k=>D[k].forEach(r=>{if(r.by)ids.add(r.by);if(r.who)ids.add(r.who);}));
   if(U&&ids.size){try{P=await U.profiles([...ids]);}catch(e){}}
-  if(!document.querySelector('.drawer'))render();
+  if(document.querySelector('.drawer'))return;
+  const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#view')&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){S.dirty=true;return;}   // don't redraw under someone typing
+  if(S.view==='cctv'&&document.querySelector('.cam-view .cam-video')){S.dirty=true;return;}                                         // or over a playing camera
+  render();
 },60);}
+document.addEventListener('focusout',()=>{if(S.dirty)setTimeout(()=>{const ae=document.activeElement;if(S.dirty&&!(ae&&ae.closest&&ae.closest('#view')&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))&&!(S.view==='cctv'&&document.querySelector('.cam-view .cam-video'))){S.dirty=false;refresh();}},300);});
 
 /* ================= Events ================= */
 document.addEventListener('click',e=>{
