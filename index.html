@@ -4940,40 +4940,59 @@ function camFull(id){const box=document.getElementById('cam-'+id);const el=box&&
 let QRS=null;
 function loadJsQR(){if(window.jsQR)return Promise.resolve();return new Promise((ok,bad)=>{const j=document.createElement('script');j.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';j.onload=ok;j.onerror=()=>bad(new Error('QR reader could not load'));document.head.appendChild(j);});}
 async function qrFromCanvas(cv){
-  if('BarcodeDetector' in window){try{const d=new BarcodeDetector({formats:['qr_code']});const r=await d.detect(cv);if(r[0])return r[0].rawValue;}catch(_){}}
-  await loadJsQR();const g=cv.getContext('2d');const im=g.getImageData(0,0,cv.width,cv.height);const r=window.jsQR(im.data,im.width,im.height);return r?r.data:'';
+  if('BarcodeDetector' in window){try{const d=new BarcodeDetector({formats:['qr_code','data_matrix','code_128']});const r=await d.detect(cv);if(r[0])return r[0].rawValue;}catch(_){}}
+  await loadJsQR();const g=cv.getContext('2d');
+  const tryAt=(x,y,w,h)=>{const im=g.getImageData(x,y,w,h);const r=window.jsQR(im.data,im.width,im.height,{inversionAttempts:'attemptBoth'});return r?r.data:'';};
+  let t=tryAt(0,0,cv.width,cv.height);if(t)return t;
+  /* small QR on a label: look again at the middle, enlarged */
+  const s=Math.round(Math.min(cv.width,cv.height)*0.6),x=Math.round((cv.width-s)/2),y=Math.round((cv.height-s)/2);
+  const c2=document.createElement('canvas');c2.width=c2.height=Math.min(900,s*2);c2.getContext('2d').drawImage(cv,x,y,s,s,0,0,c2.width,c2.height);
+  const im=c2.getContext('2d').getImageData(0,0,c2.width,c2.height);const r=window.jsQR(im.data,im.width,im.height,{inversionAttempts:'attemptBoth'});return r?r.data:'';
 }
+/* reads the QR of any camera brand: EZVIZ / Hikvision labels, CP Plus / Dahua / Imou "SN:…", plain serial numbers, JSON, links */
+const CAM_BRAND_RE=[['EZVIZ',/ys7|ezviz/i],['Hikvision',/hik-?connect|hikvision|\bDS-\d/i],['CP Plus',/cp-?plus|cpplus|gcmob|icmob|ezykam|\bCP-[A-Z]/i],['Imou',/imou|easy4ip|lechange/i],['Dahua',/dahua|dmss|\bDH-/i],['TP-Link Tapo',/tapo|tp-?link/i],['Qubo',/qubo/i],['Godrej',/godrej/i]];
 function camParseQR(t){
   t=String(t||'').trim();const o={raw:t};
-  const url=t.match(/(https?|rtsp):\/\/\S+/i);if(url){o.url=url[0];if(/ezviz|ys7|hik-?connect|hikvision/i.test(t))o.brand=/hik/i.test(t)?'Hikvision':'EZVIZ';}
+  for(const [b,re] of CAM_BRAND_RE)if(re.test(t)){o.brand=b;break;}
+  let j=null;try{j=JSON.parse(t);}catch(_){}
+  if(j&&typeof j==='object'){const g=(...ks)=>{for(const k of Object.keys(j))if(ks.includes(k.toLowerCase()))return String(j[k]);return '';};
+    o.serial=g('sn','serial','serialno','deviceserial','devsn','id','did','uid','p2pid')||undefined;o.code=g('code','verifycode','safecode','validatecode','vc')||undefined;o.model=g('model','type','devicetype')||undefined;
+    const u=g('url','link','live');if(u)o.url=u;}
+  const url=t.match(/(https?|rtsp):\/\/\S+/i);
+  if(url&&!o.url){o.url=url[0];try{const q=new URL(url[0]).searchParams;const sn=q.get('sn')||q.get('serial')||q.get('deviceSerial')||q.get('id');if(sn&&/^[\w-]{6,40}$/.test(sn)){o.serial=sn;delete o.url;}}catch(_){}}
+  if(!o.serial){const m=t.match(/\b(?:S\/?N|serial(?:\s*no)?|device\s*id|P2P\s*ID|UID|ID)\s*[:=#]\s*([A-Za-z0-9-]{6,40})/i);if(m)o.serial=m[1];}
   const parts=t.split(/[\r\n,;|\s]+/).map(s=>s.trim()).filter(Boolean);
-  if(/ys7|ezviz|hik/i.test(t)||parts.length>=3){
-    const ser=parts.find(s=>/^[A-Z0-9]{9}$/.test(s)&&/\d/.test(s))||parts.find(s=>/^[A-Z0-9]{8,14}$/.test(s)&&/\d/.test(s)&&/[A-Z]/.test(s));
-    const code=parts.find(s=>/^[A-Z]{6}$/.test(s)&&s!==ser);const model=parts.find(s=>/^(CS|DS)-[\w-]+/i.test(s));
-    if(ser){o.serial=ser;o.brand=o.brand||(/^DS-/i.test(model||'')||/hik/i.test(t)?'Hikvision':'EZVIZ');}if(code)o.code=code;if(model)o.model=model;}
+  if(!o.serial&&(/ys7|ezviz|hik/i.test(t)||parts.length>=3)){
+    const ser=parts.find(s=>/^[A-Z0-9]{9}$/.test(s)&&/\d/.test(s))||parts.find(s=>/^[A-Z0-9]{8,20}$/.test(s)&&/\d/.test(s)&&/[A-Z]/.test(s));
+    if(ser){o.serial=ser;o.brand=o.brand||'EZVIZ';}}
+  if(!o.code){const c=parts.find(s=>/^[A-Z]{6}$/.test(s)&&s!==o.serial);if(c&&['EZVIZ','Hikvision'].includes(o.brand))o.code=c;}
+  if(!o.model){const md=parts.find(s=>/^(CS|DS|CP|DH|IPC)-[\w-]+/i.test(s));if(md)o.model=md;}
+  if(!o.serial&&!o.url&&/^[A-Za-z0-9-]{6,40}$/.test(t))o.serial=t;            // the QR is just the serial number
+  if(o.serial)o.serial=o.serial.toUpperCase();
   return o;
 }
 function camScanDialog(){
   document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>Scan camera QR</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
    <div class="pane-b"><p class="code">Point at the QR code on the camera, its box, or a QR shared from the camera app. Or pick a photo / screenshot of the QR.</p>
     <div class="qr-box"><video id="qrVid" playsinline muted></video><div class="qr-frame"></div></div>
-    <div class="srow" style="padding:8px 0"><label class="btn">${ico('upload')}<span>Pick a QR photo</span><input type="file" id="qrFile" accept="image/*" hidden></label><span class="code" id="qrMsg">Starting camera…</span></div></div></div></div>`;
+    <div class="srow" style="padding:8px 0"><label class="btn">${ico('upload')}<span>Pick a QR photo</span><input type="file" id="qrFile" accept="image/*" hidden></label><button type="button" class="btn ghost" id="qrManual">Type the serial instead</button></div>
+    <div class="code" id="qrMsg">Starting camera…</div><div class="code" style="margin-top:6px">Tip: hold the phone 10–20 cm from the label, in good light, so the QR fills the white box.</div></div></div></div>`;
   qrStart();
 }
 async function qrStart(){
   const v=document.getElementById('qrVid'),msg=t=>{const m=document.getElementById('qrMsg');if(m)m.textContent=t;};
-  try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});QRS=st;v.srcObject=st;await v.play();msg('Looking for a QR code…');}
-  catch(_){msg('Camera not available here — pick a photo of the QR instead.');return;}
+  try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});QRS=st;v.srcObject=st;await v.play();msg('Looking for a QR code…');}
+  catch(e){msg(e&&e.name==='NotAllowedError'?'Camera permission is off — allow the camera for BuildMitr (or the browser) in phone settings, or pick a photo of the QR.':'Camera not available here — pick a photo of the QR instead.');return;}
   const cv=document.createElement('canvas');
   const loop=async()=>{if(!document.getElementById('qrVid')){qrStop();return;}
-    if(v.videoWidth){cv.width=Math.min(960,v.videoWidth);cv.height=Math.round(cv.width*v.videoHeight/v.videoWidth);cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+    if(v.videoWidth){cv.width=Math.min(1280,v.videoWidth);cv.height=Math.round(cv.width*v.videoHeight/v.videoWidth);cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
       try{const t=await qrFromCanvas(cv);if(t){qrStop();camFromQR(t);return;}}catch(e){msg(e.message);}}
     setTimeout(loop,350);};loop();
 }
 function qrStop(){if(QRS){QRS.getTracks().forEach(t=>t.stop());QRS=null;}}
 async function camFromQR(text){
   const o=camParseQR(text);
-  if(!o.url&&!o.serial){toast('This QR has no camera details. Try the QR on the camera label, or a shared live link.');return;}
+  if(!o.url&&!o.serial){o.serial=(o.raw||'').slice(0,40);toast('QR read — check the serial number it filled in.');}
   let note='';
   if(o.serial&&['EZVIZ','Hikvision'].includes(o.brand)&&CAM.ez&&isAdmin()){
     try{const j=await gasApi('camAdd',{serial:o.serial,code:o.code||''});note=j.already?'Already on your EZVIZ account.':'Added to your EZVIZ account.';}catch(e){note='EZVIZ: '+e.message;}}
@@ -5005,6 +5024,7 @@ document.addEventListener('click',async e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-camfull]');if(b){camFull(b.dataset.camfull);return;}}
   const id=(e.target.closest('button')||{}).id;if(!id)return;
   if(id==='camScan'){camScanDialog();return;}
+  if(id==='qrManual'){qrStop();openForm('cameras',null,{project:S.proj!=='all'?S.proj:'',status:'Online',clientView:'No',teamView:'All team on this project'});setTimeout(()=>{const f=document.getElementById('f-serial');f&&f.focus();},200);return;}
   if(id==='ezList'){try{toast('Reading your EZVIZ cameras…');const j=await gasApi('camList');CAM.list=j.devices;render();setTimeout(()=>{const b=document.getElementById('camBox');b&&b.scrollIntoView({block:'start'});},50);}catch(err){toast(err.message);}return;}
   if(id==='ezOff'){if(!confirm('Disconnect EZVIZ? Cameras will no longer play inside the app.'))return;try{await gasApi('camKeys',{key:''});CAM.ez=false;CAM.list=null;render();}catch(err){toast(err.message);}return;}
 },true);
