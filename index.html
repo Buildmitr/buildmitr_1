@@ -368,6 +368,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -1181,6 +1182,7 @@ function vSettings(){
     <label class="code">Brochure link (Drive / website PDF)<input id="o-broch" value="${esc(org.brochure||'')}" ${admin?'':'disabled'} placeholder="https://…"></label>
     <label class="code">Google review link<input id="o-review" value="${esc(org.reviewLink||'')}" ${admin?'':'disabled'} placeholder="https://g.page/r/…/review"></label>
     ${admin?`<div><button class="btn pri">${ico('check')}Save</button></div>`:'<p class="code">Only the admin or editors can change company details.</p>'}</form></div>`:''}
+  ${admin?orgLinkBox():''}
   ${admin?letterheadBox():''}
   ${admin?camSettingsBox():''}
   ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="pwSet">${ico('lock')}<span>${LG.hasPw?'Change password':'Set password'}</span></button><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
@@ -2990,7 +2992,8 @@ function vLogin(){
   const langs=`<div class="lg-lang">${LANGS.map(([k,l])=>`<button type="button" class="fchip ${LANG===k?'on':''}" data-setlang="${k}">${l}</button>`).join('')}</div>`;
   const err=LG.err?`<div class="lg-err" role="alert">${esc(LG.err)}</div>`:'';
   let body='';
-  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in</h2>
+  if(step==='email'&&LG.fixedOrg)lgLoadOrgs();
+  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in${LG.fixedOrg&&(LG.orgList||[]).find(o=>o.id===LG.fixedOrg)?` to <span data-notr>${esc(LG.orgList.find(o=>o.id===LG.fixedOrg).name)}</span>`:''}</h2>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="username" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Password<input id="lgPw" type="password" autocomplete="current-password" required placeholder="Your password"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
@@ -2999,7 +3002,7 @@ function vLogin(){
   else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code">Enter your details. A 6-digit login code goes to your organisation's admin, who shares it with you — no password needed.</p>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Your name (new users)<input id="lgName" autocomplete="name" value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
-    ${(LG.orgList||[]).length>1?`<label>Your organisation (new users)<select id="lgOrg"><option value="">Choose your organisation</option>${LG.orgList.map(o=>`<option value="${esc(o.id)}" ${LG.org===o.id?'selected':''} data-notr>${esc(o.name)}</option>`).join('')}</select></label>`:''}
+    ${LG.fixedOrg?`<input type="hidden" id="lgOrg" value="${esc(LG.fixedOrg)}"><div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||'from your invite link')}</b></span></div>`:(LG.orgList||[]).length>1?`<label>Your organisation (new users)<select id="lgOrg"><option value="">Choose your organisation</option>${LG.orgList.map(o=>`<option value="${esc(o.id)}" ${LG.org===o.id?'selected':''} data-notr>${esc(o.name)}</option>`).join('')}</select></label>`:''}
     <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
     <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
@@ -3770,6 +3773,7 @@ function orgsDraw(){
   box.innerHTML=ORGS.length?ORGS.map(o=>`<div class="srow org-row"><span style="flex:1;min-width:210px"><b data-notr>${esc(o.name)}</b>${o.id===CLOUD.org?' <span class="pill p-green">Open now</span>':''}${o.hidden?' <span class="pill p-grey">Hidden from sign-up</span>':''}<br>
       <span class="code" data-notr>${o.admins.length?o.admins.map(a=>esc(a.email)+(a.joined?'':' (not signed in yet)')).join(', '):'No admin yet'} · ${o.people} people · ${o.projects} projects</span></span>
       ${o.id!==CLOUD.org?`<button type="button" class="btn sm" data-orgopen="${esc(o.id)}">${ico('log-in')}<span>Open</span></button>`:''}
+      <button type="button" class="btn sm" data-orglink="${esc(o.id)}|${esc(o.name)}">${ico('link')}<span>Sign-in link</span></button>
       <button type="button" class="btn sm ghost" data-orgedit="${esc(o.id)}">${ico('pencil')}<span>Edit</span></button></div>
       <form class="srow org-edit" data-orgform="${esc(o.id)}" hidden style="align-items:flex-end">
       <label class="code">Name<input name="name" value="${esc(o.name)}" maxlength="120"></label>
@@ -3799,7 +3803,7 @@ async function lgLoadOrgs(){
   if(LG.orgList||LG.orgListBusy)return;LG.orgListBusy=true;
   try{const j=await gasApi('orgList');LG.orgList=j.orgs||[];}catch(_){LG.orgList=[];}
   LG.orgListBusy=false;
-  if(S.authStep==='email'&&LG.mode!=='pw'&&LG.orgList.length>1){   // keep what was already typed, then show the organisation list
+  if(S.authStep==='email'&&(LG.orgList.length>1||LG.fixedOrg)){   // keep what was already typed, then show the organisation list
     const v=id=>{const x=document.getElementById(id);return x?x.value:null;};
     [['lgEmail','email'],['lgName','name'],['lgPhone','phone'],['lgRole','role']].forEach(([id,k])=>{const x=v(id);if(x!==null)LG[k]=k==='email'?x.trim():x;});
     const f=document.activeElement&&document.activeElement.id;render();if(f){const x=document.getElementById(f);x&&x.focus&&x.focus();}}
@@ -5241,6 +5245,34 @@ document.addEventListener('submit',e=>{if(e.target.id!=='dlAdd')return;e.prevent
   if(dlItems(S.proj,DL.disc).some(x=>x.k.toLowerCase()===v.toLowerCase())){toast('Already in the list');return;}
   write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,dkey:v,title:v,cat:DL_CAT[DL.disc],status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
 
+/* ================= Sign-in link for each organisation ================= */
+Object.assign(ICONS,{'link':ICONS.link||'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'});
+const orgLink=(id,name)=>APP_URL+'?org='+encodeURIComponent(id)+(name?'&n='+encodeURIComponent(name):'');
+function orgLinkShare(id,name){
+  const link=orgLink(id,name),text=`Sign in to ${name} on BuildMitr:\n${link}\n\nOpen the link, enter your email and name, and ask the admin for the 6-digit login code.`;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Sign-in link — ${esc(name)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><p class="code">Anyone who opens this link signs in straight into <b>${esc(name)}</b> — they don't have to pick an organisation. They still need your approval (the login code) before they see anything.</p>
+    <div class="inst-b" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:0"><div id="olQR" class="inst-qr" aria-label="QR code of the sign-in link"></div><code style="word-break:break-all;flex:1;min-width:200px">${esc(link)}</code></div>
+    <div class="sh-grid" style="margin-top:12px"><a class="btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${ico('message-circle')}<span>WhatsApp</span></a>
+     <a class="btn" href="mailto:?subject=${encodeURIComponent('Sign in to '+name+' on BuildMitr')}&body=${encodeURIComponent(text)}">${ico('mail')}<span>Email</span></a>
+     <button type="button" class="btn" data-olcopy="${esc(link)}">${ico('copy')}<span>Copy link</span></button>
+     <button type="button" class="btn" data-olmore>${ico('share-2')}<span>More…</span></button></div></div></div></div>`;
+  OLT={text,link,name};
+  loadJs('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',()=>window.qrcode).then(()=>{const b=document.getElementById('olQR');if(!b)return;const q=window.qrcode(0,'M');q.addData(link);q.make();b.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});}).catch(()=>{});
+}
+let OLT=null;
+function orgLinkBox(){
+  if(!isAdmin()||!S.cloud||!CLOUD.org)return '';const name=orgName();
+  return `<div class="box"><div class="box-h">${ico('link')}<h2>Sign-in link for ${esc(name)}</h2></div><div class="srow"><code style="flex:1;min-width:200px;word-break:break-all">${esc(orgLink(CLOUD.org,name))}</code>
+    <button type="button" class="btn pri" data-orglink="${esc(CLOUD.org)}|${esc(name)}">${ico('share-2')}<span>Share link</span></button></div>
+    <div class="code" style="padding:0 16px 12px">Send this to your team and clients. It opens BuildMitr with ${esc(name)} already chosen. They enter their email and get the login code from you.</div></div>`;
+}
+document.addEventListener('click',async e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-orglink]');if(b){const [id,...nm_]=b.dataset.orglink.split('|');orgLinkShare(id,nm_.join('|'));return;}}
+  {const b=e.target.closest('[data-olcopy]');if(b){try{await navigator.clipboard.writeText(b.dataset.olcopy);toast('Link copied');}catch(_){toast('Could not copy');}return;}}
+  {const b=e.target.closest('[data-olmore]');if(b&&OLT){if(navigator.share){try{await navigator.share({title:'BuildMitr — '+OLT.name,text:OLT.text});}catch(_){}}else shareSheet('Sign-in link',OLT.text);return;}}
+},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5535,6 +5567,7 @@ document.addEventListener('submit',async e=>{
     {const cfg=cloudCfg();let forceDemo=false;try{forceDemo=localStorage.getItem('bm-forcedemo')==='1'||/[?&]demo\b/.test(location.search);}catch(_){}
      if(cfg&&!forceDemo){S.web=true;S.cloud=true;try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(_){}
        CLOUD.url=cfg.googleScriptUrl;try{CLOUD.token=localStorage.getItem('bm-token')||'';}catch(_){}
+       try{const o=new URLSearchParams(location.search).get('org');if(o&&/^[\w-]{3,40}$/.test(o)){LG.fixedOrg=o;LG.org=o;LG.fixedName=String(new URLSearchParams(location.search).get('n')||'').slice(0,120);localStorage.setItem('bm-org',o);}}catch(_){}
        S.authStep='loading';render();
        if(CLOUD.token)await cloudEnter({id:'',email:''});else lgSet('email');
        return;}}
