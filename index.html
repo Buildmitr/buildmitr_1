@@ -3025,19 +3025,19 @@ async function lgVerify(){
   const code=((document.getElementById('lgCode')||{}).value||'').replace(/\D/g,'');
   if(code.length!==6){lgSet('code','The code has 6 digits.');return;}
   LG.busy=true;render();
-  let j;try{j=await gasApi('verify',{email:LG.email,code});}catch(e){lgSet('code',e.message);return;}
+  let j;const so=(()=>{try{return localStorage.getItem('bm-org')||'';}catch(_){return '';}})();try{j=await gasApi('verify',{email:LG.email,code,org:so});}catch(e){lgSet('code',e.message);return;}
   CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}
   LG.owner=!!j.owner;LG.hasPw=!!j.hasPw;LG.pwAsked=false;
-  await cloudEnter(j.user,null,j.mems);
+  await cloudEnter(j.user,j.org||null,j.mems,j.data?{rows:j.data.rows,now:j.data.now}:null);
 }
 async function lgPwLogin(){
   LG.email=((document.getElementById('lgEmail')||{}).value||'').trim().toLowerCase();const pw=(document.getElementById('lgPw')||{}).value||'';
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Please enter a valid email address.');return;}
   if(!pw){lgSet('email','Enter your password.');return;}
   LG.busy=true;render();let j;
-  try{j=await gasApi('loginPw',{email:LG.email,password:pw});}catch(e){lgSet('email',e.message);return;}
+  const so=(()=>{try{return localStorage.getItem('bm-org')||'';}catch(_){return '';}})();try{j=await gasApi('loginPw',{email:LG.email,password:pw,org:so});}catch(e){lgSet('email',e.message);return;}
   CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}
-  LG.owner=!!j.owner;LG.hasPw=true;await cloudEnter(j.user,null,j.mems);
+  LG.owner=!!j.owner;LG.hasPw=true;await cloudEnter(j.user,j.org||null,j.mems,j.data?{rows:j.data.rows,now:j.data.now}:null);
 }
 function pwDialog(first){
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="pwForm" autocomplete="on">
@@ -3063,9 +3063,9 @@ async function lgCreateOrg(){
   try{j=await gasApi('createOrg',{name});}catch(e){lgSet('org',e.message);return;}
   await cloudEnter(CLOUD.user,j.org_id);
 }
-async function cloudEnter(user,orgId,mems){
+async function cloudEnter(user,orgId,mems,pre0){
   CLOUD.user=user;S.authStep='loading';LG.err='';render();
-  let pre=null,fromCache=false;
+  let pre=pre0||null,fromCache=false;
   const pickSaved=()=>{try{return localStorage.getItem('bm-org');}catch(_){return null;}};
   if(!mems){
     const c=bmGet('bm-c-me');
