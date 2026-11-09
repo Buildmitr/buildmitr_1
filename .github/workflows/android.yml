@@ -35,15 +35,21 @@ jobs:
         working-directory: android
         run: gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build.log; test ${PIPESTATUS[0]} -eq 0
       - name: Sign
+        shell: bash
         run: |
-          set -e
+          set -eo pipefail
+          exec > >(tee -a build.log) 2>&1
+          echo "ANDROID_HOME=$ANDROID_HOME"; ls $ANDROID_HOME/build-tools || true; ls -la android/app/build/outputs/apk/release/ || true
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
           $BT/zipalign -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
           $BT/apksigner sign --ks keys/buildmitr.jks --ks-pass file:keys/key.txt --ks-key-alias buildmitr --key-pass file:keys/key.txt --out BuildMitr.apk aligned.apk
           $BT/apksigner verify BuildMitr.apk
           printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":["%s"]}}]\n' "$(cat sha256.txt)" > assetlinks.json
       - name: Publish
+        shell: bash
         run: |
+          exec > >(tee -a build.log) 2>&1
+          set -x
           gh release delete android-latest -y --cleanup-tag || true
           gh release create android-latest --title "BuildMitr for Android" \
             --notes "Install BuildMitr.apk on Android (allow install from this source when asked). Built from commit ${GITHUB_SHA::7}." \
