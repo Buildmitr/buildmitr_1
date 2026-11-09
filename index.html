@@ -353,6 +353,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .fv .fv-pane{width:min(1100px,100%);max-width:100%}
 .qr-box{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1/1;max-height:60vh}.qr-box video{width:100%;height:100%;object-fit:cover}.qr-frame{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .cam-note{position:absolute;left:8px;right:8px;bottom:6px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px}.cam-note a{color:#fff}
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.inst-b{padding:12px 16px}.inst-b p{margin:0 0 10px}.inst-b ol{margin:0 0 10px;padding-left:20px}.inst-me{outline:2px solid var(--accent)}.inst-qr{width:150px;height:150px;background:#fff;border-radius:8px;padding:4px}.inst-qr svg{width:100%;height:100%}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -1150,7 +1151,7 @@ function vReports(){
 function vSettings(){
   const org=D.org.find(o=>o.id==='main')||{};
   const admin=ME.isOwner||ME.canEdit;
-  return header(label('settings'))+`
+  return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
   ${myProfileBox(admin)}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
     <label class="code">Company name<input id="o-name" value="${esc(org.name||'')}" ${admin?'':'disabled'} placeholder="e.g. BuildMitr"></label>
@@ -1754,7 +1755,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings')return true;if(v==='docmaker')v='invoices';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='docmaker')v='invoices';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -3266,7 +3267,7 @@ function signOutBar(){
   const many=(CLOUD.mems||[]).length>1;
   return `<div class="box signout-bar"><div class="srow"><span style="flex:1;min-width:180px" class="code">Signed in as <b data-notr>${esc(ME.email||'')}</b> · ${esc(curRole())}${CLOUD.mem?` · <b data-notr>${esc(CLOUD.mem.org_name||'')}</b>`:''}</span>
     ${many&&!isSuperAdmin()?`<button class="btn" id="orgPick">${ico('building-2')}<span>Switch organisation</span></button>`:''}
-    <button class="btn" data-go="settings">${ico('settings')}<span>Settings</span></button><button class="btn warn" id="signOut">${ico('log-in')}<span>Log out</span></button></div></div>`;
+    ${isStandalone()?'':`<button class="btn" data-go="install">${ico('download')}<span>Install app</span></button>`}<button class="btn" data-go="settings">${ico('settings')}<span>Settings</span></button><button class="btn warn" id="signOut">${ico('log-in')}<span>Log out</span></button></div></div>`;
 }
 /* ================= Site cameras ================= */
 const BRANDS={
@@ -5012,6 +5013,38 @@ document.addEventListener('change',async e=>{if(e.target.id!=='qrFile')return;co
     try{const t=await qrFromCanvas(cv);if(t){qrStop();camFromQR(t);}else toast('No QR code found in that picture.');}catch(err){toast(err.message);}};im.src=URL.createObjectURL(f);},true);
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-close]'))qrStop();},true);
 
+/* ================= Install the app (Android APK, iPhone/iPad, Windows PC, Mac) ================= */
+Object.assign(ICONS,{'download':ICONS.download||'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  'monitor':'<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>','apple':'<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>'});
+const APK_URL='https://github.com/Buildmitr/buildmitr_1/releases/download/android-latest/BuildMitr.apk';
+const APP_URL='https://buildmitr.github.io/buildmitr_1/';
+let INSTALL_EVT=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EVT=e;if(S.view==='install')render();});
+window.addEventListener('appinstalled',()=>{INSTALL_EVT=null;toast('BuildMitr is installed');});
+const PLAT=(()=>{const u=navigator.userAgent||'';if(/android/i.test(u))return 'android';if(/iphone|ipad|ipod/i.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))return 'ios';if(/Macintosh|Mac OS X/.test(u))return 'mac';if(/Windows/.test(u))return 'win';return 'other';})();
+const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||/src=android/.test(location.search);}catch(_){return false;}};
+function vInstall(){
+  const card=(key,icon,title,body)=>`<div class="box inst ${PLAT===key?'inst-me':''}"><div class="box-h">${ico(icon)}<h2>${title}</h2>${PLAT===key?'<span class="pill p-green">This device</span>':''}</div><div class="inst-b">${body}</div></div>`;
+  const prompt=INSTALL_EVT?`<button class="btn pri" id="instNow">${ico('download')}<span>Install BuildMitr now</span></button>`:'';
+  setTimeout(instQR,0);
+  return header('Install the app')+
+  (isStandalone()?`<div class="note">${ico('check')}<span>You are using the installed BuildMitr app.</span></div>`:'')+
+  `<div class="inst-grid">
+  ${card('android','smartphone','Android phone',`<p>Download the BuildMitr app and open the file to install it. If the phone asks, allow installing from this source (Chrome / Files).</p>
+    <div class="srow" style="padding:0;border:0"><a class="btn pri" href="${APK_URL}" target="_blank" rel="noopener">${ico('download')}<span>Download Android app (APK)</span></a>${PLAT==='android'?prompt:''}</div>
+    <p class="code">Or in Chrome: menu ⋮ → <b>Install app</b> / <b>Add to Home screen</b>. Both open BuildMitr full screen with its own icon.</p>`)}
+  ${card('ios','apple','iPhone & iPad',`<ol><li>Open <b>${esc(APP_URL)}</b> in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with an arrow).</li><li>Tap <b>Add to Home Screen</b> → <b>Add</b>.</li></ol><p class="code">BuildMitr then opens from its own icon, full screen, like any app.</p>`)}
+  ${card('win','monitor','Windows PC / laptop',`<p>Open BuildMitr in <b>Chrome</b> or <b>Microsoft Edge</b> and ${PLAT==='win'&&INSTALL_EVT?'tap the button below':'click the <b>Install</b> icon at the right end of the address bar (or menu → <b>Apps → Install BuildMitr</b>)'}.</p>${PLAT==='win'?prompt:''}<p class="code">It gets a desktop and Start-menu icon and opens in its own window.</p>`)}
+  ${card('mac','apple','MacBook / iMac',`<p><b>Safari:</b> File → <b>Add to Dock</b>.<br><b>Chrome / Edge:</b> click the <b>Install</b> icon in the address bar.</p>${PLAT==='mac'?prompt:''}<p class="code">BuildMitr appears in the Dock and Launchpad and opens in its own window.</p>`)}
+  </div>
+  <div class="box"><div class="box-h">${ico('scan-line')}<h2>Open on your phone</h2></div><div class="inst-b" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="instQR" class="inst-qr" aria-label="QR code for the BuildMitr web address"></div>
+    <div><p>Scan with the phone camera to open BuildMitr, then install it as above.</p><p class="code">${esc(APP_URL)}</p><button type="button" class="btn sm" id="instShare">${ico('share-2')}<span>Share the app link</span></button></div></div></div>`;
+}
+function instQR(){const box=document.getElementById('instQR');if(!box||box.dataset.done)return;box.dataset.done=1;
+  loadJs('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',()=>window.qrcode).then(()=>{const q=window.qrcode(0,'M');q.addData(APP_URL);q.make();box.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});}).catch(()=>{box.textContent='';});}
+document.addEventListener('click',async e=>{const id=(e.target.closest&&(e.target.closest('button')||{}).id);
+  if(id==='instNow'&&INSTALL_EVT){INSTALL_EVT.prompt();try{await INSTALL_EVT.userChoice;}catch(_){}INSTALL_EVT=null;render();}
+  if(id==='instShare')shareSheet('BuildMitr app',`BuildMitr — construction project management.\nOpen: ${APP_URL}\nAndroid app: ${APK_URL}`);},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5042,7 +5075,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='docmaker'?vDocMaker():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='docmaker'?vDocMaker():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
