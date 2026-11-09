@@ -17,43 +17,33 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.7' }
-      - name: Signing key
-        run: |
-          set -e
-          mkdir -p keys
-          if gh release download signing-key -p buildmitr.jks -p key.txt -D keys; then echo "Using the saved key"; else
-            PASS=$(openssl rand -hex 16); echo -n "$PASS" > keys/key.txt
-            keytool -genkeypair -keystore keys/buildmitr.jks -alias buildmitr -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "$PASS" -keypass "$PASS" -dname "CN=BuildMitr, O=BuildMitr, C=IN"
-            gh release create signing-key --draft --title "Signing key (private - do not publish)" --notes "Keep private. Needed to update the app." keys/buildmitr.jks keys/key.txt
-          fi
-          keytool -list -v -keystore keys/buildmitr.jks -storepass "$(cat keys/key.txt)" | grep 'SHA256:' | head -1 | sed 's/.*SHA256: //' > sha256.txt
-          cat sha256.txt
-      - name: Build
-        working-directory: android
-        run: gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build.log; test ${PIPESTATUS[0]} -eq 0
       - name: Sign
         shell: bash
         run: |
-          set -eo pipefail
-          exec > >(tee -a build.log) 2>&1
-          echo "ANDROID_HOME=$ANDROID_HOME"; ls $ANDROID_HOME/build-tools || true; ls -la android/app/build/outputs/apk/release/ || true
-          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
-          $BT/zipalign -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
-          $BT/apksigner sign --ks keys/buildmitr.jks --ks-pass file:keys/key.txt --ks-key-alias buildmitr --key-pass file:keys/key.txt --out BuildMitr.apk aligned.apk
-          $BT/apksigner verify BuildMitr.apk
-          printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":["%s"]}}]\n' "$(cat sha256.txt)" > assetlinks.json
+          set -o pipefail
+          {
+            set -e
+            SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"; echo "SDK=$SDK"
+            BT=$(dirname "$(find "$SDK/build-tools" -name apksigner -type f | sort -V | tail -1)"); echo "build-tools: $BT"
+            ls -la android/app/build/outputs/apk/release/
+            "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+            "$BT/apksigner" sign --ks keys/buildmitr.jks --ks-pass file:keys/key.txt --ks-key-alias buildmitr --key-pass file:keys/key.txt --out BuildMitr.apk aligned.apk
+            "$BT/apksigner" verify --print-certs BuildMitr.apk
+            printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":["%s"]}}]\n' "$(cat sha256.txt)" > assetlinks.json
+          } 2>&1 | tee -a build.log
       - name: Publish
         shell: bash
         run: |
-          exec > >(tee -a build.log) 2>&1
-          set -x
-          gh release delete android-latest -y --cleanup-tag || true
-          gh release create android-latest --title "BuildMitr for Android" \
-            --notes "Install BuildMitr.apk on Android (allow install from this source when asked). Built from commit ${GITHUB_SHA::7}." \
-            BuildMitr.apk assetlinks.json
+          set -o pipefail
+          {
+            gh release delete android-latest -y --cleanup-tag || true
+            gh release create android-latest --title "BuildMitr for Android" \
+              --notes "Install BuildMitr.apk on Android (allow install from this source when asked). Built from commit ${GITHUB_SHA::7}." \
+              BuildMitr.apk assetlinks.json
+          } 2>&1 | tee -a build.log
       - name: Save the log if the build failed
         if: failure()
         run: |
