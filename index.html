@@ -3002,7 +3002,7 @@ function vLogin(){
   else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code">Enter your details. A 6-digit login code goes to your organisation's admin, who shares it with you — no password needed.</p>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Your name (new users)<input id="lgName" autocomplete="name" value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
-    ${LG.fixedOrg?`<input type="hidden" id="lgOrg" value="${esc(LG.fixedOrg)}"><div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||'from your invite link')}</b></span></div>`:(LG.orgList||[]).length>1?`<label>Your organisation (new users)<select id="lgOrg"><option value="">Choose your organisation</option>${LG.orgList.map(o=>`<option value="${esc(o.id)}" ${LG.org===o.id?'selected':''} data-notr>${esc(o.name)}</option>`).join('')}</select></label>`:''}
+    ${LG.fixedOrg?`<input type="hidden" id="lgOrg" value="${esc(LG.fixedOrg)}"><div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||'from your invite link')}</b></span></div>`:`<div class="code lg-hint">${ico('link')}<span>New here? Open the sign-in link your company admin sent you.</span></div>`}
     <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
     <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
@@ -3034,7 +3034,7 @@ async function lgSend(){
   const nm=document.getElementById('lgName'),ph=document.getElementById('lgPhone'),rl=document.getElementById('lgRole'),og=document.getElementById('lgOrg');if(nm)LG.name=nm.value.trim();if(ph)LG.phone=ph.value.trim();if(rl)LG.role=rl.value;if(og)LG.org=og.value;
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Please enter a valid email address.');return;}
   LG.busy=true;render();let j;
-  try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role,org:LG.org||''});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.message);return;}
+  try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role,org:LG.org||''});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.code==='need_org'?'You are not on a company team yet. Open the BuildMitr sign-in link your company admin sent you.':e.message);return;}
   LG.toAdmin=j.to!=='you';
   LG.sentAt=Date.now();lgSet('code');
 }
