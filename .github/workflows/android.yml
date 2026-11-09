@@ -48,8 +48,9 @@ jobs:
             BT=$(dirname "$(find "$SDK/build-tools" -name apksigner -type f | sort -V | tail -1)"); echo "build-tools: $BT"
             APK=$(find "$GITHUB_WORKSPACE" -name '*release*.apk' -not -name 'aligned.apk' | head -1); echo "apk: $APK"
             [ -n "$APK" ] || { find "$GITHUB_WORKSPACE" -maxdepth 4 -type d -name build; exit 3; }
+            export KSP="$(cat keys/key.txt)"
             "$BT/zipalign" -p -f 4 "$APK" aligned.apk
-            "$BT/apksigner" sign --ks keys/buildmitr.jks --ks-pass file:keys/key.txt --ks-key-alias buildmitr --key-pass file:keys/key.txt --out BuildMitr.apk aligned.apk
+            "$BT/apksigner" sign --ks keys/buildmitr.jks --ks-pass env:KSP --ks-key-alias buildmitr --key-pass env:KSP --out BuildMitr.apk aligned.apk
             "$BT/apksigner" verify --print-certs BuildMitr.apk
             printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":["%s"]}}]\n' "$(cat sha256.txt)" > assetlinks.json
           } 2>&1 | tee -a build.log
