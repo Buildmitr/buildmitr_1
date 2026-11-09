@@ -1240,7 +1240,7 @@ function openForm(k,id,preset){
   const isP=k==='projects';
   const m=isP?{label:'Project',fields:[
     {k:'prefix',l:'Project code / prefix',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'description',l:'Description',t:'textarea'},
-    {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
+    {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'nfloors',l:'Number of floors above ground (incl. ground floor)',t:'number',max:40},{k:'base',l:'Below / stilt',t:'select',o:['None','Cellar','Stilt floor','Cellar + Stilt floor']},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
   const r=id?D[k].find(x=>x.id===id):null;
   DRAFT.k=k;DRAFT.id=id||null;DRAFT.fields=m.fields;DRAFT.photos={};DRAFT.files={};
   if(k==='invoices'&&!r){preset={...(preset||{})};preset.no=preset.no||nextInvNo(preset.kind||'Tax invoice');preset.sac=preset.sac||orgVal('sac')||'995411';}
@@ -5120,7 +5120,10 @@ const DL_CAT={Architecture:'Architectural drawing',Structure:'Structural drawing
 /* drawings made once for every floor (listed as "Floor plans — First floor" …); roof drawings are per floor roof */
 const DL_PERFLOOR={Architecture:['Floor plans','Furniture layout','Ceiling layout (RCP)','Flooring layout'],Structure:['Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details'],MEP:['Electrical layout','Lighting layout','Water supply (plumbing) layout','Drainage layout','AC / HVAC layout']};
 const FLOOR_NAMES=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor','Seventh floor','Eighth floor','Ninth floor','Tenth floor'];
-function dlFloors(pid){const p=proj(pid)||{};if(Array.isArray(p.floors)&&p.floors.length)return p.floors;
+const dlKey=p=>`${n(p.nfloors)||''}|${p.base||''}`;
+function dlFloors(pid){const p=proj(pid)||{};
+  if(Array.isArray(p.floors)&&p.floors.length&&(!n(p.nfloors)||p.floorsKey===dlKey(p)))return p.floors;   // edited in the library
+  if(n(p.nfloors))return dlFloorList({n:Math.min(40,Math.round(n(p.nfloors))),cellar:/cellar/i.test(p.base||''),stilt:/stilt/i.test(p.base||'')});
   const ef=((p.estimate||{}).floors||[]).map(f=>f.n).filter(Boolean);return ef.length?ef:['Ground floor'];}
 const dlRoof=f=>/ floor$/i.test(f)?f.replace(/ floor$/i,' floor roof'):f+' roof';
 function dlFloorList({n,cellar,stilt}){const out=[];if(cellar)out.push('Cellar');if(stilt)out.push('Stilt floor');for(let i=0;i<n;i++)out.push(FLOOR_NAMES[i]||`Floor ${i}`);return out;}
@@ -5178,7 +5181,8 @@ document.addEventListener('input',e=>{const f=e.target.form;if(!f||f.id!=='dlFlF
 document.addEventListener('change',e=>{const f=e.target.form;if(!f||f.id!=='dlFlForm'||e.target.type!=='checkbox')return;f.elements.names.value=dlFloorList({n:Math.max(1,Math.min(30,+f.elements.n.value||1)),cellar:f.elements.cellar.checked,stilt:f.elements.stilt.checked}).join(', ');},true);
 document.addEventListener('submit',e=>{if(e.target.id!=='dlFlForm')return;e.preventDefault();const f=e.target;
   const list=[...new Set(String(f.elements.names.value).split(',').map(x=>x.trim()).filter(Boolean))].slice(0,40);if(!list.length){toast('Enter at least one floor');return;}
-  write(()=>db.doc('projects/'+S.proj).update({floors:list}),`Floors saved: ${list.length}`).then(ok=>{if(ok){DL.flEdit=false;render();}});},true);
+  const above=list.filter(x=>!/cellar|stilt/i.test(x)).length,base=[list.some(x=>/cellar/i.test(x))?'Cellar':'',list.some(x=>/stilt/i.test(x))?'Stilt floor':''].filter(Boolean).join(' + ')||'None';
+  write(()=>db.doc('projects/'+S.proj).update({floors:list,nfloors:above,base,floorsKey:`${above}|${base}`}),`Floors saved: ${list.length}`).then(ok=>{if(ok){DL.flEdit=false;render();}});},true);
 async function dlUpload(key,files){
   const pid=S.proj;if(!A){toast('File upload needs Contributor access.');return;}
   const prev=dlItems(pid,DL.disc).find(x=>x.k===key);const up=[];
