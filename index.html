@@ -369,6 +369,8 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
+.pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.pl-bar #q{flex:1;min-width:200px;margin:0}.seg{display:flex;gap:4px}
+.pcard-w{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--r,12px);overflow:hidden}.pcard-w .pcard{border:0;border-radius:0;flex:1}.pcard-acts{display:flex;gap:4px;justify-content:flex-end;padding:4px 8px 8px;flex-wrap:wrap}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -775,7 +777,7 @@ const vname=id=>(D.vendors.find(v=>v.id===id)||{}).name||'—';
 const lname=id=>(D.labour.find(v=>v.id===id)||{}).name||'—';
 const cname=id=>(D.clients.find(v=>v.id===id)||{}).name||'—';
 const ename=id=>(D.equipment.find(v=>v.id===id)||{}).name||'—';
-const inProj=r=>S.proj==='all'?(!r.project||projOK(r.project)):r.project===S.proj;
+const inProj=r=>S.proj==='all'?(!r.project||(projOK(r.project)&&!projArch(r.project))):r.project===S.proj;
 const canDel=r=>CANW&&(ME.canEdit||ME.isOwner||r.by===ME.id);
 const orgName=()=>(D.org.find(o=>o.id==='main')||{}).name||'Your company';
 
@@ -1075,20 +1077,6 @@ function vInventory(){
 }
 
 /* ================= Projects ================= */
-function vProjects(){
-  const ps=PJ().filter(p=>[p.prefix,p.name,p.address,p.description].join(' ').toLowerCase().includes(S.q.toLowerCase())).sort((a,b)=>(b.created||0)-(a.created||0));
-  const btn=CANW?`<button class="btn pri" data-add="projects">${ico('plus')}New project</button>`:'';
-  if(!D.projects.length)return header(label('projects'))+`<div class="box hero-empty">${ico('building-2')}<h2>No projects yet</h2><p>Start by creating your first project. Then record daily reports, tasks, material, labour and payments against it.</p>${btn}</div>`;
-  return header(label('projects'),btn)+`<input id="q" placeholder="Search projects" value="${esc(S.q)}" aria-label="Search projects">
-  <div class="cards">${ps.map(p=>{
-    const ts=D.tasks.filter(t=>t.project===p.id),pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;
-    const open=D.issues.filter(i=>i.project===p.id&&i.status!=='Resolved').length;
-    return `<button class="pcard" data-proj="${p.id}">${p.prefix?`<span class="code">${esc(p.prefix)}</span>`:''}<h3>${esc(p.name)}</h3>
-      <div class="meta"><span>${ico('map-pin')}${esc(p.address||'—')}</span>${p.loc?'<span class="pill p-green">Pinned</span>':''}</div>
-      <div class="meta"><span>${ico('calendar')}${fd(p.start)} → ${fd(p.end)}</span><span>${ico('alert-triangle')}${open} open</span></div>
-      <div style="display:flex;gap:8px;align-items:center"><div class="prog" style="flex:1"><i style="width:${pc}%"></i></div><span class="code">${pc}%</span></div></button>`;}).join('')}</div>`;
-}
-
 /* ================= Dashboard ================= */
 function vDashboard(){
   if(!PJ().length)return header(label('dashboard'))+`<div class="box hero-empty">${ico('hard-hat')}<h2>Welcome to BuildMitr</h2><p>Create a project first. Then your team can log daily reports, tasks, issues, material and labour from site — on phone or computer.</p><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${CANW?`<button class="btn pri" data-add="projects">${ico('plus')}Create first project</button>`:''}<button class="btn" data-demo="on">${ico('flask-conical')}See a demo with sample data</button></div></div>`;
@@ -1185,7 +1173,7 @@ function vSettings(){
   ${admin?orgLinkBox():''}
   ${admin?letterheadBox():''}
   ${admin?camSettingsBox():''}
-  ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="pwSet">${ico('lock')}<span>${LG.hasPw?'Change password':'Set password'}</span></button><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
+  ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
   <div class="box"><div class="box-h">${ico('eye')}<h2>Colour theme</h2></div><div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     ${[['light','Light'],['dark','Dark'],['auto','Automatic (same as phone)']].map(([k,l])=>`<button class="btn ${THEME===k?'pri':''}" data-settheme="${k}">${l}</button>`).join('')}</div></div>
   <div class="box"><div class="box-h">${ico('languages')}<h2>Language</h2></div><div style="padding:14px 16px;display:grid;gap:12px">
@@ -1781,7 +1769,7 @@ function myProjSet(){
   return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);
 }
 const projOK=pid=>{const s=myProjSet();return s==='all'||s.has(pid);};
-const PJ=()=>D.projects.filter(p=>projOK(p.id));
+const PJ=()=>D.projects.filter(p=>projOK(p.id)&&!p.archived);
 const canMoney=()=>canView('payments');
 function vNoAccess(){
   return `<div class="bar"><h1>Welcome to BuildMitr</h1></div><div class="box hero-empty">${ico('lock')}<h2>Waiting for access</h2><p>You have opened the app, but the admin has not added you to a project yet. Ask the admin to add you on the Team page and link your account. Once that is done, your screens appear here automatically.</p></div>`;
@@ -2975,7 +2963,7 @@ function setLang(l){LANG=l;try{localStorage.setItem('bm-lang',LANG)}catch(_){}lo
 const CLOUD={url:'',token:'',org:null,mem:null,user:null,blob:''};
 const cloudCfg=()=>{const c=window.BM_CONFIG||{};return c.googleScriptUrl&&/^https:\/\//.test(c.googleScriptUrl)?c:null;};
 const JOIN_ROLES=['Site engineer','Supervisor','Architect','Structural engineer','Client','Project manager','Accountant','Storekeeper','Sub-contractor','Marketing'];
-const LG={mode:'pw',hasPw:true,pwAsked:false,email:'',name:'',phone:'',role:'',busy:false,err:'',sentAt:0,orgs:[],toAdmin:true,owner:false,wait:null};
+const LG={mode:'code',hasPw:true,pwAsked:false,email:'',name:'',phone:'',role:'',busy:false,err:'',sentAt:0,orgs:[],toAdmin:true,owner:false,wait:null};
 async function gasApi(action,args){
   let r;
   try{r=await fetch(CLOUD.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:CLOUD.token,org:CLOUD.org,...(args||{})}),redirect:'follow'});}
@@ -3006,8 +2994,7 @@ function vLogin(){
     <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
     <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
-    <p class="code">New here? Choose your role. When you enter the code from the admin you are in straight away — then set your own password for next time.</p>
-    <button type="button" class="btn ghost sm" id="lgUsePw">I already have a password</button></form>`;}
+    <p class="code">Every sign-in needs a fresh 6-digit code from your admin.</p></form>`;}
   else if(step==='wait')body=`<div class="lg-form"><h2>Waiting for approval</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||LG.email)}</b>.</p>
     <div class="note">${ico('history')}<span>The BuildMitr admin has your request and will choose your role. This page opens by itself once you are approved — you can keep it open or come back later.</span></div>${err}
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
@@ -3117,12 +3104,11 @@ async function cloudEnter(user,orgId,mems,pre0){
 async function cloudAfterLoad(){
   /* make sure the signed-in person has a Team card linked to their login */
   const me=CLOUD.user;
-  if(isSuperAdmin()){if(!LG.hasPw&&!LG.pwAsked){LG.pwAsked=true;setTimeout(()=>pwDialog(true),600);}return;}   // the BuildMitr admin is not added to each organisation's team
+  if(isSuperAdmin())return;   // the BuildMitr admin is not added to each organisation's team
   const t=D.team.find(x=>x.account===me.id)||D.team.find(x=>(x.email||'').toLowerCase()===me.email.toLowerCase());
   try{if(t&&t.account!==me.id&&ME.isOwner)await db.doc('team/'+t.id).update({account:me.id,status:'Active'});
     else if(!t&&ME.isOwner)await db.collection('team').add({name:ME.name,email:me.email,phone:'',role:'Admin',access:'Full access',projects:['all'],account:me.id,status:'Active',by:me.id,at:Date.now()});
     await db.doc('members/'+me.id).set({joined:Date.now(),email:me.email});}catch(_){}
-  if(!LG.hasPw&&!LG.pwAsked){LG.pwAsked=true;setTimeout(()=>pwDialog(true),600);}
 }
 function cloudForget(){CLOUD.token='';bmClearCache();try{localStorage.removeItem('bm-token');localStorage.removeItem('bm-org');}catch(_){}}
 async function cloudSignOut(){cloudForget();location.reload();}
@@ -3143,10 +3129,10 @@ function gasDb(org,pre){
      The outbox is kept on the device, so nothing is lost if the network drops or the app is closed; it is sent when back online. */
   const OK='bm-c-out:'+org;let out=(()=>{const o=bmGet(OK);return Array.isArray(o)?o:[];})(),flushing=false,resync=false;
   const saveOut=()=>{bmSet(OK,out);pend=out.length;saveChip(out.length?(navigator.onLine===false?'offline':'saving'):'');};
-  const opIds=o=>o.a==='putMany'?o.args.items.map(([c,id])=>c+'|'+id):[o.args.col+'|'+o.args.id];
+  const opIds=o=>o.a==='putMany'||o.a==='delMany'?o.args.items.map(([c,id])=>c+'|'+id):[o.args.col+'|'+o.args.id];
   const pendingIds=()=>new Set(out.flatMap(opIds));
   const applyOp=o=>{if(o.a==='put')put(o.args.col,o.args.id,o.args.data);else if(o.a==='merge'){const pr=(store[o.args.col]||[]).find(x=>x.id===o.args.id);put(o.args.col,o.args.id,{...(pr?pr.data:{}),...o.args.patch});}
-    else if(o.a==='del')drop(o.args.col,o.args.id);else if(o.a==='putMany')o.args.items.forEach(([c,id,d])=>put(c,id,d));};
+    else if(o.a==='del')drop(o.args.col,o.args.id);else if(o.a==='delMany')o.args.items.forEach(([c,id])=>drop(c,id));else if(o.a==='putMany')o.args.items.forEach(([c,id,d])=>put(c,id,d));};
   const flush=async()=>{if(flushing||!out.length)return;flushing=true;saveChip('saving');
     while(out.length){const o=out[0];
       try{await gasApi(o.a,o.args);out.shift();saveOut();}
@@ -3188,6 +3174,7 @@ function gasDb(org,pre){
     refreshNow:poll,
     /* many entries in one request (e.g. a whole work schedule) */
     batch:async list=>{list.forEach(([c,id,d])=>put(c,id,d));saveCache();for(let i=0;i<list.length;i+=300)await send('putMany',{items:list.slice(i,i+300)});},
+    delMany:async list=>{list.forEach(([c,id])=>drop(c,id));saveCache();for(let i=0;i<list.length;i+=1500)await send('delMany',{items:list.slice(i,i+1500)});},
     flush,pending:()=>out.length,
     reset:()=>toast('Your data is saved on the server — nothing to reset.')
   };
@@ -5272,6 +5259,79 @@ document.addEventListener('click',async e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-olcopy]');if(b){try{await navigator.clipboard.writeText(b.dataset.olcopy);toast('Link copied');}catch(_){toast('Could not copy');}return;}}
   {const b=e.target.closest('[data-olmore]');if(b&&OLT){if(navigator.share){try{await navigator.share({title:'BuildMitr — '+OLT.name,text:OLT.text});}catch(_){}}else shareSheet('Sign-in link',OLT.text);return;}}
 },true);
+
+/* ================= Projects page: search, sort, grid / list, own order, archive, delete ================= */
+Object.assign(ICONS,{'archive':'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+  'layout-grid':'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  'list':'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>','arrow-up':'<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>','arrow-down':'<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  'rotate-ccw':'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'});
+const PV=(()=>{try{return JSON.parse(localStorage.getItem('bm-pview')||'{}');}catch(_){return {};}})();
+PV.sort=PV.sort||'order';PV.lay=PV.lay||'grid';
+const pvSave=()=>{try{localStorage.setItem('bm-pview',JSON.stringify({sort:PV.sort,lay:PV.lay}));}catch(_){}};
+const projArch=id=>{const p=D.projects.find(x=>x.id===id);return !!(p&&p.archived);};
+function projOrdered(list){
+  const by={order:(a,b)=>(a.order??1e9)-(b.order??1e9)||(b.created||0)-(a.created||0),name:(a,b)=>String(a.name||'').localeCompare(String(b.name||''),undefined,{numeric:true}),
+    code:(a,b)=>String(a.prefix||'').localeCompare(String(b.prefix||''),undefined,{numeric:true})||String(a.name||'').localeCompare(String(b.name||'')),
+    start:(a,b)=>String(a.start||'9').localeCompare(String(b.start||'9')),newest:(a,b)=>(b.created||0)-(a.created||0)}[PV.sort]||((a,b)=>0);
+  return [...list].sort(by);
+}
+function vProjects(){
+  const canEd=CANW&&canEditView('projects'),admin=isAdmin();
+  const all=D.projects.filter(p=>projOK(p.id)),arch=all.filter(p=>p.archived);if(PV.arch&&!arch.length)PV.arch=false;
+  const q=S.q.toLowerCase(),list=projOrdered(all.filter(p=>!!p.archived===!!PV.arch).filter(p=>[p.prefix,p.name,p.address,p.description,cname(p.client)].join(' ').toLowerCase().includes(q)));
+  const btn=CANW?`<button class="btn pri" data-add="projects">${ico('plus')}New project</button>`:'';
+  if(!D.projects.length)return header(label('projects'))+`<div class="box hero-empty">${ico('building-2')}<h2>No projects yet</h2><p>Start by creating your first project. Then record daily reports, tasks, material, labour and payments against it.</p>${btn}</div>`;
+  const stats=p=>{const ts=D.tasks.filter(t=>t.project===p.id),pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;return {pc,open:D.issues.filter(i=>i.project===p.id&&i.status!=='Resolved').length};};
+  const moveOK=canEd&&PV.sort==='order'&&!q&&!PV.arch;
+  const acts=(p,i)=>`${moveOK?`<button type="button" class="btn sm ghost" data-pmove="${p.id}|-1" ${i===0?'disabled':''} aria-label="Move ${esc(p.name)} up">${ico('arrow-up')}</button><button type="button" class="btn sm ghost" data-pmove="${p.id}|1" ${i===list.length-1?'disabled':''} aria-label="Move ${esc(p.name)} down">${ico('arrow-down')}</button>`:''}
+    ${canEd?`<button type="button" class="btn sm ghost" data-edit="projects:${p.id}" aria-label="Edit ${esc(p.name)}">${ico('pencil')}</button>`:''}
+    ${admin?(p.archived?`<button type="button" class="btn sm ghost" data-parch="${p.id}|0">${ico('rotate-ccw')}<span>Restore</span></button>`:`<button type="button" class="btn sm ghost" data-parch="${p.id}|1" aria-label="Archive ${esc(p.name)}">${ico('archive')}</button>`)+`<button type="button" class="btn sm ghost warn" data-pdel="${p.id}" aria-label="Delete ${esc(p.name)}">${ico('trash-2')}</button>`:''}`;
+  const card=(p,i)=>{const s=stats(p);return `<div class="pcard-w"><button class="pcard" data-proj="${p.id}">${p.prefix?`<span class="code">${esc(p.prefix)}</span>`:''}<h3>${esc(p.name)}${p.archived?' <span class="pill p-grey">Archived</span>':''}</h3>
+      <div class="meta"><span>${ico('map-pin')}${esc(p.address||'—')}</span>${p.loc?'<span class="pill p-green">Pinned</span>':''}</div>
+      <div class="meta"><span>${ico('calendar')}${fd(p.start)} → ${fd(p.end)}</span><span>${ico('alert-triangle')}${s.open} open</span></div>
+      <div style="display:flex;gap:8px;align-items:center"><div class="prog" style="flex:1"><i style="width:${s.pc}%"></i></div><span class="code">${s.pc}%</span></div></button>
+      ${canEd||admin?`<div class="pcard-acts">${acts(p,i)}</div>`:''}</div>`;};
+  const row=(p,i)=>{const s=stats(p);return `<tr><td class="code">${esc(p.prefix||'')}</td><td><button type="button" class="linkish" data-proj="${p.id}"><b>${esc(p.name)}</b></button>${p.archived?' <span class="pill p-grey">Archived</span>':''}<div class="code">${esc(p.address||'')}</div></td>
+      <td>${esc(cname(p.client)||'—')}</td><td class="code">${fd(p.start)} → ${fd(p.end)}</td><td class="num">${s.pc}%</td><td class="num">${s.open}</td><td class="acts">${acts(p,i)}</td></tr>`;};
+  const bar=`<div class="pl-bar"><input id="q" placeholder="Search projects by name, code, client, place" value="${esc(S.q)}" aria-label="Search projects">
+    <label class="code">Sort<select id="pv-sort">${[['order','My order'],['name','Name A–Z'],['code','Project code / number'],['start','Start date'],['newest','Newest first']].map(([v,l])=>`<option value="${v}" ${PV.sort===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    <div class="seg" role="group" aria-label="Layout"><button type="button" class="btn sm ${PV.lay==='grid'?'pri':''}" data-play="grid" aria-label="Grid">${ico('layout-grid')}</button><button type="button" class="btn sm ${PV.lay==='list'?'pri':''}" data-play="list" aria-label="List">${ico('list')}</button></div>
+    ${arch.length||PV.arch?`<button type="button" class="btn sm ${PV.arch?'pri':''}" data-parchv>${ico('archive')}<span>${PV.arch?'Back to active projects':`Archived (${arch.length})`}</span></button>`:''}</div>
+    ${PV.sort==='order'&&canEd&&!PV.arch?'<div class="code" style="margin:-4px 0 10px">Use ↑ ↓ to set your own order.</div>':''}`;
+  const body=!list.length?`<div class="empty">${q?'No project matches your search.':PV.arch?'No archived projects.':'No projects.'}</div>`:
+    PV.lay==='list'?`<div class="box"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Project</th><th>Client</th><th>Dates</th><th class="num">Done</th><th class="num">Issues</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div></div>`:
+    `<div class="cards">${list.map(card).join('')}</div>`;
+  return header(PV.arch?'Archived projects':label('projects'),btn)+bar+body;
+}
+async function projMove(id,dir){
+  const list=projOrdered(D.projects.filter(p=>projOK(p.id)&&!p.archived));const i=list.findIndex(p=>p.id===id),j=i+dir;if(i<0||j<0||j>=list.length)return;
+  [list[i],list[j]]=[list[j],list[i]];
+  const ch=list.map((p,k)=>[p,k]).filter(([p,k])=>p.order!==k).map(([p,k])=>['projects',p.id,{...recOf(p),order:k}]);
+  await write(()=>dbBatch(ch),'Order saved');render();
+}
+function projDelDialog(id){
+  const p=proj(id);if(!p)return;const cols=Object.keys(D).filter(c=>Array.isArray(D[c])&&c!=='projects');
+  const n=cols.reduce((s,c)=>s+D[c].filter(r=>r.project===id).length,0);
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="pdelForm" data-id="${esc(id)}" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Delete project</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><p>This permanently deletes <b>${esc(p.name)}</b> and everything recorded in it — <b>${n}</b> entries (tasks, reports, payments, drawings list, invoices…). Uploaded files stay in Google Drive.</p>
+    <p class="code">Want to keep the records? Use <b>Archive</b> instead — it hides the project and can be restored.</p>
+    <label>Type the project name to confirm<input name="c" autocomplete="off" placeholder="${esc(p.name)}" required></label></div>
+   <div class="pane-f"><button type="button" class="btn" data-parch="${esc(id)}|1">${ico('archive')}<span>Archive instead</span></button><button class="btn warn">${ico('trash-2')}<span>Delete for ever</span></button></div></form></div>`;
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='pdelForm')return;e.preventDefault();const f=e.target,id=f.dataset.id,p=proj(id);if(!p)return;
+  if(f.elements.c.value.trim().toLowerCase()!==String(p.name).trim().toLowerCase()){toast('The name does not match.');return;}
+  const items=[];Object.keys(D).forEach(c=>{if(Array.isArray(D[c])&&c!=='projects')D[c].forEach(r=>{if(r.project===id)items.push([c,r.id]);});});items.push(['projects',id]);
+  const ok=await write(()=>db.delMany(items),`${p.name} deleted`);if(ok){closeLayer();if(S.proj===id)S.proj='all';render();}},true);
+document.addEventListener('click',async e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-play]');if(b){PV.lay=b.dataset.play;pvSave();render();return;}}
+  {const b=e.target.closest('[data-parchv]');if(b){PV.arch=!PV.arch;render();return;}}
+  {const b=e.target.closest('[data-pmove]');if(b){e.stopPropagation();const [id,d]=b.dataset.pmove.split('|');projMove(id,+d);return;}}
+  {const b=e.target.closest('[data-pdel]');if(b){e.stopPropagation();projDelDialog(b.dataset.pdel);return;}}
+  {const b=e.target.closest('[data-parch]');if(b){e.stopPropagation();const [id,v]=b.dataset.parch.split('|');const p=proj(id);if(!p)return;
+    const ok=await write(()=>db.doc('projects/'+id).update({archived:v==='1'?Date.now():null}),v==='1'?`${p.name} archived — find it under Archived`:`${p.name} restored`);
+    if(ok){closeLayer();if(v==='1'&&S.proj===id)S.proj='all';render();}return;}}
+},true);
+document.addEventListener('change',e=>{if(e.target.id==='pv-sort'){PV.sort=e.target.value;pvSave();render();}},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
