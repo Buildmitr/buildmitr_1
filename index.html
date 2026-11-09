@@ -930,7 +930,7 @@ async function write(fn,ok){
 }
 
 /* ================= Shell ================= */
-const SUPER=[{name:'Marketing & sales',icon:'megaphone',groups:['Leads & pipeline','Follow-ups','Estimates','Campaigns','Content & reviews','Sales']},{name:'Project management',icon:'briefcase',groups:['Library','Planning','Progress & quality','Reports & export']},{name:'Site resources',icon:'boxes',groups:['Material','Manpower','Equipment','Money']}];
+const SUPER=[{name:'Marketing & sales',icon:'megaphone',groups:['Leads & pipeline','Follow-ups','Campaigns','Content & reviews','Sales']},{name:'Project management',icon:'briefcase',groups:['Library','Estimates','Planning','Progress & quality','Reports & export']},{name:'Site resources',icon:'boxes',groups:['Material','Manpower','Equipment','Money']}];
 const GROUP_ICON={'Leads & pipeline':'kanban','Follow-ups':'calendar-clock','Estimates':'calculator','Campaigns':'target','Content & reviews':'star','Reports & export':'file-bar-chart','Site cameras':'cctv','Sales':'user-plus','Library':'library','Planning':'gantt-chart','Progress & quality':'list-checks','Material':'warehouse','Manpower':'hard-hat','Equipment':'truck','Money':'indian-rupee'};
 let COLLAPSED=false;try{COLLAPSED=localStorage.getItem('bm-collapsed')==='1';}catch(e){}
 const SMALL_MQ='(max-width:1024px)';
