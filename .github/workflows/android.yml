@@ -19,6 +19,25 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.7' }
+      - name: Signing key
+        shell: bash
+        run: |
+          set -e
+          mkdir -p keys
+          if gh release download signing-key -p buildmitr.jks -p key.txt -D keys; then echo "Using the saved key"; else
+            PASS=$(openssl rand -hex 16); echo -n "$PASS" > keys/key.txt
+            keytool -genkeypair -keystore keys/buildmitr.jks -alias buildmitr -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" -dname "CN=BuildMitr, O=BuildMitr, C=IN"
+            gh release create signing-key --draft --title "Signing key (private - do not publish)" --notes "Keep private. Needed to update the app." keys/buildmitr.jks keys/key.txt
+          fi
+          keytool -list -v -keystore keys/buildmitr.jks -storepass "$(cat keys/key.txt)" | grep 'SHA256:' | head -1 | sed 's/.*SHA256: //' > sha256.txt
+          echo "key: $(cat sha256.txt)" | tee -a build.log
+      - name: Build
+        working-directory: android
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee -a ../build.log
       - name: Sign
         shell: bash
         run: |
