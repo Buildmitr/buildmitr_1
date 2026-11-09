@@ -354,6 +354,19 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .qr-box{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1/1;max-height:60vh}.qr-box video{width:100%;height:100%;object-fit:cover}.qr-frame{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .cam-note{position:absolute;left:8px;right:8px;bottom:6px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px}.cam-note a{color:#fff}
 .inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.inst-b{padding:12px 16px}.inst-b p{margin:0 0 10px}.inst-b ol{margin:0 0 10px;padding-left:20px}.inst-me{outline:2px solid var(--accent)}.inst-qr{width:150px;height:150px;background:#fff;border-radius:8px;padding:4px}.inst-qr svg{width:100%;height:100%}
+.bar{position:sticky;top:0;z-index:30;background:var(--bg);margin:-8px 0 0;padding:8px 0;transition:padding .15s}
+body.scrolled .bar{padding:6px 0;box-shadow:0 6px 10px -10px rgba(0,0,0,.35);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+body.scrolled .bar::-webkit-scrollbar{display:none}
+body.scrolled .bar h1{font-size:15px;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+body.scrolled .bar .btn{padding:5px 9px;font-size:12.5px;flex:none}body.scrolled .bar .btn svg{width:15px;height:15px}
+body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px 5px 0;font-size:12.5px;max-width:180px}
+.back-btn{flex:none}.back-btn span{font-weight:600}
+.dl-prog{display:flex;gap:10px;align-items:center;padding:0 16px 10px;flex-wrap:wrap}.dl-prog .prog{flex:1;min-width:140px}
+.dl-list{border-top:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
+.dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
+.dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
+.dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .org-row{border-bottom:1px solid var(--line)}.e2sec td{background:var(--bg)}.e2ed td{background:var(--amber-soft,rgba(214,158,46,.12))}.e2hd{border-top:1px solid var(--line)}.e2hb{display:flex;width:100%;gap:10px;align-items:center;padding:12px 16px;background:none;border:0;color:inherit;font:600 14px var(--f-body);cursor:pointer;text-align:left}.e2hb span:first-child{flex:1}.e2hb[aria-expanded=true] .chev{transform:rotate(180deg)}.org-edit{background:var(--bg);border-radius:10px;padding:10px;margin:6px 0}
 .ai-m.ai-long:not(.ai-open) .ai-body{max-height:220px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .ai-m.think::after{content:'';display:inline-block;width:8px;height:8px;margin-left:8px;border-radius:50%;background:var(--accent);animation:aipulse 1s infinite alternate}
@@ -667,8 +680,8 @@ const MOD={
     extra:[{l:'Cost',num:1,f:r=>inr(equipCost(r))}]},
   documents:{label:'Drawings & documents',te:'డ్రాయింగ్‌లు & పత్రాలు',icon:'folder-open',fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'title',l:'Title',t:'text',req:1,list:1},
-    {k:'cat',l:'Type',t:'select',o:['Architectural drawing','Structural drawing','Electrical / plumbing','Approval / permit','Agreement','BOQ / estimate','Report','Other'],list:1},
-    {k:'rev',l:'Revision',t:'text',list:1},{k:'status',l:'Status',t:'select',o:['Draft','For approval','Approved','Superseded'],list:1},{k:'files',l:'Files (PDF or photos, up to 20 MB each)',t:'files',list:1},
+    {k:'cat',l:'Type',t:'select',o:['Architectural drawing','Structural drawing','Electrical / plumbing','Approval / permit','Agreement','BOQ / estimate','Report','Other'],list:1},{k:'disc',l:'Drawings library section',t:'select',o:['Architecture','Structure','MEP']},
+    {k:'rev',l:'Revision',t:'text',list:1},{k:'status',l:'Status',t:'select',o:['Draft','For approval','Approved','Superseded'],list:1},{k:'files',l:'Files (DWG, PDF, photos and more — up to 10 MB each)',t:'files',list:1},
     {k:'link',l:'Or link (Drive / Dropbox for DWG, Revit, Excel)',t:'url',list:1},{k:'notes',l:'Notes',t:'textarea'}]},
   campaigns:{label:'Campaigns',te:'ప్రచారాలు',icon:'megaphone',noProject:true,fields:[
     {k:'name',l:'Campaign name',t:'text',req:1,list:1},{k:'channel',l:'Channel',t:'select',o:CAMP_CH,req:1,list:1},{k:'branch',l:'Branch',t:'select',o:BRANCHES,list:1},
@@ -710,7 +723,7 @@ const NAV=[
   {g:'Content & reviews',items:[['content','images','Content library','ఫోటో లైబ్రరీ'],['reviews'],['referrals'],['portfolio']]},
   {g:'Sales',items:[['docmaker','file-text','Quotations & invoices','కోటేషన్లు & ఇన్వాయిస్‌లు'],['invoices']]},
   {g:'Library',items:[['clients'],['vendors'],['documents']]},
-  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
+  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్'],['drawlib','library','Drawings library','డ్రాయింగ్ లైబ్రరీ'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
   {g:'Progress & quality',items:[['tasks'],['issues'],['dpr']]},
   {g:'Site cameras',items:[['cctv','cctv','Live cameras','లైవ్ కెమెరాలు'],['cameras']]},
   {g:'Material',items:[['inventory','warehouse','Inventory','స్టాక్'],['po'],['received'],['requests'],['issue'],['returned'],['consumed']]},
@@ -966,7 +979,7 @@ function side(){
 }
 function header(title,actions=''){
   const opts=PJ().sort((a,b)=>(b.created||0)-(a.created||0)).map(p=>`<option value="${p.id}" ${S.proj===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('');
-  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar"><h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().length;return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
+  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().length;return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
     <label class="psw">${ico('building-2')}<select id="projSel" aria-label="Project"><option value="all">All projects</option>${opts}</select></label>${actions}</div>`;
 }
 const isAdmin=()=>ME.isOwner||ME.canEdit;
@@ -990,7 +1003,7 @@ function cell(f,r){
     case 'projects':return (v||[]).includes('all')?'<span class="pill p-green">All projects</span>':(v||[]).length?(v||[]).map(id=>`<span class="pill p-grey" style="margin:1px">${esc(pname(id))}</span>`).join(' '):'—';
     case 'equipment':return esc(ename(v));
     case 'url':return v?`<a class="btn sm" href="${esc(v)}" target="_blank" rel="noopener noreferrer">${ico('external-link')}Open link</a>`:'—';
-    case 'files':return (v||[]).length?`<div class="acts-f" style="display:flex;gap:6px;flex-wrap:wrap">${v.map(x=>`<a class="btn sm" href="/_blob/${esc(x.id)}" target="_blank" rel="noopener">${ico(x.type==='application/pdf'?'file-text':'image')}${esc(x.name.length>22?x.name.slice(0,20)+'…':x.name)}</a>`).join('')}</div>`:'—';
+    case 'files':return (v||[]).length?`<div class="acts-f" style="display:flex;gap:6px;flex-wrap:wrap">${v.map(x=>`<span class="dl-f"><a class="btn sm" href="/_blob/${esc(x.id)}" target="_blank" rel="noopener" aria-label="${esc(x.name)}">${ico(fileIco(x))}${esc(x.name.length>22?x.name.slice(0,20)+'…':x.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(x.id)}|${esc(x.name)}|${esc(x.type||'')}|${esc(r.title||x.name)}" aria-label="Share ${esc(x.name)}">${ico('share-2')}</button></span>`).join('')}</div>`:'—';
     case 'date':return fd(v);
     case 'money':return v?inr(v):'—';
     case 'number':return f.k==='progress'?`<div style="display:flex;gap:8px;align-items:center"><div class="prog"><i style="width:${Math.min(100,+v||0)}%"></i></div><span class="code">${+v||0}%</span></div>`:(v===''||v==null?'—':num(v));
@@ -1213,8 +1226,8 @@ function fieldInput(f,v){
     case 'projects':return D.projects.length?`<div id="${id}" class="checks">${D.projects.map(p=>`<label><input type="checkbox" value="${p.id}" ${(v||[]).includes(p.id)?'checked':''}>${esc(pname(p.id))}</label>`).join('')}<label><input type="checkbox" value="all" ${(v||[]).includes('all')?'checked':''}><b>All projects (now and future)</b></label></div>`:'<span class="code">Create a project first.</span>';
     case 'equipment':return sel(D.equipment.map(x=>[x.id,`${x.name}${x.own?' · '+x.own:''}`]),v);
     case 'url':return `<input id="${id}" type="url" placeholder="https://…" value="${esc(v||'')}" ${req}>`;
-    case 'files':return `<div id="fl-list" style="display:grid;gap:4px">${(DRAFT.files[f.k]||[]).map(x=>`<span class="code">${ico(x.type==='application/pdf'?'file-text':'image')} ${esc(x.name)}</span>`).join('')}</div>
-      ${A?`<label class="btn sm" style="width:max-content">${ico('upload')}Add files<input type="file" accept=".pdf,image/*" multiple hidden data-files="${f.k}"></label>`:'<span class="code">File upload needs Contributor access.</span>'}`;
+    case 'files':return `<div id="fl-list" style="display:grid;gap:4px">${(DRAFT.files[f.k]||[]).map(x=>`<span class="code">${ico(fileIco(x))} ${esc(x.name)}</span>`).join('')}</div>
+      ${A?`<label class="btn sm" style="width:max-content">${ico('upload')}Add files<input type="file" accept=".pdf,image/*,.dwg,.dxf,.dwf,.skp,.xlsx,.xls,.docx,.doc,.zip,.rvt,.ifc" multiple hidden data-files="${f.k}"></label>`:'<span class="code">File upload needs Contributor access.</span>'}`;
     case 'material':{const mats=[...new Set([...MAT_KEYS].flatMap(k=>D[k].map(r=>(r.material||'').trim())).filter(Boolean))].sort();
       return `<input id="${id}" list="matlist" value="${esc(v||'')}" placeholder="e.g. Cement OPC 53" ${req}><datalist id="matlist">${mats.map(m=>`<option value="${esc(m)}">`).join('')}</datalist>`;}
     case 'photos':return `<div id="ph-list" style="display:flex;gap:6px;flex-wrap:wrap">${(DRAFT.photos[f.k]||[]).map(pid=>`<img src="/_blob/${esc(pid)}" alt="" style="width:56px;height:56px;border-radius:6px;object-fit:cover">`).join('')}</div>
@@ -1266,9 +1279,9 @@ async function addFiles(files,fk){
   if(!A){toast('File upload needs Contributor access.');return;}
   for(const file of [...files]){
     const ext=(file.name.split('.').pop()||'').toLowerCase();
-    const type={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp'}[ext];
-    if(!type){toast(`${ext.toUpperCase()} can't be uploaded here. Use the link box for DWG, Revit or Excel.`);continue;}
-    if(file.size>20*1048576){toast(`${file.name} is over 20 MB. Use the link box instead.`);continue;}
+    const type=fileType(file.name);
+    if(!type){toast(`${ext.toUpperCase()} files can't be uploaded here. Use the link box instead.`);continue;}
+    if(file.size>10*1048576){toast(`${file.name} is over 10 MB. Save it as PDF, zip it, or use the link box.`);continue;}
     toast(`Uploading ${file.name}…`);
     try{const r=await A.upload(file,{type});DRAFT.files[fk].push({id:r.id,name:file.name,type});
       const l=document.getElementById('fl-list');if(l){const s=document.createElement('span');s.className='code';s.textContent='✓ '+file.name;l.appendChild(s);}
@@ -1309,7 +1322,7 @@ const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;
 function vSchedule(){
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
   const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
-  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
+  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
   if(!ts.length)return header(label('schedule'),btn)+`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`;
   const day=s=>new Date(s+'T00:00').getTime()/864e5;
   let min=Math.min(...ts.map(t=>day(t.s)),day(today()))-2,max=Math.max(...ts.map(t=>day(t.e)),day(today()))+3;
@@ -1579,7 +1592,7 @@ function vProject(){
   return header(esc(p.name),`<button class="btn" data-go="projects">${ico('arrow-left')}Projects</button>`)+
   `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
   <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>
-  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button><button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}</div></div>`;
+  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}</div></div>`;
 }
 const fmtTs=ms=>ms?new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'short'}):'—';
 
@@ -1755,7 +1768,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='docmaker')v='invoices';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -2425,7 +2438,7 @@ function ownerBox(){
 }
 
 /* ---- Client tabs ---- */
-function clientHead(title){return `${S.viewAs?previewBar():''}<div class="bar"><h1>${title}</h1></div>`;}
+function clientHead(title){return `${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1></div>`;}
 function vCPhotos(){
   const ids=new Set(PJ().map(p=>p.id));
   const ds=[...D.dpr,...D.workupd].filter(d=>ids.has(d.project)&&(d.photos||[]).length).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -4894,6 +4907,7 @@ function fileIdOf(href){const m=String(href||'').match(/drive\.google\.com\/file
 function openFile(id,isImg,name){
   const big=isImg?`<img src="${esc(driveImg(id))}" alt="${esc(name||'Photo')}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px">`:`<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" title="${esc(name||'File')}" style="width:100%;height:calc(100vh - 150px);border:0;border-radius:6px;background:#fff" allow="autoplay"></iframe>`;
   document.getElementById('layer').innerHTML=`<div class="drawer fv"><div class="pane fv-pane"><div class="pane-h"><h2 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name||(isImg?'Photo':'File'))}</h2>
+    <button type="button" class="btn sm" data-fshare="${esc(id)}|${esc(name||'File')}|${isImg?'image/jpeg':''}|${esc(name||'File')}">${ico('share-2')}<span>Share</span></button>
     <a class="btn sm" href="https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${ico('file-down')}<span>Download</span></a>
     <a class="btn sm ghost" href="${esc(isImg?driveImg(id):driveView(id))}" target="_blank" rel="noopener" aria-label="Open in a new tab">${ico('external-link')}</a>
     <button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div><div class="pane-b" style="padding:8px">${big}</div></div></div>`;
@@ -5065,6 +5079,135 @@ document.addEventListener('click',async e=>{const id=(e.target.closest&&(e.targe
   if(id==='instNow'&&INSTALL_EVT){INSTALL_EVT.prompt();try{await INSTALL_EVT.userChoice;}catch(_){}INSTALL_EVT=null;render();}
   if(id==='instShare')shareSheet('BuildMitr app',`BuildMitr — construction project management.\nOpen: ${APP_URL}\nAndroid app: ${APK_URL}`);},true);
 
+/* ================= Slim sticky top bar + Back ================= */
+Object.assign(ICONS,{'arrow-left':ICONS['arrow-left']||'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'});
+/* the page's top bar stays on screen while scrolling, and gets slimmer once you scroll down */
+(function(){let on=false;const f=()=>{const s=(window.scrollY||document.documentElement.scrollTop)>40;if(s!==on){on=s;document.body.classList.toggle('scrolled',s);}};
+  window.addEventListener('scroll',f,{passive:true});})();
+/* Back: every page you open is remembered; Back (button, phone back key, browser back) returns to the page before */
+const HIST=[];let LASTV=null,NAVBACK=false;
+function navTrack(){
+  if(!S.ready||(S.cloud&&S.authStep))return;
+  const cur={view:S.view,proj:S.proj,y:0};
+  if(LASTV&&(LASTV.view!==cur.view||LASTV.proj!==cur.proj)){
+    if(!NAVBACK){LASTV.y=LASTV.y||0;HIST.push(LASTV);if(HIST.length>40)HIST.shift();try{history.pushState({bm:HIST.length},'');}catch(_){}}
+  }
+  if(!LASTV||LASTV.view!==cur.view||LASTV.proj!==cur.proj)LASTV=cur;
+  NAVBACK=false;
+}
+window.addEventListener('scroll',()=>{if(LASTV)LASTV.y=window.scrollY;},{passive:true});
+function goBack(fromPop){
+  const l=document.getElementById('layer');if(l&&l.innerHTML.trim()){if(typeof qrStop==='function')qrStop();closeLayer();if(fromPop)try{history.pushState({bm:HIST.length},'');}catch(_){}return true;}
+  const p=HIST.pop();if(!p)return false;NAVBACK=true;S.view=p.view;S.proj=p.proj;LASTV={...p};render();setTimeout(()=>scrollTo(0,p.y||0),0);return true;
+}
+window.addEventListener('popstate',()=>{goBack(true);});
+const backBtn=()=>HIST.length&&!HOME_VIEWS.includes(S.view)?`<button type="button" class="btn ghost back-btn" data-back aria-label="Back">${ico('arrow-left')}<span>Back</span></button>`:'';
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-back]');if(!b)return;e.preventDefault();e.stopPropagation();
+  if(HIST.length){try{history.back();}catch(_){goBack();}}else goBack();},true);
+
+/* ================= Drawings library (Architecture / Structure / MEP) + share any file =================
+ * Each project gets a standard checklist of drawings per discipline. Upload DWG, DXF, PDF or images against each item;
+ * a new upload becomes the next revision and the older one is marked Superseded. Any file can be shared by WhatsApp,
+ * email, copied link, or sent as the file itself from a phone. Saved in the existing "documents" list. */
+Object.assign(ICONS,{'file':ICONS.file||'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>','library':'<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>'});
+const DL_DISC=['Architecture','Structure','MEP'];
+const DL_STD={
+  Architecture:['Site plan','Floor plans','Terrace plan','Elevations','Sections','Door & window schedule','Staircase details','Toilet details','Kitchen details','Flooring layout','Ceiling layout (RCP)','Furniture layout','Compound wall & gate','Municipal approval drawings','3D views / renders'],
+  Structure:['Soil investigation report','Centre line / column marking','Footing layout & details','Column layout & schedule','Plinth beam layout','Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details','Staircase reinforcement','Sump & septic tank','Headroom / overhead tank','Structural design report'],
+  MEP:['Electrical layout','Electrical single-line diagram','Lighting layout','Water supply (plumbing) layout','Drainage layout','Rainwater harvesting','Sump & overhead tank piping','AC / HVAC layout','Fire safety layout','Solar layout','CCTV, data & low-voltage layout','Earthing & lightning protection']};
+const DL_CAT={Architecture:'Architectural drawing',Structure:'Structural drawing',MEP:'Electrical / plumbing'};
+const DL={disc:'Architecture'};
+const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?o:DL_STD;};
+const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream'};
+const fileType=n=>FILE_TYPES[(String(n).split('.').pop()||'').toLowerCase()]||'';
+const fileIco=f=>/pdf/.test(f.type||'')?'file-text':/^image\/(jpe?g|png|webp)/.test(f.type||'')?'image':'file';
+const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):driveView(f.id);
+/* the drawings of one project: checklist items + anything else filed under that discipline */
+function dlItems(pid,disc){
+  const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&d.cat===DL_CAT[disc])));
+  const names=[...(dlStd()[disc]||[])];docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
+  return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=all.find(d=>d.status!=='Superseded')||all[0];
+    return {k,all,cur,has:!!(cur&&((cur.files||[]).length||cur.link)),std:(dlStd()[disc]||[]).includes(k)};});
+}
+function vDrawLib(){
+  const pid=S.proj!=='all'?S.proj:'';
+  if(!pid)return header('Drawings library')+`<div class="box hero-empty">${ico('library')}<h2>Choose a project</h2><p>Pick a project at the top to see its Architecture, Structure and MEP drawings.</p></div>`;
+  const tabs=DL_DISC.map(d=>{const it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${d}">${d} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
+  const items=dlItems(pid,DL.disc),n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
+  const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':c.status||'Draft';
+    return `<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${st==='Approved'?'p-green':st==='Pending'?'p-grey':st==='For approval'?'p-amber':'p-blue'}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
+      ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
+      ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}</div>
+      <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept=".dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc" data-dlup="${esc(x.k)}"></label>`:''}
+        ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
+        ${x.has&&isAdmin()&&st!=='Approved'?`<button type="button" class="btn sm ghost" data-dlok="${esc(c.id)}">${ico('check')}Approve</button>`:''}
+        ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
+  return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
+   `<div class="box"><div class="srow">${tabs}</div>
+    <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.disc)} drawings uploaded</span>
+      ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.disc)}</span></button>`:''}</div>
+    <div class="dl-list">${rows}</div>
+    ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
+    <div class="code" style="padding:0 16px 14px">DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each. A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.</div></div>`;
+}
+async function dlUpload(key,files){
+  const pid=S.proj;if(!A){toast('File upload needs Contributor access.');return;}
+  const prev=dlItems(pid,DL.disc).find(x=>x.k===key);const up=[];
+  for(const file of [...files]){const type=fileType(file.name)||file.type||'application/octet-stream';
+    if(file.size>10*1048576){toast(`${file.name} is over 10 MB — save it as PDF, zip it, or put it on Drive and add the link.`);continue;}
+    toast(`Uploading ${file.name}…`);try{const r=await A.upload(file,{type});up.push({id:r.id,name:file.name,type});}catch(e){toast(`${file.name}: ${e.message||'upload failed'}`);}}
+  if(!up.length)return;
+  const cur=prev&&prev.cur;const revN=prev?prev.all.filter(d=>(d.files||[]).length||d.link).length:0;
+  const list=[];
+  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For approval',fu:1,at:Date.now(),by:ME.id}]);
+  else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
+    const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+    list.push(['documents',id,{project:pid,disc:DL.disc,dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For approval',files:up,fu:1,by:ME.id,at:Date.now()}]);}
+  await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();
+}
+/* ---------- share a file ---------- */
+function fileShareText(files,title){const p=S.proj!=='all'?pname(S.proj):'';
+  return [`*${title}*${p?' — '+p:''}`,...files.map(f=>`${f.name}: ${f.link||fileLink(f)}`),'',`— ${orgName()} (BuildMitr)`].join('\n');}
+function shareFiles(files,title){
+  files=files.map(f=>({...f,link:fileLink(f)}));const text=fileShareText(files,title);
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Share ${esc(title)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><div class="code" style="margin-bottom:10px">${files.map(f=>esc(f.name)).join(', ')}</div>
+    <div class="sh-grid">
+     <button type="button" class="btn" data-fsto="wa">${ico('message-circle')}<span>WhatsApp</span></button>
+     <button type="button" class="btn" data-fsto="mail">${ico('mail')}<span>Email</span></button>
+     <button type="button" class="btn" data-fsto="file">${ico('share-2')}<span>Send the file${files.length>1?'s':''}</span></button>
+     <button type="button" class="btn" data-fsto="copy">${ico('copy')}<span>Copy link${files.length>1?'s':''}</span></button>
+     <button type="button" class="btn" data-fsto="tg">${ico('send')}<span>Telegram</span></button>
+     <button type="button" class="btn" data-fsto="dl">${ico('file-down')}<span>Download</span></button></div>
+    <p class="code" style="margin-top:10px">WhatsApp, email and Telegram send a link that opens the file (anyone with the link can view it). "Send the file" attaches the actual file on a phone.</p></div></div></div>`;
+  SHF={files,title,text};
+}
+let SHF=null;
+async function shareFilesTo(k){
+  const {files,title,text}=SHF||{};if(!files)return;
+  if(k==='wa'){const w=window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');if(w)try{w.opener=null;}catch(_){}}
+  else if(k==='tg'){const w=window.open('https://t.me/share/url?url='+encodeURIComponent(files[0].link)+'&text='+encodeURIComponent(text),'_blank');if(w)try{w.opener=null;}catch(_){}}
+  else if(k==='mail')location.href='mailto:?subject='+encodeURIComponent(`${title}${S.proj!=='all'?' — '+pname(S.proj):''}`)+'&body='+encodeURIComponent(text.replace(/\*/g,''));
+  else if(k==='copy'){try{await navigator.clipboard.writeText(text.replace(/\*/g,''));toast('Copied — paste it anywhere');}catch(_){toast('Could not copy');}}
+  else if(k==='dl'){files.forEach(f=>{const w=window.open('https://drive.google.com/uc?export=download&id='+encodeURIComponent(f.id),'_blank');if(w)try{w.opener=null;}catch(_){}});}
+  else if(k==='file'){try{toast('Preparing the file…');const fs=[];for(const f of files){const r=await bmBlob(f.id);const b=await r.blob();fs.push(new File([b],f.name,{type:f.type||b.type||'application/octet-stream'}));}
+      if(navigator.canShare&&navigator.canShare({files:fs})){await navigator.share({files:fs,title,text:text.replace(/\*/g,'')});}
+      else{for(const f of fs)await saveFile(f.name,f);toast('Saved — attach it in WhatsApp or email');}}catch(e){if(e&&e.name!=='AbortError')toast(e.message||'Could not share the file');}}
+}
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  {const b=e.target.closest('[data-fsto]');if(b){shareFilesTo(b.dataset.fsto);return;}}
+  {const b=e.target.closest('[data-fshare]');if(b){e.preventDefault();e.stopPropagation();const [id,name,type,t]=b.dataset.fshare.split('|');shareFiles([{id,name,type}],t||name);return;}}
+  {const b=e.target.closest('[data-dldisc]');if(b){DL.disc=b.dataset.dldisc;render();return;}}
+  {const b=e.target.closest('[data-dlshare]');if(b){const x=dlItems(S.proj,DL.disc).find(y=>y.k===b.dataset.dlshare);if(x&&x.cur)shareFiles(x.cur.files||[],`${x.k}${x.cur.rev?' '+x.cur.rev:''}`);return;}}
+  {const b=e.target.closest('[data-dlshareall]');if(b){const fs=dlItems(S.proj,DL.disc).filter(x=>x.has&&x.cur).flatMap(x=>x.cur.files||[]);if(fs.length)shareFiles(fs,`${DL.disc} drawings`);return;}}
+  {const b=e.target.closest('[data-dlok]');if(b){const d=D.documents.find(x=>x.id===b.dataset.dlok);if(d)write(()=>db.doc('documents/'+d.id).update({status:'Approved'}),'Approved').then(()=>render());return;}}
+},true);
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.dlup){const fs=t.files;dlUpload(t.dataset.dlup,fs);t.value='';}},true);
+document.addEventListener('submit',e=>{if(e.target.id!=='dlAdd')return;e.preventDefault();const v=(e.target.elements.t.value||'').trim();if(!v)return;
+  if(dlItems(S.proj,DL.disc).some(x=>x.k.toLowerCase()===v.toLowerCase())){toast('Already in the list');return;}
+  write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,dkey:v,title:v,cat:DL_CAT[DL.disc],status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5090,12 +5233,13 @@ function render(){
     document.getElementById('view').innerHTML=`<div class="box hero-empty">${ico('log-in')}<h2>Sign in to use BuildMitr</h2><p>Open this page signed in to claude.ai with the account it was shared with. All project data is saved there for the whole team.</p></div>`;draw();return;}
   if(S.proj!=='all'&&!proj(S.proj)&&S.ready)S.proj='all';
   if(S.ready&&!['noaccess'].includes(S.view)&&!(UI_ONLY[S.view]?uiOf()===UI_ONLY[S.view]&&canView(S.view):canView(S.view))){S.view=homeView();}
+  navTrack();
   if(S.ready&&curRole()==='none')S.view='noaccess';
   side();
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='docmaker'?vDocMaker():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
