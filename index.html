@@ -361,6 +361,7 @@ body.scrolled .bar h1{font-size:15px;flex:0 1 auto;white-space:nowrap;overflow:h
 body.scrolled .bar .btn{padding:5px 9px;font-size:12.5px;flex:none}body.scrolled .bar .btn svg{width:15px;height:15px}
 body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px 5px 0;font-size:12.5px;max-width:180px}
 .back-btn{flex:none}.back-btn span{font-weight:600}
+.dl-floors .srow{gap:10px}
 .dl-prog{display:flex;gap:10px;align-items:center;padding:0 16px 10px;flex-wrap:wrap}.dl-prog .prog{flex:1;min-width:140px}
 .dl-list{border-top:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
 .dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
@@ -5116,6 +5117,13 @@ const DL_STD={
   Structure:['Soil investigation report','Centre line / column marking','Footing layout & details','Column layout & schedule','Plinth beam layout','Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details','Staircase reinforcement','Sump & septic tank','Headroom / overhead tank','Structural design report'],
   MEP:['Electrical layout','Electrical single-line diagram','Lighting layout','Water supply (plumbing) layout','Drainage layout','Rainwater harvesting','Sump & overhead tank piping','AC / HVAC layout','Fire safety layout','Solar layout','CCTV, data & low-voltage layout','Earthing & lightning protection']};
 const DL_CAT={Architecture:'Architectural drawing',Structure:'Structural drawing',MEP:'Electrical / plumbing'};
+/* drawings made once for every floor (listed as "Floor plans — First floor" …); roof drawings are per floor roof */
+const DL_PERFLOOR={Architecture:['Floor plans','Furniture layout','Ceiling layout (RCP)','Flooring layout'],Structure:['Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details'],MEP:['Electrical layout','Lighting layout','Water supply (plumbing) layout','Drainage layout','AC / HVAC layout']};
+const FLOOR_NAMES=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor','Seventh floor','Eighth floor','Ninth floor','Tenth floor'];
+function dlFloors(pid){const p=proj(pid)||{};if(Array.isArray(p.floors)&&p.floors.length)return p.floors;
+  const ef=((p.estimate||{}).floors||[]).map(f=>f.n).filter(Boolean);return ef.length?ef:['Ground floor'];}
+const dlRoof=f=>/ floor$/i.test(f)?f.replace(/ floor$/i,' floor roof'):f+' roof';
+function dlFloorList({n,cellar,stilt}){const out=[];if(cellar)out.push('Cellar');if(stilt)out.push('Stilt floor');for(let i=0;i<n;i++)out.push(FLOOR_NAMES[i]||`Floor ${i}`);return out;}
 const DL={disc:'Architecture'};
 const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?o:DL_STD;};
 const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream'};
@@ -5125,9 +5133,11 @@ const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):dri
 /* the drawings of one project: checklist items + anything else filed under that discipline */
 function dlItems(pid,disc){
   const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&d.cat===DL_CAT[disc])));
-  const names=[...(dlStd()[disc]||[])];docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
+  const fl=dlFloors(pid),per=DL_PERFLOOR[disc]||[];
+  const names=(dlStd()[disc]||[]).flatMap(k=>per.includes(k)?fl.map(f=>`${k.replace(/s$/,'')} — ${/roof|slab|beam/i.test(k)?dlRoof(f):f}`):[k]);
+  docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
   return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=all.find(d=>d.status!=='Superseded')||all[0];
-    return {k,all,cur,has:!!(cur&&((cur.files||[]).length||cur.link)),std:(dlStd()[disc]||[]).includes(k)};});
+    return {k,all,cur,has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
 }
 function vDrawLib(){
   const pid=S.proj!=='all'?S.proj:'';
@@ -5143,13 +5153,32 @@ function vDrawLib(){
         ${x.has&&isAdmin()&&st!=='Approved'?`<button type="button" class="btn sm ghost" data-dlok="${esc(c.id)}">${ico('check')}Approve</button>`:''}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
-   `<div class="box"><div class="srow">${tabs}</div>
+   dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>
     <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.disc)} drawings uploaded</span>
       ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.disc)}</span></button>`:''}</div>
     <div class="dl-list">${rows}</div>
     ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
     <div class="code" style="padding:0 16px 14px">DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each. A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.</div></div>`;
 }
+function dlFloorBox(pid){
+  const fl=dlFloors(pid),p=proj(pid)||{},ed=CANW&&canEditView('projects');const above=fl.filter(f=>!/cellar|stilt/i.test(f)).length;
+  return `<div class="box dl-floors"><div class="srow">${ico('building-2')}<span><b>Floors:</b> ${fl.map(esc).join(' · ')}</span>
+    ${ed?`<button type="button" class="btn sm" id="dlFlEdit">${ico('pencil')}<span>${Array.isArray(p.floors)&&p.floors.length?'Change floors':'Set floors'}</span></button>`:''}</div>
+    ${DL.flEdit?`<form id="dlFlForm" class="e2form">
+      <label>Floors above ground (incl. ground)<input name="n" type="number" min="1" max="30" value="${above||1}" required></label>
+      <label class="pl-chk" style="align-self:end"><input type="checkbox" name="cellar" ${fl.includes('Cellar')?'checked':''}>Cellar</label>
+      <label class="pl-chk" style="align-self:end"><input type="checkbox" name="stilt" ${fl.includes('Stilt floor')?'checked':''}>Stilt floor</label>
+      <label class="wide">Or type the floor names (comma separated)<input name="names" value="${esc(fl.join(', '))}" placeholder="Cellar, Ground floor, First floor, Second floor"></label>
+      <div class="srow" style="grid-column:1/-1;padding:0;border:0"><button class="btn pri">${ico('check')}<span>Save floors</span></button><button type="button" class="btn ghost" id="dlFlCancel">Cancel</button>
+      <span class="code">Floor plans, ceiling, flooring, shuttering, slab, beam, electrical, lighting, plumbing, drainage and AC drawings are listed once per floor.</span></div></form>`:''}</div>`;
+}
+document.addEventListener('click',e=>{const id=(e.target.closest&&(e.target.closest('button')||{}).id);if(id==='dlFlEdit'){DL.flEdit=true;render();}if(id==='dlFlCancel'){DL.flEdit=false;render();}},true);
+document.addEventListener('input',e=>{const f=e.target.form;if(!f||f.id!=='dlFlForm'||e.target.name==='names')return;   // number / cellar / stilt fill the names box
+  f.elements.names.value=dlFloorList({n:Math.max(1,Math.min(30,+f.elements.n.value||1)),cellar:f.elements.cellar.checked,stilt:f.elements.stilt.checked}).join(', ');},true);
+document.addEventListener('change',e=>{const f=e.target.form;if(!f||f.id!=='dlFlForm'||e.target.type!=='checkbox')return;f.elements.names.value=dlFloorList({n:Math.max(1,Math.min(30,+f.elements.n.value||1)),cellar:f.elements.cellar.checked,stilt:f.elements.stilt.checked}).join(', ');},true);
+document.addEventListener('submit',e=>{if(e.target.id!=='dlFlForm')return;e.preventDefault();const f=e.target;
+  const list=[...new Set(String(f.elements.names.value).split(',').map(x=>x.trim()).filter(Boolean))].slice(0,40);if(!list.length){toast('Enter at least one floor');return;}
+  write(()=>db.doc('projects/'+S.proj).update({floors:list}),`Floors saved: ${list.length}`).then(ok=>{if(ok){DL.flEdit=false;render();}});},true);
 async function dlUpload(key,files){
   const pid=S.proj;if(!A){toast('File upload needs Contributor access.');return;}
   const prev=dlItems(pid,DL.disc).find(x=>x.k===key);const up=[];
