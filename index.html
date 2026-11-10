@@ -367,6 +367,22 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
 .dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-chips{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-top:6px}.ap-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:3px 8px 3px 3px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
+.ap-chip b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--line);color:var(--ink);font-size:11px}.ap-chip small{opacity:.8}
+.ap-chip.on{border-color:#16a34a;color:#15803d;background:rgb(22 163 74 / .08)}.ap-chip.on b{background:#16a34a;color:#fff}.ap-chip.next{border-color:#f59e0b;color:#b45309}.ap-chip.next b{background:#f59e0b;color:#fff}
+.ap-ln{display:inline-block;width:12px;height:2px;background:var(--line)}
+.ap-log{margin-top:6px;font-size:13px}.ap-log summary{cursor:pointer;color:var(--muted);display:flex;gap:6px;align-items:center}.ap-log summary svg{width:14px;height:14px}
+.ap-note{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.ap-note.back{border-left:3px solid #e11d48;padding-left:8px}.ap-thumb img{width:84px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+.mk{position:fixed;inset:0;z-index:40;background:#1f2937;display:flex;flex-direction:column;color:#fff;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+.mk .btn{color:#fff;border-color:rgb(255 255 255 / .25);background:rgb(255 255 255 / .08)}.mk .btn.pri{background:#2563eb;border-color:#2563eb}.mk .btn.ghost{background:transparent;border-color:transparent}
+.mk-bar{display:flex;align-items:center;gap:6px;padding:6px 8px}.mk-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mk-pg{display:inline-flex;align-items:center;gap:2px;font-size:13px}
+.mk-stage{flex:1;min-height:0;overflow:auto;display:flex;position:relative;background:#111827}.mk-stage canvas{margin:auto;background:#fff;box-shadow:0 2px 12px rgb(0 0 0 / .4);cursor:crosshair}
+.mk-load{margin:auto;opacity:.8;padding:20px;text-align:center}
+.mk-txt{position:absolute;z-index:2;min-width:160px;font:600 16px system-ui,sans-serif;background:rgb(255 255 255 / .95);border:2px solid currentColor;border-radius:6px;padding:4px 6px}
+.mk-tools{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 8px;flex-wrap:wrap}@media (max-width:600px){.mk-sep{display:none}.mk-tools{gap:5px}.mk-tools .btn.sm{padding:5px 7px}}.mk-tools .btn{flex:none}.mk-sep{width:1px;height:24px;background:rgb(255 255 255 / .2);flex:none}
+.mk-col{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid rgb(255 255 255 / .4);padding:0;cursor:pointer}.mk-col.on{outline:3px solid #fff;outline-offset:1px}
+.mk-sz i{display:block;width:18px;background:currentColor;border-radius:2px}
+.mk-foot{display:flex;gap:6px;padding:6px 8px 10px}.mk-foot input{flex:1;min-width:0;background:rgb(255 255 255 / .95);color:#111827}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
 .pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.pl-bar #q{flex:1;min-width:200px;margin:0}.seg{display:flex;gap:4px}
@@ -1248,7 +1264,7 @@ function openForm(k,id,preset){
   const first=document.querySelector('.pane-b input:not([type=date]):not(#locSearch):not(#locPaste),.pane-b textarea');if(first)first.focus();
   if(m.fields.some(f=>f.t==='location')&&S.web)initMap();
 }
-function closeLayer(){if(MAP){MAP.remove();MAP=null;PIN=null;}document.getElementById('layer').innerHTML='';}
+function closeLayer(){if(MAP){MAP.remove();MAP=null;PIN=null;}document.getElementById('layer').innerHTML='';if(S.dirtyL){S.dirtyL=false;setTimeout(()=>{if(!document.querySelector('.drawer'))render();},0);}}
 async function addPhotos(files,fk){
   if(S.demo){toast('Exit the demo to upload photos.');return;}
   if(!A){toast('Photo upload needs Contributor access.');return;}
@@ -2473,7 +2489,7 @@ function raValP(t,k){const po=personOv(t&&t.id);if(po&&po[k])return po[k];return
 function raOverride(role){const o=D.roleaccess.find(x=>x.id===ROLE_KEY(role));return o&&o.v?o.v:null;}
 function raDefaultEdit(role,k){
   if(role==='Client')return k==='changes';
-  if(role==='Architect'||role==='Structural engineer')return ['documents','issues','changes','forms'].includes(k);
+  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms'].includes(k);
   return true;
 }
 function raVal(role,k){
@@ -5138,13 +5154,14 @@ function vDrawLib(){
   if(!pid)return header('Drawings library')+`<div class="box hero-empty">${ico('library')}<h2>Choose a project</h2><p>Pick a project at the top to see its Architecture, Structure and MEP drawings.</p></div>`;
   const tabs=DL_DISC.map(d=>{const it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${d}">${d} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
   const items=dlItems(pid,DL.disc),n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
-  const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':c.status||'Draft';
-    return `<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${st==='Approved'?'p-green':st==='Pending'?'p-grey':st==='For approval'?'p-amber':'p-blue'}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
+  const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':apStatus(c);
+    return `<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
       ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
-      ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}</div>
+      ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}
+      ${x.has?apChips(c):''}${x.has?apLog(c):''}</div>
       <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept=".dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc" data-dlup="${esc(x.k)}"></label>`:''}
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
-        ${x.has&&isAdmin()&&st!=='Approved'?`<button type="button" class="btn sm ghost" data-dlok="${esc(c.id)}">${ico('check')}Approve</button>`:''}
+        ${x.has?apButtons(c,x.k):''}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
    dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>
@@ -5152,7 +5169,8 @@ function vDrawLib(){
       ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.disc)}</span></button>`:''}</div>
     <div class="dl-list">${rows}</div>
     ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
-    <div class="code" style="padding:0 16px 14px">DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each. A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.</div></div>`;
+    <div class="code" style="padding:0 16px 14px">DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each. A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.<br>
+      Approval: ① Drafted (draftsman uploads) → ② Checked (architect / project manager) → ③ Approved (senior architect). Upload a PDF or image print with the DWG to use <b>Mark up</b> (pen, arrows, boxes, text).</div></div>`;
 }
 function dlFloorBox(pid){
   const fl=dlFloors(pid),p=proj(pid)||{},ed=CANW&&canEditView('projects');const above=fl.filter(f=>!/cellar|stilt/i.test(f)).length;
@@ -5183,10 +5201,10 @@ async function dlUpload(key,files){
   if(!up.length)return;
   const cur=prev&&prev.cur;const revN=prev?prev.all.filter(d=>(d.files||[]).length||d.link).length:0;
   const list=[];
-  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For approval',fu:1,at:Date.now(),by:ME.id}]);
+  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
   else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
     const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-    list.push(['documents',id,{project:pid,disc:DL.disc,dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For approval',files:up,fu:1,by:ME.id,at:Date.now()}]);}
+    list.push(['documents',id,{project:pid,disc:DL.disc,dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
   await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();
 }
 /* ---------- share a file ---------- */
@@ -5333,6 +5351,166 @@ document.addEventListener('click',async e=>{if(!e.target.closest)return;
 },true);
 document.addEventListener('change',e=>{if(e.target.id==='pv-sort'){PV.sort=e.target.value;pvSave();render();}},true);
 
+/* ================= Drawing approval (3 stages) + pen markup =================
+ * Every drawing in the library goes: ① Drafted (draftsman uploads / submits) → ② Checked (architect, structural engineer
+ * or project manager) → ③ Approved (senior architect or admin). Any reviewer can send it back with a comment.
+ * "Mark up" opens the PDF / image of the drawing to draw on it like WhatsApp's pen; the marked copy is saved on the drawing. */
+Object.assign(ICONS,{
+  'pen-tool':'<path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
+  'square':'<rect width="18" height="18" x="3" y="3" rx="2"/>','circle':'<circle cx="12" cy="12" r="10"/>',
+  'type':ICONS.type||'<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>',
+  'hand':'<path d="M18 11V6a2 2 0 0 0-4 0"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  'zoom-in':'<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/>',
+  'zoom-out':'<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="8" x2="14" y1="11" y2="11"/>',
+  'check-check':'<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>','chevron-left':'<path d="m15 18-6-6 6-6"/>','chevron-right':'<path d="m9 18 6-6-6-6"/>',
+  'save':'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+  'highlighter':'<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>',
+  'move-up-right':'<path d="M13 5H19V11"/><path d="M19 5L5 19"/>',
+  'undo-2':ICONS['undo-2']||'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+  'corner-up-left':ICONS['corner-up-left']||'<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>'});
+
+/* two new team roles: Draftsman and Senior architect (they see what an architect sees) */
+const AP_NEW_ROLES=false;   // switched on once the server knows these two roles (server update pending)
+(AP_NEW_ROLES?['Draftsman','Senior architect']:[]).forEach(r=>{const o=MOD.team.fields.find(f=>f.k==='role').o;if(!o.includes(r))o.splice(o.indexOf('Structural engineer')+1,0,r);
+  if(!ROLE_VIEWS[r])ROLE_VIEWS[r]=ROLE_VIEWS['Architect'];UI_OF[r]='design';CAT_OF[r]='design';if(!JOIN_ROLES.includes(r))JOIN_ROLES.push(r);if(!RA_MORE.includes(r))RA_MORE.push(r);});
+{const st=MOD.documents.fields.find(f=>f.k==='status');if(st)st.o=['Draft','For checking','For approval','Approved','Sent back','Superseded'];}
+
+const AP_STEPS=[{n:'Drafted',who:'Draftsman',act:'Submit for checking'},{n:'Checked',who:'Architect / PM',act:'Mark checked'},{n:'Approved',who:'Senior architect',act:'Approve'}];
+const AP_STATUS=['Draft','For checking','For approval','Approved'];
+const AP_WHO_DEF={2:['Admin','Project manager','Senior architect','Architect','Structural engineer'],3:['Admin','Senior architect']};
+const apWho=st=>{const o=(orgMain().apprRoles||{})[st];return Array.isArray(o)&&o.length?o:AP_WHO_DEF[st];};
+/* my own role for approvals: the owner is Admin; everyone else by their team role (a project manager is not the senior architect) */
+function apMyRole(){if(S.viewAs)return S.viewAs;if(ME.isOwner)return 'Admin';const t=myTeamRec();if(t&&t.role)return t.role;if(S.demo||(S.web&&!S.cloud))return 'Admin';return isAdmin()?'Project manager':'';}
+function apCan(st){if(!CANW)return false;if(st===1)return canEditView('documents');const r=apMyRole();return r==='Admin'||apWho(st).includes(r);}
+/* stage reached: 0 = not submitted / sent back, 1 = drafted, 2 = checked, 3 = approved */
+function apStage(d){if(!d)return 0;if(d.status==='Approved')return 3;if(d.status==='Sent back'||d.status==='Superseded'&&!d.appr)return 0;
+  const a=d.appr;if(a)return a.s3?3:a.s2?2:a.s1?1:0;return d.status==='For approval'?1:((d.files||[]).length||d.link)&&d.fu?1:0;}
+const apStatus=d=>d&&d.status==='Sent back'?'Sent back':d&&d.status==='Superseded'?'Superseded':AP_STATUS[apStage(d)];
+const apPill=st=>st==='Approved'?'p-green':st==='Pending'?'p-grey':st==='Sent back'?'p-red':st==='For checking'||st==='For approval'?'p-amber':'p-blue';
+function apChips(d){const st=apStage(d),a=(d&&d.appr)||{};
+  return `<span class="ap-chips" aria-label="Approval stage ${st} of 3">${AP_STEPS.map((s,i)=>{const x=a['s'+(i+1)],done=st>i;
+    return `<span class="ap-chip ${done?'on':''} ${st===i&&d&&d.status!=='Sent back'?'next':''}" title="${esc(s.n)}${x?` — ${esc(nm(x.by))}, ${esc(fd(new Date(x.at).toISOString().slice(0,10)))}`:` — ${esc(s.who)}`}"><b>${i+1}</b>${esc(s.n)}${x&&done?`<small>${esc(String(nm(x.by)).split(' ')[0])}</small>`:''}</span>`;}).join('<i class="ap-ln"></i>')}</span>`;}
+function apButtons(d,key){if(!d||!((d.files||[]).length||d.link)||d.status==='Superseded')return '';const st=apStage(d),out=[];
+  if(st<3&&apCan(st+1))out.push(`<button type="button" class="btn sm ${st===2?'pri':''}" data-apgo="${esc(d.id)}|${st+1}">${ico(st===2?'check-check':'check')}<span>${esc(AP_STEPS[st].act)}</span></button>`);
+  if(st>=1&&apCan(Math.min(st+1,3)))out.push(`<button type="button" class="btn sm ghost" data-apback="${esc(d.id)}">${ico('corner-up-left')}<span>Send back</span></button>`);
+  if(dlMarkable(d))out.push(`<button type="button" class="btn sm" data-mkup="${esc(d.id)}">${ico('pen-tool')}<span>Mark up</span></button>`);
+  return out.join('');}
+/* comments, send-backs and marked-up copies of one drawing */
+function apLog(d){const L=((d&&d.rv)||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0));if(!L.length)return '';
+  const one=x=>`<div class="ap-note ${x.k==='back'?'back':''}">${x.img?`<a href="/_blob/${esc(x.img.id)}" target="_blank" rel="noopener" aria-label="${esc(x.img.name)}" class="ap-thumb"><img src="/_blob/${esc(x.img.id)}" alt="Marked-up drawing" loading="lazy"></a>`:''}
+    <div><b>${esc(nm(x.by))}</b> <span class="code">${esc(x.k==='back'?'sent it back':x.k==='mark'?'marked it up':x.k==='go'?AP_STEPS[(x.st||1)-1].n.toLowerCase():'commented')} · ${esc(fd(new Date(x.at).toISOString().slice(0,10)))}</span>${x.t?`<div>${esc(x.t)}</div>`:''}
+    ${x.img?`<button type="button" class="btn sm ghost" data-fshare="${esc(x.img.id)}|${esc(x.img.name)}|image/jpeg|${esc(x.img.name)}">${ico('share-2')}<span>Share</span></button>`:''}</div></div>`;
+  return `<details class="ap-log" ${L[0].k==='back'&&d.status==='Sent back'?'open':''}><summary>${ico('message-square')} ${L.length} comment${L.length>1?'s':''} & markup${L[0].t?` — <i>${esc(String(L[0].t).slice(0,60))}</i>`:''}</summary>${L.map(one).join('')}</details>`;}
+
+/* the dialog for a stage / send back: who, comment, and a WhatsApp nudge to the next person */
+function apDialog(id,kind,st){const d=D.documents.find(x=>x.id===id);if(!d)return;const t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
+  const head=kind==='back'?'Send back for changes':AP_STEPS[st-1].act;
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane" style="height:auto;max-height:100%"><div class="pane-h"><h2>${esc(head)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <form id="apForm" class="pane-b" data-id="${esc(id)}" data-kind="${kind}" data-st="${st||0}"><div class="code" style="margin-bottom:8px">${esc(t)} · ${esc(pname(d.project))}</div>
+    ${apChips(d)}
+    <label style="display:block;margin-top:12px">${kind==='back'?'What needs to change (required)':'Comment (optional)'}<textarea name="t" rows="3" ${kind==='back'?'required':''} placeholder="${kind==='back'?'e.g. Staircase width 1.2 m, update the door schedule':'e.g. Checked dimensions and grid lines'}"></textarea></label>
+    <label class="pl-chk" style="margin-top:8px"><input type="checkbox" name="wa" checked> Tell the team on WhatsApp</label>
+    <div class="srow" style="padding:12px 0 0;border:0"><button class="btn ${kind==='back'?'warn':'pri'}">${ico(kind==='back'?'corner-up-left':'check')}<span>${esc(head)}</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div></div>`;
+  setTimeout(()=>{const ta=document.querySelector('#apForm textarea');if(ta)ta.focus();},50);}
+async function apSave(id,kind,st,txt,wa){const d=D.documents.find(x=>x.id===id);if(!d)return;const now=Date.now(),t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
+  const a={...(d.appr||{})},rv=[...(d.rv||[])];let status;
+  if(kind==='back'){status='Sent back';rv.push({k:'back',by:ME.id,at:now,t:txt,st:apStage(d)});Object.keys(a).forEach(k=>delete a[k]);}
+  else{a['s'+st]={by:ME.id,at:now};for(let i=1;i<st;i++)if(!a['s'+i])a['s'+i]={by:ME.id,at:now};status=AP_STATUS[st];rv.push({k:'go',by:ME.id,at:now,t:txt,st});}
+  const ok=await write(()=>db.doc('documents/'+id).update({appr:a,status,rv}),kind==='back'?`${t}: sent back`:`${t}: ${AP_STEPS[st-1].n.toLowerCase()}`);
+  if(!ok)return;closeLayer();render();
+  if(wa){const next=kind==='back'?'Please update and upload a new revision.':st===1?`Please check it (${apWho(2).filter(r=>r!=='Admin').join(' / ')}).`:st===2?'Ready for final approval by the senior architect.':'Approved — good for construction.';
+    const msg=[`*${t}* — ${pname(d.project)}`,kind==='back'?`↩️ Sent back by ${ME.name||'me'}`:`✅ ${AP_STEPS[st-1].n} by ${ME.name||'me'} (stage ${st} of 3)`,txt?`“${txt}”`:'',next,'',...(d.files||[]).map(f=>`${f.name}: ${fileLink(f)}`),'',`— ${orgName()} (BuildMitr)`].filter((x,i,arr)=>x!==''||arr[i-1]!=='').join('\n');
+    const w=window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');if(w)try{w.opener=null;}catch(_){}}}
+
+/* ---------- pen markup ---------- */
+const dlMarkFile=d=>((d&&d.files)||[]).find(f=>/pdf|^image\/(jpe?g|png|webp)/.test(f.type||fileType(f.name)))||null;
+const dlMarkable=d=>!!dlMarkFile(d);
+const MK={doc:null,file:null,img:null,shapes:[],tool:'pen',color:'#e11d48',size:2,zoom:1,page:1,pages:1,pdf:null,draw:null};
+const MK_COLORS=['#e11d48','#2563eb','#16a34a','#f59e0b','#111827','#ffffff'];
+async function loadPdfJs(){await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>window.pdfjsLib);
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
+async function mkOpen(id,fileId){const d=D.documents.find(x=>x.id===id);const f=fileId?((d&&d.files)||[]).find(x=>x.id===fileId):dlMarkFile(d);
+  if(!d||!f){toast('Upload a PDF or image print of this drawing to mark it up — DWG files cannot be drawn on in a phone or browser.');return;}
+  Object.assign(MK,{doc:d,file:f,img:null,shapes:[],zoom:1,page:1,pages:1,pdf:null,draw:null});
+  document.getElementById('layer').innerHTML=`<div class="mk" role="dialog" aria-label="Mark up drawing">
+   <div class="mk-bar"><button type="button" class="btn sm ghost" data-mkx aria-label="Close">${ico('x')}</button><b class="mk-t">${esc(d.dkey||d.title)}${d.rev?' '+esc(d.rev):''}</b>
+    <span class="mk-pg" hidden><button type="button" class="btn sm ghost" data-mkpg="-1" aria-label="Previous page">${ico('chevron-left')}</button><span id="mkPg">1/1</span><button type="button" class="btn sm ghost" data-mkpg="1" aria-label="Next page">${ico('chevron-right')}</button></span>
+    <button type="button" class="btn sm ghost" data-mkz="-1" aria-label="Zoom out">${ico('zoom-out')}</button><button type="button" class="btn sm ghost" data-mkz="1" aria-label="Zoom in">${ico('zoom-in')}</button></div>
+   <div class="mk-stage" id="mkStage"><div class="mk-load">Opening ${esc(f.name)}…</div><canvas id="mkCv" hidden></canvas><input id="mkTxt" class="mk-txt" hidden placeholder="Type, then Enter"></div>
+   <div class="mk-tools">${[['pen','pen-tool','Pen'],['hl','highlighter','Highlight'],['arrow','move-up-right','Arrow'],['box','square','Box'],['ring','circle','Circle'],['text','type','Text'],['hand','hand','Move']].map(([k,i,l])=>`<button type="button" class="btn sm mk-tool ${MK.tool===k?'pri':''}" data-mktool="${k}" aria-label="${l}" title="${l}">${ico(i)}</button>`).join('')}
+    <span class="mk-sep"></span>${MK_COLORS.map(c=>`<button type="button" class="mk-col ${MK.color===c?'on':''}" data-mkcol="${c}" style="background:${c}" aria-label="Colour ${c}"></button>`).join('')}
+    <span class="mk-sep"></span>${[1,2,4].map(s=>`<button type="button" class="btn sm mk-sz ${MK.size===s?'pri':''}" data-mksz="${s}" aria-label="Line ${s}"><i style="height:${s+1}px"></i></button>`).join('')}
+    <span class="mk-sep"></span><button type="button" class="btn sm" data-mkundo aria-label="Undo">${ico('undo-2')}</button><button type="button" class="btn sm ghost" data-mkclear>Clear</button></div>
+   <form class="mk-foot" id="mkForm"><input name="t" placeholder="Add a comment (optional)" aria-label="Comment"><button class="btn pri" name="go" value="save">${ico('save')}<span>Save</span></button><button class="btn" name="go" value="share">${ico('share-2')}<span>Save & share</span></button></form></div>`;
+  try{const r=await bmBlob(f.id);const blob=await r.blob();
+    if(/pdf/.test(f.type||'')||/\.pdf$/i.test(f.name)){await loadPdfJs();MK.pdf=await pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;MK.pages=MK.pdf.numPages;await mkPage(1);}
+    else{MK.img=await mkImage(blob);mkReady();}}
+  catch(e){const s=document.querySelector('#mkStage .mk-load');if(s)s.textContent='Could not open the drawing: '+(e.message||e);}}
+function mkImage(blob){return new Promise((ok,no)=>{const u=URL.createObjectURL(blob),im=new Image();im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,3000/Math.max(im.width,im.height));c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c);};im.onerror=()=>no(new Error('not a picture'));im.src=u;});}
+async function mkPage(n){if(!MK.pdf)return;if(MK.shapes.length&&!MK.okLeave){MK.okLeave=true;toast('Marks on this page are not saved — Save first, or tap again to leave them');return;}MK.page=Math.max(1,Math.min(MK.pages,n));MK.shapes=[];
+  const pg=await MK.pdf.getPage(MK.page),v0=pg.getViewport({scale:1}),k=Math.min(4,2600/Math.max(v0.width,v0.height)),v=pg.getViewport({scale:k});
+  const c=document.createElement('canvas');c.width=Math.round(v.width);c.height=Math.round(v.height);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  await pg.render({canvasContext:x,viewport:v}).promise;MK.img=c;mkReady();}
+function mkReady(){const cv=document.getElementById('mkCv');if(!cv||!MK.img)return;MK.okLeave=false;cv.width=MK.img.width;cv.height=MK.img.height;cv.hidden=false;
+  const l=document.querySelector('#mkStage .mk-load');if(l)l.remove();const pg=document.querySelector('.mk-pg');if(pg){pg.hidden=MK.pages<2;document.getElementById('mkPg').textContent=MK.page+'/'+MK.pages;}
+  mkFit();mkDraw();}
+function mkFit(){const cv=document.getElementById('mkCv'),st=document.getElementById('mkStage');if(!cv||!st)return;const k=Math.min((st.clientWidth-8)/cv.width,(st.clientHeight-8)/cv.height);
+  cv.style.width=Math.round(cv.width*k*MK.zoom)+'px';cv.style.height=Math.round(cv.height*k*MK.zoom)+'px';cv.style.touchAction=MK.tool==='hand'?'auto':'none';st.classList.toggle('zoomed',MK.zoom>1);}
+const mkU=()=>Math.max(MK.img?MK.img.width:1000,MK.img?MK.img.height:1000)/700;   // 1 "screen pixel" in drawing pixels
+function mkShape(x,s){const u=mkU();x.save();x.strokeStyle=s.c;x.fillStyle=s.c;x.lineWidth=(s.t==='hl'?7:1.6)*s.w*u;x.lineCap='round';x.lineJoin='round';x.globalAlpha=s.t==='hl'?.35:1;
+  if(s.t==='pen'||s.t==='hl'){x.beginPath();s.p.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));if(s.p.length===1)x.lineTo(s.p[0][0]+.1,s.p[0][1]);x.stroke();}
+  else if(s.t==='box'){x.strokeRect(s.a[0],s.a[1],s.b[0]-s.a[0],s.b[1]-s.a[1]);}
+  else if(s.t==='ring'){x.beginPath();x.ellipse((s.a[0]+s.b[0])/2,(s.a[1]+s.b[1])/2,Math.abs(s.b[0]-s.a[0])/2||1,Math.abs(s.b[1]-s.a[1])/2||1,0,0,Math.PI*2);x.stroke();}
+  else if(s.t==='arrow'){const [x1,y1]=s.a,[x2,y2]=s.b,an=Math.atan2(y2-y1,x2-x1),h=(10+4*s.w)*u;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
+    x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-h*Math.cos(an-.45),y2-h*Math.sin(an-.45));x.lineTo(x2-h*Math.cos(an+.45),y2-h*Math.sin(an+.45));x.closePath();x.fill();}
+  else if(s.t==='text'){const fs=(12+5*s.w)*u;x.font=`600 ${fs}px system-ui,sans-serif`;x.textBaseline='top';x.lineWidth=fs/6;x.strokeStyle=s.c==='#ffffff'?'#111827':'#ffffff';
+    String(s.s).split('\n').forEach((ln,i)=>{x.strokeText(ln,s.a[0],s.a[1]+i*fs*1.2);x.fillText(ln,s.a[0],s.a[1]+i*fs*1.2);});}
+  x.restore();}
+function mkDraw(){const cv=document.getElementById('mkCv');if(!cv||!MK.img)return;const x=cv.getContext('2d');x.drawImage(MK.img,0,0);MK.shapes.forEach(s=>mkShape(x,s));if(MK.draw)mkShape(x,MK.draw);}
+function mkPt(e){const cv=document.getElementById('mkCv'),r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height];}
+document.addEventListener('pointerdown',e=>{if(e.target.id!=='mkCv'||MK.tool==='hand')return;e.preventDefault();const p=mkPt(e);
+  if(MK.tool==='text'){mkTextAt(p,e);return;}
+  try{e.target.setPointerCapture(e.pointerId);}catch(_){}MK.draw=MK.tool==='pen'||MK.tool==='hl'?{t:MK.tool,c:MK.color,w:MK.size,p:[p]}:{t:MK.tool,c:MK.color,w:MK.size,a:p,b:p};mkDraw();});
+document.addEventListener('pointermove',e=>{if(!MK.draw||e.target.id!=='mkCv')return;e.preventDefault();const p=mkPt(e);if(MK.draw.p)MK.draw.p.push(p);else MK.draw.b=p;mkDraw();});
+const mkEnd=()=>{if(!MK.draw)return;const s=MK.draw;MK.draw=null;if(s.p||Math.hypot(s.b[0]-s.a[0],s.b[1]-s.a[1])>3)MK.shapes.push(s);mkDraw();};
+document.addEventListener('pointerup',mkEnd);document.addEventListener('pointercancel',mkEnd);
+function mkTextAt(p,e){const t=document.getElementById('mkTxt'),st=document.getElementById('mkStage'),r=st.getBoundingClientRect();
+  t.hidden=false;t.value='';t.style.left=(e.clientX-r.left+st.scrollLeft)+'px';t.style.top=(e.clientY-r.top+st.scrollTop)+'px';t.style.color=MK.color;MK.txtAt=p;t.focus();setTimeout(()=>{if(document.activeElement!==t)t.focus();},50);}
+function mkTextDone(){const t=document.getElementById('mkTxt');if(!t||t.hidden)return;const v=t.value.trim();t.hidden=true;if(v&&MK.txtAt){MK.shapes.push({t:'text',c:MK.color,w:MK.size,a:MK.txtAt,s:v});mkDraw();}MK.txtAt=null;}
+document.addEventListener('keydown',e=>{if(e.target.id==='mkTxt'){if(e.key==='Enter'){e.preventDefault();mkTextDone();}if(e.key==='Escape'){e.target.hidden=true;}return;}
+  if(document.querySelector('.mk')&&(e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();MK.shapes.pop();mkDraw();}});
+document.addEventListener('focusout',e=>{if(e.target.id==='mkTxt')setTimeout(mkTextDone,0);});
+window.addEventListener('resize',()=>{if(document.getElementById('mkCv'))mkFit();});
+function mkTools(){document.querySelectorAll('[data-mktool]').forEach(b=>b.classList.toggle('pri',b.dataset.mktool===MK.tool));document.querySelectorAll('[data-mkcol]').forEach(b=>b.classList.toggle('on',b.dataset.mkcol===MK.color));
+  document.querySelectorAll('[data-mksz]').forEach(b=>b.classList.toggle('pri',+b.dataset.mksz===MK.size));mkFit();}
+async function mkSave(share,txt){const d=MK.doc,cv=document.getElementById('mkCv');if(!d||!cv||!MK.img)return;if(!MK.shapes.length&&!txt){toast('Draw something on the drawing first');return;}
+  if(!A){toast('Saving needs Contributor access.');return;}mkTextDone();
+  const blob=await new Promise(ok=>cv.toBlob(ok,'image/jpeg',.85));const n=((d.rv||[]).filter(x=>x.k==='mark').length)+1;
+  const name=`${(d.dkey||d.title||'Drawing').replace(/[\\\/:*?"<>|]/g,'-')}${d.rev?' '+d.rev:''} markup ${n}${MK.pages>1?' p'+MK.page:''}.jpg`;
+  const btns=document.querySelectorAll('#mkForm button');btns.forEach(b=>b.disabled=true);toast('Saving the marked-up drawing…');
+  try{const r=await A.upload(new File([blob],name,{type:'image/jpeg'}),{type:'image/jpeg'});const img={id:r.id,name,type:'image/jpeg'};
+    const ok=await write(()=>db.doc('documents/'+d.id).update({rv:[...(d.rv||[]),{k:'mark',by:ME.id,at:Date.now(),t:txt,img,st:apStage(d)}]}),'Marked-up drawing saved');
+    if(!ok){btns.forEach(b=>b.disabled=false);return;}MK.shapes=[];closeLayer();render();if(share)shareFiles([img],name.replace(/\.jpg$/,''));}
+  catch(e){btns.forEach(b=>b.disabled=false);toast('Could not save: '+(e.message||e));}}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-apgo]'))){const [id,st]=b.dataset.apgo.split('|');apDialog(id,'go',+st);return;}
+  if((b=e.target.closest('[data-apback]'))){apDialog(b.dataset.apback,'back');return;}
+  if((b=e.target.closest('[data-mkup]'))){mkOpen(b.dataset.mkup);return;}
+  if((b=e.target.closest('[data-mkx]'))){if(MK.shapes.length&&!MK.okClose){MK.okClose=true;toast('Marks not saved — tap ✕ again to close without saving');setTimeout(()=>MK.okClose=false,4000);return;}MK.okClose=false;MK.shapes=[];closeLayer();return;}
+  if((b=e.target.closest('[data-mktool]'))){mkTextDone();MK.tool=b.dataset.mktool;mkTools();return;}
+  if((b=e.target.closest('[data-mkcol]'))){MK.color=b.dataset.mkcol;mkTools();return;}
+  if((b=e.target.closest('[data-mksz]'))){MK.size=+b.dataset.mksz;mkTools();return;}
+  if((b=e.target.closest('[data-mkundo]'))){MK.shapes.pop();mkDraw();return;}
+  if((b=e.target.closest('[data-mkclear]'))){MK.shapes=[];mkDraw();return;}
+  if((b=e.target.closest('[data-mkz]'))){MK.zoom=Math.max(1,Math.min(6,MK.zoom*(+b.dataset.mkz>0?1.5:1/1.5)));if(MK.zoom>1&&MK.tool!=='hand')toast('Use ✋ Move to scroll around');mkFit();return;}
+  if((b=e.target.closest('[data-mkpg]'))){mkPage(MK.page+ +b.dataset.mkpg);return;}
+},true);
+document.addEventListener('submit',e=>{const f=e.target;
+  if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked);return;}
+  if(f.id==='mkForm'){e.preventDefault();mkSave((e.submitter&&e.submitter.value)==='share',(f.elements.t.value||'').trim());}},true);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5361,7 +5539,7 @@ function render(){
   navTrack();
   if(S.ready&&curRole()==='none')S.view='noaccess';
   side();
-  {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer'].includes(curRole()));}
+  {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
     v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
@@ -5379,7 +5557,7 @@ function refresh(){clearTimeout(rT);rT=setTimeout(async()=>{
   const ids=new Set(D.members.map(m=>m.id));
   Object.keys(MOD).forEach(k=>D[k].forEach(r=>{if(r.by)ids.add(r.by);if(r.who)ids.add(r.who);}));
   if(U&&ids.size){try{P=await U.profiles([...ids]);}catch(e){}}
-  if(document.querySelector('.drawer'))return;
+  if(document.querySelector('.drawer')){S.dirtyL=true;return;}   // redrawn when the drawer closes
   const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#view')&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){S.dirty=true;return;}   // don't redraw under someone typing
   if(S.view==='cctv'&&document.querySelector('.cam-view .cam-video')){S.dirty=true;return;}                                         // or over a playing camera
   render();
