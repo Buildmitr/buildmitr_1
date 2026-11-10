@@ -5737,8 +5737,8 @@ document.addEventListener('click',e=>{
   if(el.id==='lgBack'){lgSet('email');return;}
   if(el.id==='lgResend'){lgSend();return;}
   if(el.id==='lgRecheck'||el.id==='lgRetry'){cloudEnter(CLOUD.user);return;}
-  if(el.id==='lgDemo'){try{localStorage.setItem('bm-forcedemo','1');}catch(_){}location.reload();return;}
-  if(el.id==='lgExitDemo'){try{localStorage.removeItem('bm-forcedemo');}catch(_){}location.reload();return;}
+  if(el.id==='lgDemo'){try{sessionStorage.setItem('bm-forcedemo','1');}catch(_){}location.reload();return;}
+  if(el.id==='lgExitDemo'){try{sessionStorage.removeItem('bm-forcedemo');localStorage.removeItem('bm-forcedemo');}catch(_){}location.reload();return;}
   if(d.lgorg){cloudEnter(CLOUD.user,d.lgorg);return;}
   if(el.id==='orgPick'){try{localStorage.removeItem('bm-org');}catch(_){}bmClearCache();location.reload();return;}
   if(d.jrok){joinReqAct(d.jrok,true);return;}
@@ -5946,7 +5946,7 @@ document.addEventListener('submit',async e=>{
 (async()=>{
   render();
   if(!window.claude||!claude.use){
-    {const cfg=cloudCfg();let forceDemo=false;try{forceDemo=localStorage.getItem('bm-forcedemo')==='1'||/[?&]demo\b/.test(location.search);}catch(_){}
+    {const cfg=cloudCfg();let forceDemo=false;try{localStorage.removeItem('bm-forcedemo');forceDemo=sessionStorage.getItem('bm-forcedemo')==='1'||/[?&]demo\b/.test(location.search);}catch(_){}
      if(cfg&&!forceDemo){S.web=true;S.cloud=true;try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(_){}
        CLOUD.url=cfg.googleScriptUrl;try{CLOUD.token=localStorage.getItem('bm-token')||'';}catch(_){}
        try{const o=new URLSearchParams(location.search).get('org');if(o&&/^[\w-]{3,40}$/.test(o)){LG.fixedOrg=o;LG.org=o;LG.fixedName=String(new URLSearchParams(location.search).get('n')||'').slice(0,120);localStorage.setItem('bm-org',o);}}catch(_){}
