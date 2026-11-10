@@ -376,6 +376,10 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .mk-col{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid rgb(255 255 255 / .4);padding:0;cursor:pointer}.mk-col.on{outline:3px solid #fff;outline-offset:1px}
 .mk-sz i{display:block;width:18px;background:currentColor;border-radius:2px}
 .mk-foot{display:flex;gap:6px;padding:6px 8px 10px}.mk-foot input{flex:1;min-width:0;background:rgb(255 255 255 / .95);color:#111827}
+.wt-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);min-width:120px}.wt-bar i{display:block;min-width:2px}
+.wt-leg{display:flex;flex-wrap:wrap;gap:12px;padding:8px 16px;font-size:12px;color:var(--muted)}.wt-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.wt-row{cursor:pointer}.wt-row:hover td{background:var(--accent-soft)}.wt-t td.num,.wt-t th.num{text-align:right;white-space:nowrap}
+.wt-apps{padding:10px 16px;display:grid;gap:8px}.wt-apps>div{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center}.wt-apps b{text-align:right;font-variant-numeric:tabular-nums}.wt-apps .prog i{display:block;height:100%}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
 .pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.pl-bar #q{flex:1;min-width:200px;margin:0}.seg{display:flex;gap:4px}
@@ -774,7 +778,7 @@ const icon=k=>MOD[k]?MOD[k].icon:(NAV.flatMap(g=>g.items).find(i=>i[0]===k)||[])
 
 /* ================= State ================= */
 let db=null,U=null,A=null,ME={id:null,name:'',isOwner:false,canEdit:false},CANW=true,CANW0=true;
-const COLS=['projects','members','org','joinreq','templates','forms','formAccess','audit','roleaccess','chats','chatseen','chatgroups','chatprefs',...Object.keys(MOD)];
+const COLS=['projects','members','org','joinreq','templates','forms','formAccess','audit','roleaccess','chats','chatseen','chatgroups','chatprefs','worklog',...Object.keys(MOD)];
 const D={};COLS.forEach(c=>D[c]=[]);
 let P={};
 const S={view:'dashboard',proj:'all',q:'',fstat:'',confirm:null,ready:false,stale:false};
@@ -939,7 +943,7 @@ async function saveFile(filename,blob){
 
 function setDemo(on){
   S.demo=on;S.proj='all';S.view='dashboard';
-  if(on){const X=demoData();COLS.forEach(c=>D[c]=X[c]);}else COLS.forEach(c=>D[c]=REAL[c]||[]);
+  if(on){const X=demoData();COLS.forEach(c=>D[c]=X[c]||[]);}else COLS.forEach(c=>D[c]=REAL[c]||[]);
   render();scrollTo(0,0);toast(on?'Demo loaded — sample data only, nothing is saved':'Back to your real data');
 }
 
@@ -1768,7 +1772,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='worktime')return !['Client','none'].includes(curRole());if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -5374,9 +5378,10 @@ Object.assign(ICONS,{
   'corner-up-left':ICONS['corner-up-left']||'<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>'});
 
 /* two new team roles: Draftsman and Senior architect (they see what an architect sees) */
-const AP_NEW_ROLES=false;   // switched on once the server knows these two roles (server update pending)
-(AP_NEW_ROLES?['Draftsman','Senior architect']:[]).forEach(r=>{const o=MOD.team.fields.find(f=>f.k==='role').o;if(!o.includes(r))o.splice(o.indexOf('Structural engineer')+1,0,r);
-  if(!ROLE_VIEWS[r])ROLE_VIEWS[r]=ROLE_VIEWS['Architect'];UI_OF[r]='design';CAT_OF[r]='design';if(!JOIN_ROLES.includes(r))JOIN_ROLES.push(r);if(!RA_MORE.includes(r))RA_MORE.push(r);});
+['Draftsman','Senior architect'].forEach(r=>{if(!ROLE_VIEWS[r])ROLE_VIEWS[r]=ROLE_VIEWS['Architect'];UI_OF[r]='design';CAT_OF[r]='design';});
+/* offered in Team / sign-up only once the server knows these two roles (see wtSrv) */
+function apAddRoles(){['Draftsman','Senior architect'].forEach(r=>{const o=MOD.team.fields.find(f=>f.k==='role').o;if(!o.includes(r))o.splice(o.indexOf('Structural engineer')+1,0,r);
+  if(!JOIN_ROLES.includes(r))JOIN_ROLES.push(r);if(!RA_MORE.includes(r))RA_MORE.push(r);});}
 {const st=MOD.documents.fields.find(f=>f.k==='status');if(st)st.o=['Draft','For checking','For approval','Approved','Sent back','Superseded'];}
 
 const AP_STEPS=[{n:'Drafted',who:'Draftsman',act:'Submit for checking'},{n:'Checked',who:'Architect / PM',act:'Mark checked'},{n:'Approved',who:'Senior architect',act:'Approve'}];
@@ -5515,6 +5520,134 @@ document.addEventListener('submit',e=>{const f=e.target;
   if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked);return;}
   if(f.id==='mkForm'){e.preventDefault();mkSave((e.submitter&&e.submitter.value)==='share',(f.elements.t.value||'').trim());}},true);
 
+/* ================= Staff work time (AutoCAD, SketchUp, Revit…) =================
+ * The BuildMitr Windows app records, on office PCs, which program is in front and whether the PC is in use
+ * (idle after 5 minutes without mouse / keyboard; locked screen is not counted). Only program names and drawing
+ * file names are kept — no screenshots, no typing. The admin switches it on for the company; staff see their own time. */
+Object.assign(ICONS,{'timer':'<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>'});
+{const g=NAV[0].items;const i=g.findIndex(x=>x[0]==='team');if(!g.some(x=>x[0]==='worktime'))g.splice(i+1,0,['worktime','timer','Staff work time','పని సమయం']);}
+const DESK=window.bmDesk||null;
+const WT={range:'week',from:'',to:'',person:'',last:'',seen:null};
+const WT_CAD=['AutoCAD','SketchUp','Revit','ETABS','Rendering'],WT_OFFICE=['Excel','Word','PDF reader','BuildMitr'],WT_PERSONAL=['YouTube','WhatsApp'];
+const wtGroup=a=>WT_CAD.includes(a)?'cad':WT_OFFICE.includes(a)?'office':WT_PERSONAL.includes(a)?'personal':a==='Browser'?'browser':'other';
+const WT_GL={cad:'Drawing (CAD)',office:'Office & BuildMitr',browser:'Browser',personal:'YouTube / WhatsApp',other:'Other programs',idle:'Idle'};
+const WT_GC={cad:'#16a34a',office:'#2563eb',browser:'#8b5cf6',personal:'#e11d48',other:'#94a3b8',idle:'#f59e0b'};
+const wtOn=()=>!!orgMain().workTrack&&WT.srv!==false;
+const hm=s=>{s=Math.round((s||0)/60);const h=Math.floor(s/60),m=s%60;return h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}m`;};
+const wtHash=s=>{let h=5381;for(const c of String(s))h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36);};
+
+
+/* the server must know staff work time before anything is recorded (older servers answer "Unknown request") */
+WT.srv=null;
+async function wtSrv(){if(WT.srv!==null||!S.cloud||WT.srvBusy)return WT.srv;WT.srvBusy=1;try{await gasApi('wtok');WT.srv=true;apAddRoles();}catch(e){WT.srv=/Unknown request/i.test(e.message||'')?false:null;}WT.srvBusy=0;if(S.view==='worktime')render();return WT.srv;}
+/* ---- desktop app ⇄ page ---- */
+function wtSync(){if(S.cloud&&S.ready&&WT.srv===null){wtSrv();return;}if(!DESK)return;const on=!!(S.ready&&!S.demo&&db&&ME.id&&wtOn()&&!['Client','none'].includes(curRole()));
+  const key=on+'|'+ME.id+'|'+(ME.name||'');if(key===WT.last)return;WT.last=key;try{DESK.track({on,user:ME.name||'',org:orgName()});}catch(_){}}
+setInterval(wtSync,4000);
+function wtSeen(){if(!WT.seen){try{WT.seen=JSON.parse(localStorage.getItem('bm-wt-seq:'+(ME.id||''))||'[]');}catch(_){WT.seen=[];}}return WT.seen;}
+if(DESK)DESK.onWork(async batches=>{
+  if(!S.ready||S.demo||!ME.id||!wtOn())return;const seen=wtSeen();const list=[],acks=[];const tot={};
+  for(const b of batches||[]){if(seen.includes(b.seq)){acks.push(b.seq);continue;}
+    for(const it of b.items||[]){const id=`${ME.id}_${it.date}_${wtHash(it.app+'|'+it.file)}`;
+      const old=tot[id]||D.worklog.find(x=>x.id===id)||{};
+      tot[id]={user:ME.id,name:ME.name||'',date:it.date,app:it.app,file:it.file||'',act:n(old.act)+n(it.act),idle:n(old.idle)+n(it.idle),
+        first:Math.min(n(old.first)||it.first,it.first),last:Math.max(n(old.last),it.last),pc:b.pc||old.pc||'',at:Date.now()};}
+    acks.push(b.seq);}
+  Object.entries(tot).forEach(([id,d])=>list.push(['worklog',id,d]));
+  try{if(list.length)await dbBatch(list);
+    acks.forEach(s=>{if(!seen.includes(s))seen.push(s);try{DESK.ack(s);}catch(_){}});WT.seen=seen.slice(-300);
+    try{localStorage.setItem('bm-wt-seq:'+ME.id,JSON.stringify(WT.seen));}catch(_){}
+    if(S.view==='worktime')refresh();}catch(_){}   // not saved: the desktop app keeps it and sends it again
+});
+
+/* ---- reading the records ---- */
+function wtRange(){const t=new Date(today()+'T00:00:00'),d=x=>isoDate(x),add=(x,k)=>{const y=new Date(x);y.setDate(y.getDate()+k);return y;};
+  if(WT.range==='today')return [d(t),d(t)];if(WT.range==='yday')return [d(add(t,-1)),d(add(t,-1))];
+  if(WT.range==='week'){const m=add(t,-((t.getDay()+6)%7));return [d(m),d(t)];}if(WT.range==='7d')return [d(add(t,-6)),d(t)];
+  if(WT.range==='month')return [d(new Date(t.getFullYear(),t.getMonth(),1)),d(t)];
+  return [WT.from||d(add(t,-6)),WT.to||d(t)];}
+function wtRecs(){const [a,b]=wtRange();const all=(D.worklog||[]).filter(r=>r.date>=a&&r.date<=b);return isAdmin()||S.demo?all:all.filter(r=>r.user===ME.id);}
+function wtSum(rs){const o={act:0,idle:0,cad:0,office:0,browser:0,personal:0,other:0,apps:{},days:new Set(),first:0,last:0};
+  rs.forEach(r=>{o.act+=n(r.act);o.idle+=n(r.idle);o[wtGroup(r.app)]+=n(r.act);o.apps[r.app]=(o.apps[r.app]||0)+n(r.act);if(n(r.act))o.days.add(r.date);
+    if(n(r.first)&&(!o.first||r.first<o.first))o.first=r.first;if(n(r.last)>o.last)o.last=r.last;});
+  o.tot=o.act+o.idle;o.pct=o.tot?Math.round(o.cad/o.tot*100):0;return o;}
+const wtWho=id=>{const t=D.team.find(x=>x.account===id);return (t&&t.name)||nm(id);};
+function wtBar(o){const segs=['cad','office','browser','personal','other'].map(k=>[k,o[k]]).concat([['idle',o.idle]]).filter(x=>x[1]>0);
+  return `<div class="wt-bar" role="img" aria-label="${segs.map(([k,v])=>`${WT_GL[k]} ${hm(v)}`).join(', ')}">${segs.map(([k,v])=>`<i style="flex:${v};background:${WT_GC[k]}" title="${esc(WT_GL[k])}: ${hm(v)}"></i>`).join('')}</div>`;}
+const wtLegend=()=>`<div class="wt-leg">${Object.keys(WT_GL).map(k=>`<span><i style="background:${WT_GC[k]}"></i>${esc(WT_GL[k])}</span>`).join('')}</div>`;
+const wtPctPill=p=>`<span class="pill ${p>=60?'p-green':p>=35?'p-amber':'p-red'}">${p}%</span>`;
+function wtProj(file){const f=String(file||'').toLowerCase();if(!f)return '';
+  const p=PJ().find(p=>{const c=String(p.code||'').toLowerCase(),w=String(p.name||'').toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>=4&&!['residence','house','villa','project','building','apartment'].includes(x));return (c&&f.includes(c))||w.some(x=>f.includes(x));});
+  return p?p.name:'';}
+
+/* ---- the page ---- */
+function vWorkTime(){
+  const adm=isAdmin()||S.demo,[a,b]=wtRange(),rs=wtRecs();
+  const ranges=[['today','Today'],['yday','Yesterday'],['week','This week'],['7d','Last 7 days'],['month','This month'],['custom','Pick dates']];
+  const top=`<div class="box"><div class="srow">${ranges.map(([k,l])=>`<button type="button" class="btn sm ${WT.range===k?'pri':''}" data-wtr="${k}">${l}</button>`).join('')}
+    ${WT.range==='custom'?`<label class="code">From <input type="date" id="wtFrom" value="${esc(a)}"></label><label class="code">To <input type="date" id="wtTo" value="${esc(b)}"></label>`:''}
+    <span class="code" style="margin-left:auto">${esc(fd(a))}${a!==b?' – '+esc(fd(b)):''}</span>${rs.length?`<button type="button" class="btn sm" id="wtCsv">${ico('file-down')}<span>Excel / CSV</span></button>`:''}</div></div>`;
+  const setup=adm?wtSetupBox():(wtOn()?`<div class="note">${ico('timer')}<span>${esc(orgName())} records work time on office PCs through the BuildMitr Windows app: which program is open (AutoCAD, SketchUp…), the drawing file name, and idle time. No screenshots or typing. You see your own time here.</span></div>`:'');
+  if(WT.person)return header('Work time — '+wtWho(WT.person),`<button class="btn" data-wtp="">${ico('arrow-left')}<span>All staff</span></button>`)+top+wtPerson(WT.person,rs.filter(r=>r.user===WT.person));
+  if(!adm)return header('My work time')+setup+top+(rs.length?wtPerson(ME.id,rs):`<div class="box hero-empty">${ico('timer')}<h2>No work time yet</h2><p>${wtOn()?'Open the BuildMitr Windows app on your office PC and sign in — your time is added every few minutes.':'Your admin has not switched on work time recording.'}</p></div>`);
+  const by={};rs.forEach(r=>(by[r.user]=by[r.user]||[]).push(r));
+  const ppl=Object.keys(by).map(u=>({u,name:wtWho(u),o:wtSum(by[u])})).sort((x,y)=>y.o.cad-x.o.cad);
+  const all=wtSum(rs);
+  const table=ppl.length?`<div class="box"><div class="box-h">${ico('users')}<h2>Staff</h2><span class="code">${ppl.length} ${ppl.length>1?'people':'person'}</span></div>${wtLegend()}
+    <div class="tbl-wrap"><table class="wt-t"><thead><tr><th>Staff</th><th>Drawing time</th><th style="min-width:200px">Where the time went</th><th class="num">AutoCAD</th><th class="num">SketchUp</th><th class="num">Revit</th><th class="num">Other work</th><th class="num">YouTube / WhatsApp</th><th class="num">Idle</th><th class="num">Days</th><th>Last seen</th></tr></thead>
+    <tbody>${ppl.map(({u,name,o})=>`<tr class="wt-row" data-wtp="${esc(u)}" tabindex="0"><td><b>${esc(name)}</b></td><td>${wtPctPill(o.pct)} <span class="code">${hm(o.cad)}</span></td><td>${wtBar(o)}</td>
+      <td class="num">${hm(o.apps.AutoCAD)}</td><td class="num">${hm(o.apps.SketchUp)}</td><td class="num">${hm(o.apps.Revit)}</td><td class="num">${hm(o.office+(o.apps.ETABS||0)+(o.apps.Rendering||0)+o.browser+o.other)}</td>
+      <td class="num">${hm(o.personal)}</td><td class="num">${hm(o.idle)}</td><td class="num">${o.days.size}</td><td class="code">${o.last?esc(new Date(o.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})):'—'}</td></tr>`).join('')}</tbody></table></div>
+    <div class="srow"><span class="code"><b>Drawing time</b> = time in AutoCAD, SketchUp, Revit, ETABS and rendering programs ÷ all recorded time (including idle). Tap a name for each day and each drawing file.</span></div></div>`
+   :`<div class="box hero-empty">${ico('timer')}<h2>No work time recorded ${WT.range==='today'?'today':'in these dates'}</h2><p>${wtOn()?'Install the BuildMitr Windows app on each office PC and let staff sign in once. Time appears here a few minutes later.':'Switch on work time recording above, then install the BuildMitr Windows app on the office PCs.'}</p></div>`;
+  const kpi=ppl.length?`<div class="box"><div class="tiles">${[['Drawing time',hm(all.cad),`${all.pct}% of recorded time`],['AutoCAD',hm(all.apps.AutoCAD),''],['SketchUp',hm(all.apps.SketchUp),''],['Revit',hm(all.apps.Revit),''],['Idle',hm(all.idle),all.tot?Math.round(all.idle/all.tot*100)+'% of recorded time':'']].map(([l,v,x])=>`<div class="tile"><b>${v}</b><span>${l}${x?' · '+x:''}</span></div>`).join('')}</div></div>`:'';
+  return header('Staff work time')+setup+top+kpi+table;
+}
+function wtPerson(u,rs){
+  const o=wtSum(rs);const days=[...new Set(rs.map(r=>r.date))].sort().reverse();
+  const daysBox=`<div class="box"><div class="box-h">${ico('calendar-range')}<h2>Each day</h2>${wtPctPill(o.pct)}<span class="code">drawing time ${hm(o.cad)} of ${hm(o.tot)}</span></div>${wtLegend()}
+    <div class="tbl-wrap"><table class="wt-t"><thead><tr><th>Day</th><th style="min-width:220px">Where the time went</th><th class="num">Drawing</th><th class="num">Idle</th><th class="num">Total</th><th>First – last</th></tr></thead><tbody>
+    ${days.map(d=>{const x=wtSum(rs.filter(r=>r.date===d));return `<tr><td>${esc(fd(d))}</td><td>${wtBar(x)}</td><td class="num">${hm(x.cad)} ${wtPctPill(x.pct)}</td><td class="num">${hm(x.idle)}</td><td class="num">${hm(x.tot)}</td><td class="code">${x.first?new Date(x.first).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''} – ${x.last?new Date(x.last).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+  const files={};rs.filter(r=>r.file).forEach(r=>{const k=r.app+'|'+r.file;const f=files[k]||(files[k]={app:r.app,file:r.file,act:0,idle:0,days:new Set()});f.act+=n(r.act);f.idle+=n(r.idle);f.days.add(r.date);});
+  const fl=Object.values(files).sort((a,b)=>b.act-a.act);
+  const filesBox=`<div class="box"><div class="box-h">${ico('file-text')}<h2>Drawing files worked on</h2><span class="code">${fl.length}</span></div>${fl.length?`<div class="tbl-wrap"><table class="wt-t"><thead><tr><th>File</th><th>Program</th><th>Project</th><th class="num">Active</th><th class="num">Idle</th><th class="num">Days</th></tr></thead><tbody>
+    ${fl.slice(0,60).map(f=>`<tr><td><b>${esc(f.file)}</b></td><td>${esc(f.app)}</td><td>${esc(wtProj(f.file))||'<span class="code">—</span>'}</td><td class="num">${hm(f.act)}</td><td class="num">${hm(f.idle)}</td><td class="num">${f.days.size}</td></tr>`).join('')}</tbody></table></div>`:`<div class="srow"><span class="code">No drawing files in these dates.</span></div>`}</div>`;
+  const apps=Object.entries(o.apps).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const appsBox=`<div class="box"><div class="box-h">${ico('monitor')}<h2>Programs</h2></div><div class="wt-apps">${apps.map(([k,v])=>`<div><span>${esc(k)}</span><div class="prog"><i style="width:${o.act?Math.max(2,Math.round(v/o.act*100)):0}%;background:${WT_GC[wtGroup(k)]}"></i></div><b>${hm(v)}</b></div>`).join('')}</div></div>`;
+  return daysBox+filesBox+appsBox;
+}
+function wtSetupBox(){const on=wtOn();if(S.cloud&&WT.srv===null)wtSrv();
+  if(WT.srv===false)return `<div class="box"><div class="box-h">${ico('timer')}<h2>Work time recording</h2><span class="pill p-amber">Server update needed</span></div><div class="inst-b"><p>Work time recording is ready in the app, but your BuildMitr server needs a small update first (Apps Script → new version). After that you can switch it on here.</p></div></div>`;
+  return `<div class="box"><div class="box-h">${ico('timer')}<h2>Work time recording</h2><span class="pill ${on?'p-green':'p-grey'}">${on?'On':'Off'}</span></div><div class="inst-b">
+    <p>The <b>BuildMitr Windows app</b> on each office PC records the time each person spends in <b>AutoCAD, SketchUp, Revit, ETABS</b>, Excel and other programs, the <b>drawing file</b> they have open, and <b>idle time</b> (no mouse or keyboard for 5 minutes). A locked screen is not counted. No screenshots, no typing.</p>
+    <p class="code">Staff see a BuildMitr icon in the taskbar tray saying their work time is recorded, and can see their own time in BuildMitr. Tell your staff before switching it on (India's DPDP Act needs notice to employees).</p>
+    <div class="srow" style="padding:0;border:0"><button type="button" class="btn ${on?'warn':'pri'}" id="wtToggle">${ico(on?'x':'check')}<span>${on?'Switch off':'Switch on for '+esc(orgName())}</span></button>
+      <a class="btn" href="${typeof WIN_URL!=='undefined'?WIN_URL:'#'}" target="_blank" rel="noopener">${ico('download')}<span>Windows app for office PCs</span></a>
+      <button type="button" class="btn ghost" id="wtShare">${ico('share-2')}<span>Send install steps to staff</span></button></div>
+    <ol class="code" style="margin:10px 0 0 18px"><li>Install BuildMitr-Setup.exe on each office PC.</li><li>Each person opens BuildMitr once and signs in with their login code.</li><li>From then on it starts with Windows and records in the background (closing the window keeps it in the tray).</li></ol></div></div>`;}
+function wtCsv(){const rs=wtRecs().slice().sort((a,b)=>(a.date+wtWho(a.user)).localeCompare(b.date+wtWho(b.user)));
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const L=[['Date','Staff','Program','File','Project','Active (min)','Idle (min)','First','Last','PC'].map(q).join(',')].concat(rs.map(r=>[r.date,wtWho(r.user),r.app,r.file,wtProj(r.file),Math.round(n(r.act)/60),Math.round(n(r.idle)/60),r.first?new Date(r.first).toLocaleTimeString('en-IN'):'',r.last?new Date(r.last).toLocaleTimeString('en-IN'):'',r.pc].map(q).join(',')));
+  const [a,b]=wtRange();saveFile(`Work time ${a}${a!==b?' to '+b:''}.csv`,new Blob(['﻿'+L.join('\r\n')],{type:'text/csv'}));}
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-wtr]'))){WT.range=b.dataset.wtr;render();return;}
+  if((b=e.target.closest('[data-wtp]'))){WT.person=b.dataset.wtp;render();scrollTo(0,0);return;}
+  const id=(e.target.closest('button')||{}).id;
+  if(id==='wtCsv'){wtCsv();return;}
+  if(id==='wtToggle'){const on=!wtOn();write(()=>db.doc('org/main').update({workTrack:on}),on?'Work time recording switched on':'Work time recording switched off').then(()=>render());return;}
+  if(id==='wtShare'){shareSheet('BuildMitr work time',`Hello team,\n\n${orgName()} uses BuildMitr to record work time on office PCs (programs like AutoCAD / SketchUp, the drawing file name, and idle time — no screenshots).\n\n1. Download and install: ${typeof WIN_URL!=='undefined'?WIN_URL:APP_URL}\n2. Open BuildMitr and sign in with your login code.\n3. Keep it running — it stays in the taskbar tray.\n\nYou can see your own time in BuildMitr → Staff work time.\n\n— ${ME.name||orgName()}`);return;}
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('wt-row')){WT.person=e.target.dataset.wtp;render();}},true);
+document.addEventListener('change',e=>{if(e.target.id==='wtFrom'){WT.from=e.target.value;render();}if(e.target.id==='wtTo'){WT.to=e.target.value;render();}},true);
+
+/* demo: a week of sample work time for the demo team */
+{const _dd=demoData;demoData=function(){const X=_dd();const t=new Date();const L=[];
+  const P=[['dm4','AutoCAD',['GF Roof Shuttering Layout.dwg','Column Layout.dwg','JP Nagar Floor Plans.dwg'],.72],['dm4','SketchUp',['JP Nagar Elevation.skp'],.5],['dm2','AutoCAD',['Site Plan.dwg'],.3],['dm2','SketchUp',['Interior Living.skp'],.25],['dm3','AutoCAD',['Plinth Beam Layout.dwg'],.45]];
+  for(let k=0;k<7;k++){const d=new Date(t);d.setDate(t.getDate()-k);if(d.getDay()===0)continue;const ds=isoDate(d),base=new Date(ds+'T09:30:00').getTime();
+    P.forEach(([u,app,files,w],i)=>files.forEach((f,j)=>{const act=Math.round((3600*7*w/files.length)*(0.8+((k*7+i*3+j)%5)/10)/15)*15;L.push({id:`${u}_${ds}_${i}${j}`,user:u,date:ds,app,file:f,act,idle:Math.round(act*.12/15)*15,first:base+j*1800e3,last:base+8*3600e3,pc:'OFFICE-PC'+(i%3+1)});}));
+    ['dm2','dm3','dm4'].forEach((u,i)=>{L.push({id:`${u}_${ds}_x`,user:u,date:ds,app:['YouTube','WhatsApp','Excel'][(i+k)%3],file:'',act:900*(1+(i+k)%3),idle:600,first:base,last:base+7*3600e3});L.push({id:`${u}_${ds}_b`,user:u,date:ds,app:'BuildMitr',file:'',act:1200,idle:0,first:base,last:base+7*3600e3});});}
+  X.worklog=L;return X;};}
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5546,7 +5679,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
