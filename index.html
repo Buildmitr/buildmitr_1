@@ -5060,10 +5060,11 @@ Object.assign(ICONS,{'download':ICONS.download||'<path d="M21 15v4a2 2 0 0 1-2 2
   'monitor':'<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>','apple':'<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>'});
 const APK_URL='https://github.com/Buildmitr/buildmitr_1/releases/download/android-latest/BuildMitr.apk';
 const APP_URL='https://buildmitr.github.io/buildmitr_1/';
+const WIN_URL='https://github.com/Buildmitr/buildmitr_1/releases/download/windows-latest/BuildMitr-Setup.exe';
 let INSTALL_EVT=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EVT=e;if(S.view==='install')render();});
 window.addEventListener('appinstalled',()=>{INSTALL_EVT=null;toast('BuildMitr is installed');});
 const PLAT=(()=>{const u=navigator.userAgent||'';if(/android/i.test(u))return 'android';if(/iphone|ipad|ipod/i.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))return 'ios';if(/Macintosh|Mac OS X/.test(u))return 'mac';if(/Windows/.test(u))return 'win';return 'other';})();
-const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||/src=android/.test(location.search);}catch(_){return false;}};
+const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||/src=(android|win)/.test(location.search);}catch(_){return false;}};
 function vInstall(){
   const card=(key,icon,title,body)=>`<div class="box inst ${PLAT===key?'inst-me':''}"><div class="box-h">${ico(icon)}<h2>${title}</h2>${PLAT===key?'<span class="pill p-green">This device</span>':''}</div><div class="inst-b">${body}</div></div>`;
   const prompt=INSTALL_EVT?`<button class="btn pri" id="instNow">${ico('download')}<span>Install BuildMitr now</span></button>`:'';
@@ -5075,7 +5076,9 @@ function vInstall(){
     <div class="srow" style="padding:0;border:0"><a class="btn pri" href="${APK_URL}" target="_blank" rel="noopener">${ico('download')}<span>Download Android app (APK)</span></a>${PLAT==='android'?prompt:''}</div>
     <p class="code">Or in Chrome: menu ⋮ → <b>Install app</b> / <b>Add to Home screen</b>. Both open BuildMitr full screen with its own icon.</p>`)}
   ${card('ios','apple','iPhone & iPad',`<ol><li>Open <b>${esc(APP_URL)}</b> in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with an arrow).</li><li>Tap <b>Add to Home Screen</b> → <b>Add</b>.</li></ol><p class="code">BuildMitr then opens from its own icon, full screen, like any app.</p>`)}
-  ${card('win','monitor','Windows PC / laptop',`<p>Open BuildMitr in <b>Chrome</b> or <b>Microsoft Edge</b> and ${PLAT==='win'&&INSTALL_EVT?'tap the button below':'click the <b>Install</b> icon at the right end of the address bar (or menu → <b>Apps → Install BuildMitr</b>)'}.</p>${PLAT==='win'?prompt:''}<p class="code">It gets a desktop and Start-menu icon and opens in its own window.</p>`)}
+  ${card('win','monitor','Windows PC / laptop',`<p>Download the BuildMitr installer for <b>Windows 10 and 11</b> and open it. It adds a desktop and Start-menu icon and opens BuildMitr in its own window — always the latest version.</p>
+    <div class="srow" style="padding:0;border:0"><a class="btn pri" href="${WIN_URL}" target="_blank" rel="noopener">${ico('download')}<span>Download for Windows (.exe)</span></a>${PLAT==='win'?prompt:''}</div>
+    <p class="code">If Windows shows “Windows protected your PC”, click <b>More info → Run anyway</b>. Or, without downloading: open BuildMitr in <b>Chrome</b> or <b>Edge</b> and click the <b>Install</b> icon at the right end of the address bar.</p>`)}
   ${card('mac','apple','MacBook / iMac',`<p><b>Safari:</b> File → <b>Add to Dock</b>.<br><b>Chrome / Edge:</b> click the <b>Install</b> icon in the address bar.</p>${PLAT==='mac'?prompt:''}<p class="code">BuildMitr appears in the Dock and Launchpad and opens in its own window.</p>`)}
   </div>
   <div class="box"><div class="box-h">${ico('scan-line')}<h2>Open on your phone</h2></div><div class="inst-b" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div id="instQR" class="inst-qr" aria-label="QR code for the BuildMitr web address"></div>
@@ -5085,7 +5088,7 @@ function instQR(){const box=document.getElementById('instQR');if(!box||box.datas
   loadJs('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',()=>window.qrcode).then(()=>{const q=window.qrcode(0,'M');q.addData(APP_URL);q.make();box.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});}).catch(()=>{box.textContent='';});}
 document.addEventListener('click',async e=>{const id=(e.target.closest&&(e.target.closest('button')||{}).id);
   if(id==='instNow'&&INSTALL_EVT){INSTALL_EVT.prompt();try{await INSTALL_EVT.userChoice;}catch(_){}INSTALL_EVT=null;render();}
-  if(id==='instShare')shareSheet('BuildMitr app',`BuildMitr — construction project management.\nOpen: ${APP_URL}\nAndroid app: ${APK_URL}`);},true);
+  if(id==='instShare')shareSheet('BuildMitr app',`BuildMitr — construction project management.\nOpen: ${APP_URL}\nAndroid app: ${APK_URL}\nWindows PC / laptop: ${WIN_URL}`);},true);
 
 /* ================= Slim sticky top bar + Back ================= */
 Object.assign(ICONS,{'arrow-left':ICONS['arrow-left']||'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'});
