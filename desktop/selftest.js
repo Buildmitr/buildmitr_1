@@ -9,5 +9,5 @@ setTimeout(() => {
   const L = out.split(/\r?\n/).filter(x => x.includes('\t'));
   console.log('lines:', L.length, JSON.stringify(L.slice(0, 3)), JSON.stringify(L.slice(0, 1).map(l => classify(...l.split('\t')))));
   if (err) console.log('stderr:', err.slice(0, 1500));
-  process.exit(L.length >= 2 ? 0 : 1);
+  require('child_process').execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(Get-CimInstance Win32_Battery | Measure-Object).Count'], { windowsHide: true }, (e, o) => { console.log('battery count:', e ? 'error ' + e.message : String(o).trim()); process.exit(L.length >= 2 && !e ? 0 : 1); });
 }, 16000);

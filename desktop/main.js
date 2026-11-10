@@ -61,6 +61,13 @@ ipcMain.on('bm-track', (_e, info) => {
   trayMenu(); send();
 });
 ipcMain.on('bm-ack', (_e, seq) => tracker.ack(seq));
+// PC or laptop: a laptop has a battery
+let devKind = null;
+ipcMain.handle('bm-device', () => devKind || new Promise(ok => {
+  if (process.platform !== 'win32') return ok('PC / Laptop');
+  require('child_process').execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(Get-CimInstance Win32_Battery | Measure-Object).Count'], { windowsHide: true, timeout: 15000 },
+    (err, out) => { devKind = err ? 'PC / Laptop' : (parseInt(String(out).trim(), 10) > 0 ? 'Laptop' : 'PC'); ok(devKind); });
+}));
 function send() { if (win && tracker && tracker.on) { const b = tracker.take(); if (b.length) win.webContents.send('bm-work', b); } }
 
 app.whenReady().then(() => {
