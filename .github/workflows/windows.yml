@@ -1,0 +1,42 @@
+# Builds the BuildMitr Windows app (installer BuildMitr-Setup.exe for Windows 10 / 11) whenever the desktop/ folder
+# changes, and publishes it as the "windows-latest" release. The app opens the live BuildMitr site, so it never needs updating.
+name: Windows app
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', '.github/workflows/windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Build
+        working-directory: desktop
+        run: |
+          set -o pipefail
+          { npm install --no-audit --no-fund && npm run dist; ls -la dist; } 2>&1 | tee ../build.log
+      - name: Publish
+        run: |
+          set -o pipefail
+          {
+            gh release delete windows-latest -y --cleanup-tag || true
+            gh release create windows-latest --title "BuildMitr for Windows" \
+              --notes "Download BuildMitr-Setup.exe and open it to install BuildMitr on Windows 10 / 11. If Windows shows 'Windows protected your PC', click More info → Run anyway. Built from commit ${GITHUB_SHA::7}." \
+              desktop/dist/BuildMitr-Setup.exe
+          } 2>&1 | tee -a build.log
+      - name: Save the log if the build failed
+        if: failure()
+        run: |
+          gh release delete ci-log-win -y --cleanup-tag || true
+          gh release create ci-log-win --draft --title "Windows build log" --notes "Build failed" build.log

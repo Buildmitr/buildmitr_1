@@ -1,0 +1,28 @@
+{
+  "name": "buildmitr",
+  "productName": "BuildMitr",
+  "version": "1.0.0",
+  "description": "BuildMitr - construction project management",
+  "author": "BuildMitr",
+  "main": "main.js",
+  "scripts": { "dist": "electron-builder --win --x64 --publish never" },
+  "devDependencies": { "electron": "33.2.1", "electron-builder": "25.1.8" },
+  "build": {
+    "appId": "com.buildmitr.app",
+    "productName": "BuildMitr",
+    "copyright": "BuildMitr",
+    "files": ["main.js", "offline.html", "build/icon.png"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BuildMitr",
+      "runAfterFinish": true,
+      "artifactName": "BuildMitr-Setup.${ext}"
+    }
+  }
+}
