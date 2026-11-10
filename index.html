@@ -387,6 +387,15 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .wt-leg{display:flex;flex-wrap:wrap;gap:12px;padding:8px 16px;font-size:12px;color:var(--muted)}.wt-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .wt-row{cursor:pointer}.wt-row:hover td{background:var(--accent-soft)}.wt-t td.num,.wt-t th.num{text-align:right;white-space:nowrap}
 .wt-apps{padding:10px 16px;display:grid;gap:8px}.wt-apps>div{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center}.wt-apps b{text-align:right;font-variant-numeric:tabular-nums}.wt-apps .prog i{display:block;height:100%}
+.nt-row{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 16px;cursor:pointer;color:inherit;font:inherit}.nt-row:hover{background:var(--accent-soft)}.nt-row:last-child{border-bottom:0}
+.nt-i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);flex:none}
+.nt-body{padding:14px 16px;line-height:1.65;white-space:normal;max-width:78ch}
+.nt-pad{display:block;width:100%;max-width:560px;height:150px;border:1.5px dashed var(--line-strong,#b8c4bf);border-radius:10px;background:#fff;touch-action:none;margin:6px 0;cursor:crosshair}
+.nt-sigimg{height:56px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.nt-to{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:10px}.nt-roles{display:flex;flex-wrap:wrap;gap:4px 14px;padding:4px 0 4px 22px}
+.ll-s{display:grid;grid-template-columns:110px 170px minmax(180px,1.2fr) minmax(160px,1fr);gap:8px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
+.ll-s svg{width:15px;height:15px;vertical-align:-2px;margin-right:5px}.ll-bad{color:#b42318;font-weight:600}
+@media (max-width:760px){.ll-s{grid-template-columns:1fr 1fr}.ll-d,.ll-l{grid-column:1/-1}}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
 .pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.pl-bar #q{flex:1;min-width:200px;margin:0}.seg{display:flex;gap:4px}
@@ -1779,7 +1788,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='worktime')return !['Client','none'].includes(curRole());if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='worktime'||v==='notices')return !['Client','none'].includes(curRole());if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -5105,7 +5114,8 @@ document.addEventListener('click',async e=>{const id=(e.target.closest&&(e.targe
 /* ================= Slim sticky top bar + Back ================= */
 Object.assign(ICONS,{'arrow-left':ICONS['arrow-left']||'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'});
 /* the page's top bar stays on screen while scrolling, and gets slimmer once you scroll down */
-(function(){let on=false;const f=()=>{const s=(window.scrollY||document.documentElement.scrollTop)>40;if(s!==on){on=s;document.body.classList.toggle('scrolled',s);}};
+(function(){let on=false;const f=()=>{const y=window.scrollY||document.documentElement.scrollTop;const s=on?y>8:y>64;   // two limits, so the bar never flickers between sizes
+  if(s!==on){on=s;document.body.classList.toggle('scrolled',s);}};
   window.addEventListener('scroll',f,{passive:true});})();
 /* Back: every page you open is remembered; Back (button, phone back key, browser back) returns to the page before */
 const HIST=[];let LASTV=null,NAVBACK=false;
@@ -5655,6 +5665,249 @@ document.addEventListener('change',e=>{if(e.target.id==='wtFrom'){WT.from=e.targ
     ['dm2','dm3','dm4'].forEach((u,i)=>{L.push({id:`${u}_${ds}_x`,user:u,date:ds,app:['YouTube','WhatsApp','Excel'][(i+k)%3],file:'',act:900*(1+(i+k)%3),idle:600,first:base,last:base+7*3600e3});L.push({id:`${u}_${ds}_b`,user:u,date:ds,app:'BuildMitr',file:'',act:1200,idle:0,first:base,last:base+7*3600e3});});}
   X.worklog=L;return X;};}
 
+/* ================= Notices to sign + Log-in log =================
+ * Notices: the admin posts a notice (text and/or a PDF); each staff member reads it, ticks "I agree", types their name and
+ * signs. The server stamps its own time; a signature can never be changed. A signed copy can be downloaded as PDF.
+ * Log-in log: every time someone opens BuildMitr it records when, the device (mobile / tablet / PC / laptop), the app or
+ * browser, and the location (asked once), plus sign-outs and last activity. Staff see their own; the admin sees everyone. */
+Object.assign(ICONS,{
+  'file-signature':'<path d="M20 19.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5L20 7.5V8"/><path d="M14 2v6h6"/><path d="M10 18H7"/><path d="M21.4 10.6a2 2 0 1 1 2.8 2.8L19 18.6l-4 1 1-4Z"/>',
+  'laptop':'<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/>',
+  'tablet':'<rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><line x1="12" x2="12.01" y1="18" y2="18"/>',
+  'log-out':'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  'paperclip':'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  'eraser':'<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>'});
+COLS.push('notices','noticesign','attlog');
+{const g=NAV[0].items;const i=g.findIndex(x=>x[0]==='messages');if(!g.some(x=>x[0]==='notices'))g.splice(i+1,0,['notices','file-signature','Notices','నోటీసులు']);}
+const NT={open:'',edit:false};
+const staffRole=()=>!['Client','none'].includes(curRole());
+const ntForMe=n=>n&&n.active!==false&&(!n.to||n.to==='all'||(Array.isArray(n.to)&&n.to.includes(apMyRole()||curRole())));
+const ntSigOf=(nid,uid)=>(D.noticesign||[]).find(s=>s.notice===nid&&s.user===(uid||ME.id));
+const ntPending=()=>staffRole()&&!S.demo?(D.notices||[]).filter(n=>ntForMe(n)&&n.by!==ME.id&&!ntSigOf(n.id)):[];
+async function ntHash(n){const t=`${n.title||''}\n${n.body||''}\n${(n.file&&n.file.id)||''}\n${n.ver||1}`;
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}catch(_){return wtHash(t);}}
+/* staff who should sign: team members with a BuildMitr account, not clients */
+function ntPeople(n){return (D.team||[]).filter(t=>t.account&&(!n||t.account!==n.by)&&!['Client','Sub-contractor'].includes(t.role)&&(!n||!n.to||n.to==='all'||(Array.isArray(n.to)&&n.to.includes(t.role))));}
+
+/* ---------- device, app and place ---------- */
+function devKind(){const ua=navigator.userAgent||'';
+  if(/iPad|Tablet/i.test(ua)||(/Android/i.test(ua)&&!/Mobile/i.test(ua))||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1))return 'Tablet';
+  if(/Mobi|iPhone|Android/i.test(ua))return 'Mobile';return 'PC';}
+function appKind(){const ua=navigator.userAgent||'';
+  if(DESK||/src=win/.test(location.search))return 'Windows app';if(/src=android/.test(location.search))return 'Android app';
+  const os=/Windows/.test(ua)?'Windows':/Android/.test(ua)?'Android':/iPhone|iPad/.test(ua)?'iOS':/Mac OS X|Macintosh/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'';
+  const br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/SamsungBrowser/.test(ua)?'Samsung Internet':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Browser';
+  let inst=false;try{inst=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(_){}
+  return (inst?'Installed app · ':'')+br+(os?' on '+os:'');}
+async function devDetail(){let d=devKind();
+  if(d==='PC'){try{if(DESK&&DESK.device){const k=await DESK.device();if(k)return k;}}catch(_){}
+    try{if(navigator.getBattery){const b=await navigator.getBattery();if(!b.charging||b.level<1||(b.dischargingTime&&b.dischargingTime!==Infinity))return 'Laptop';}}catch(_){}
+    return 'PC / Laptop';}
+  return d;}
+const distM=(a,b)=>{const R=6371e3,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng);const h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
+function placeOf(lat,lng){const here={lat,lng},c=[];const o=orgMain().office;if(o&&o.lat)c.push(['Office',o]);
+  PJ().forEach(p=>{const l=p.loc||(p.maps&&parseLoc(p.maps));if(l&&l.lat)c.push([p.name+' site',l]);});
+  let best=null;c.forEach(([n,l])=>{const d=distM(here,l);if(!best||d<best[1])best=[n,d];});
+  return best&&best[1]<=400?`At ${best[0]}`:best&&best[1]<=3000?`${(best[1]/1000).toFixed(1)} km from ${best[0]}`:'';}
+const DEV_ICO={Mobile:'smartphone',Tablet:'tablet',Laptop:'laptop','PC / Laptop':'monitor',PC:'monitor'};
+
+/* ---------- this session in the log-in log ---------- */
+const LL={sid:null,id:null,beat:null,locAsked:false,locErr:''};
+function llDay(){return today();}
+async function llStart(){
+  if(LL.id||!S.cloud||!S.ready||S.demo||S.viewAs||!ME.id||WT.srv!==true)return;
+  try{LL.sid=sessionStorage.getItem('bm-sess:'+ME.id);}catch(_){}
+  if(!LL.sid){LL.sid=Date.now().toString(36)+Math.random().toString(36).slice(2,6);try{sessionStorage.setItem('bm-sess:'+ME.id,LL.sid);sessionStorage.setItem('bm-sess-day:'+ME.id,llDay());}catch(_){}}
+  let day=llDay();try{day=sessionStorage.getItem('bm-sess-day:'+ME.id)||day;}catch(_){}
+  LL.id=`${ME.id}_${day}_${LL.sid}`;const old=(D.attlog||[]).find(x=>x.id===LL.id);const now=Date.now();
+  if(!old){const dev=await devDetail();
+    await write(()=>db.doc('attlog/'+LL.id).set({user:ME.id,name:ME.name||'',date:day,start:now,last:now,dev,app:appKind(),ua:String(navigator.userAgent||'').slice(0,200),loc:'asking'}),null);}
+  else await write(()=>db.doc('attlog/'+LL.id).update({last:now}),null);
+  if(!old||!old.lat)llLocate();
+  clearInterval(LL.beat);LL.beat=setInterval(()=>{if(document.visibilityState==='visible'||DESK)write(()=>db.doc('attlog/'+LL.id).update({last:Date.now()}),null);},5*60*1000);
+}
+function llLocate(){if(!LL.id)return;LL.locAsked=true;
+  if(!navigator.geolocation){write(()=>db.doc('attlog/'+LL.id).update({loc:'Not available on this device'}),null);return;}
+  navigator.geolocation.getCurrentPosition(p=>{const lat=+p.coords.latitude.toFixed(6),lng=+p.coords.longitude.toFixed(6);LL.locErr='';
+      write(()=>db.doc('attlog/'+LL.id).update({lat,lng,acc:Math.round(p.coords.accuracy||0),place:placeOf(lat,lng),loc:'ok'}),null);if(S.view==='worktime')render();},
+    e=>{LL.locErr=e&&e.code===1?'Not allowed':'Not found';write(()=>db.doc('attlog/'+LL.id).update({loc:LL.locErr}),null);
+      toast(e&&e.code===1?'Please allow location for BuildMitr — your log-in is recorded without a location.':'Could not find your location.');if(S.view==='worktime')render();},
+    {enableHighAccuracy:true,timeout:20000,maximumAge:60000});}
+setInterval(()=>{if(S.ready&&S.cloud&&!LL.id&&WT.srv===true)llStart();},3000);
+{const _so=cloudSignOut;cloudSignOut=async function(){try{if(LL.id&&db){await write(()=>db.doc('attlog/'+LL.id).update({end:Date.now(),last:Date.now(),endKind:'Signed out'}),null);
+  await Promise.race([db.flush&&db.flush(),new Promise(r=>setTimeout(r,3000))]);}}catch(_){}try{sessionStorage.removeItem('bm-sess:'+ME.id);}catch(_){}return _so.apply(this,arguments);};}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&LL.id)write(()=>db.doc('attlog/'+LL.id).update({last:Date.now()}),null);});
+
+/* ---------- Log-in log page (a tab in Staff work time) ---------- */
+const llTm=t=>t?new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';
+function vLogLog(){const adm=isAdmin()||S.demo,[a,b]=wtRange();
+  let rs=(D.attlog||[]).filter(r=>r.date>=a&&r.date<=b);if(!adm)rs=rs.filter(r=>r.user===ME.id);if(WT.person)rs=rs.filter(r=>r.user===WT.person);
+  const office=orgMain().office;
+  const officeBox=adm&&!S.demo?`<div class="box"><div class="srow"><span class="code" style="flex:1">${ico('map-pin')} Office location ${office&&office.lat?`set (${office.lat.toFixed(4)}, ${office.lng.toFixed(4)}) — log-ins within 400 m show “At Office”. Project sites with a location show “At … site”.`:'not set — stand in the office and tap the button so log-ins there show “At Office”.'}</span>
+    <button type="button" class="btn sm" id="llOffice">${ico('map-pin')}<span>${office&&office.lat?'Reset':'Set'} office location here</span></button></div></div>`:'';
+  const me=!adm&&LL.locErr==='Not allowed'?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('map-pin')}<span style="flex:1">Location is blocked for BuildMitr. Allow it in the browser / phone settings (Site settings → Location → Allow), then tap Try again.</span><button class="btn sm" id="llRetry">Try again</button></div>`:'';
+  const by={};rs.forEach(r=>{const k=r.user+'|'+r.date;(by[k]=by[k]||[]).push(r);});
+  const keys=Object.keys(by).sort((x,y)=>{const [ux,dx]=x.split('|'),[uy,dy]=y.split('|');return dy.localeCompare(dx)||wtWho(ux).localeCompare(wtWho(uy));});
+  const row=r=>{const dev=r.dev||'—',loc=r.lat?`<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener">${ico('map-pin')}${esc(r.place||`${(+r.lat).toFixed(4)}, ${(+r.lng).toFixed(4)}`)}</a>${r.acc?` <span class="code">±${r.acc} m</span>`:''}`
+      :`<span class="${r.loc==='asking'?'code':'ll-bad'}">${esc(r.loc==='asking'?'Asking…':r.loc==='Not allowed'?'Location not allowed':r.loc||'No location')}</span>`;
+    const end=r.end?`${ico('log-out')} Signed out ${llTm(r.end)}`:`<span class="code">Last active ${llTm(r.last)}</span>`;
+    return `<div class="ll-s"><span class="ll-t">${ico('log-in')}<b>${llTm(r.srv0||r.start)}</b></span><span class="ll-e">${end}</span><span class="ll-d">${ico(DEV_ICO[dev]||'monitor')}${esc(dev)} <span class="code">· ${esc(r.app||'')}</span></span><span class="ll-l">${loc}</span></div>`;};
+  const body=keys.length?keys.map(k=>{const [u,d]=k.split('|');const L=by[k].sort((x,y)=>(x.srv0||x.start)-(y.srv0||y.start));const first=L[0],last=L.reduce((m,x)=>Math.max(m,x.end||x.last||0),0);
+      return `<div class="box"><div class="box-h">${ico('calendar-range')}<h2>${adm?esc(wtWho(u))+' · ':''}${esc(fd(d))}</h2><span class="pill p-green">First log-in ${llTm(first.srv0||first.start)}</span><span class="code">${L.length} log-in${L.length>1?'s':''} · until ${llTm(last)}</span></div>${L.map(row).join('')}</div>`;}).join('')
+    :`<div class="box hero-empty">${ico('log-in')}<h2>No log-ins in these dates</h2><p>${WT.srv===false?'The server update is needed before log-ins are recorded.':'Every time someone opens BuildMitr on a phone or PC, it shows here with the device and location.'}</p></div>`;
+  return me+officeBox+body;}
+/* the Staff work time page gets two tabs: Work time and Log-in log */
+{const _vw=vWorkTime;vWorkTime=function(){const tab=WT.tab||'time';
+  const tabs=`<div class="srow" style="padding:0 0 10px;border:0"><button type="button" class="btn ${tab==='time'?'pri':''}" data-wttab="time">${ico('timer')}<span>Work time (PC programs)</span></button><button type="button" class="btn ${tab==='log'?'pri':''}" data-wttab="log">${ico('log-in')}<span>Log-in log</span></button></div>`;
+  if(tab==='time'){const h=_vw();const i=h.indexOf('<div class="box');return i<0?h+tabs:h.slice(0,i)+tabs+h.slice(i);}
+  const adm=isAdmin()||S.demo,[a,b]=wtRange();
+  const ranges=[['today','Today'],['yday','Yesterday'],['week','This week'],['7d','Last 7 days'],['month','This month'],['custom','Pick dates']];
+  const ppl=[...new Set((D.attlog||[]).map(r=>r.user))];
+  const top=`<div class="box"><div class="srow">${ranges.map(([k,l])=>`<button type="button" class="btn sm ${WT.range===k?'pri':''}" data-wtr="${k}">${l}</button>`).join('')}
+    ${WT.range==='custom'?`<label class="code">From <input type="date" id="wtFrom" value="${esc(a)}"></label><label class="code">To <input type="date" id="wtTo" value="${esc(b)}"></label>`:''}
+    ${adm&&ppl.length?`<select id="llWho" aria-label="Staff" style="width:auto;max-width:220px"><option value="">All staff</option>${ppl.map(u=>`<option value="${esc(u)}" ${WT.person===u?'selected':''}>${esc(wtWho(u))}</option>`).join('')}</select>`:''}
+    <span class="code" style="margin-left:auto">${esc(fd(a))}${a!==b?' – '+esc(fd(b)):''}</span><button type="button" class="btn sm" id="llCsv">${ico('file-down')}<span>Excel / CSV</span></button></div></div>`;
+  return header(adm?'Staff work time':'My work time')+tabs+top+vLogLog();};}
+function llCsv(){const [a,b]=wtRange();let rs=(D.attlog||[]).filter(r=>r.date>=a&&r.date<=b);if(!(isAdmin()||S.demo))rs=rs.filter(r=>r.user===ME.id);
+  rs.sort((x,y)=>(x.date+wtWho(x.user)+(x.start||0)).localeCompare(y.date+wtWho(y.user)+(y.start||0)));const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const L=[['Date','Staff','Log-in','Signed out','Last active','Device','App / browser','Place','Latitude','Longitude','Accuracy (m)','Location'].map(q).join(',')].concat(rs.map(r=>[r.date,wtWho(r.user),llTm(r.srv0||r.start),r.end?llTm(r.end):'',llTm(r.last),r.dev,r.app,r.place,r.lat,r.lng,r.acc,r.loc].map(q).join(',')));
+  saveFile(`Log-in log ${a}${a!==b?' to '+b:''}.csv`,new Blob(['﻿'+L.join('\r\n')],{type:'text/csv'}));}
+
+/* ---------- Notices page ---------- */
+function vNotices(){const adm=isAdmin()&&!S.viewAs;
+  if(S.cloud&&WT.srv===null)wtSrv();
+  if(WT.srv===false)return header('Notices')+`<div class="box"><div class="box-h">${ico('file-signature')}<h2>Notices to sign</h2><span class="pill p-amber">Server update needed</span></div><div class="inst-b"><p>Notices are ready in the app, but your BuildMitr server needs a small update first (Apps Script → new version). After that you can upload notices here for staff to view and sign.</p></div></div>`;
+  if(NT.open){const n=(D.notices||[]).find(x=>x.id===NT.open);if(n)return ntOne(n,adm);}
+  const L=(D.notices||[]).filter(n=>adm||ntForMe(n)).sort((a,b)=>(b.at||0)-(a.at||0));
+  const pend=ntPending();
+  const list=L.length?`<div class="box">${L.map(n=>{const ppl=ntPeople(n),signed=ppl.filter(p=>ntSigOf(n.id,p.account)).length,mine=ntSigOf(n.id);
+      return `<button type="button" class="nt-row" data-ntopen="${esc(n.id)}"><span class="nt-i">${ico('file-signature')}</span><span style="flex:1;min-width:0"><b>${esc(n.title)}</b>${n.ver>1?` <span class="code">v${n.ver}</span>`:''}<br><span class="code">${esc(fd(new Date(n.at).toISOString().slice(0,10)))} · ${esc(n.to==='all'||!n.to?'All staff':n.to.join(', '))}${n.active===false?' · Withdrawn':''}</span></span>
+        ${adm?`<span class="pill ${signed===ppl.length&&ppl.length?'p-green':'p-amber'}">${signed}/${ppl.length} answered</span>`:mine?(mine.status==='declined'?`<span class="pill p-red">Declined</span>`:`<span class="pill p-green">Signed</span>`):n.by===ME.id?'':`<span class="pill p-amber">Please view & sign</span>`}</button>`;}).join('')}</div>`
+    :`<div class="box hero-empty">${ico('file-signature')}<h2>No notices yet</h2><p>${adm?'Post a notice for your staff to read and sign — for example the work time and log-in recording notice.':'Notices from your company will appear here for you to read and sign.'}</p></div>`;
+  return header('Notices',adm?`<button class="btn pri" id="ntNew">${ico('plus')}<span>New notice</span></button>`:'')+
+    (adm?`<div class="box"><div class="srow"><span class="code" style="flex:1">Upload a notice as a PDF. Each staff member can only <b>view</b> it and <b>sign</b> or <b>decline</b> it — they cannot edit or delete anything, and their answer is final. You see who signed, declined or has not answered yet.</span></div></div>`:'')+
+    (pend.length&&!adm?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('file-signature')}<span>${pend.length} notice${pend.length>1?'s':''} to view and sign.</span></div>`:'')+list;}
+function ntOne(n,adm){const ppl=ntPeople(n),mine=ntSigOf(n.id),locked=(D.noticesign||[]).some(s=>s.notice===n.id);
+  const att=n.file?`<div class="srow"><button type="button" class="btn pri" data-ntview="${esc(n.id)}">${ico('file-text')}<span>View notice (PDF)</span></button><span class="code">${esc(n.file.name)}</span>${NT.viewed&&NT.viewed[n.id]?`<span class="pill p-green">Viewed</span>`:''}</div>`:'';
+  const text=`<div class="box"><div class="box-h">${ico('file-signature')}<h2>${esc(n.title)}</h2>${n.ver>1?`<span class="code">Version ${n.ver}</span>`:''}</div>${n.body?`<div class="nt-body">${esc(n.body).replace(/\n/g,'<br>')}</div>`:''}${att}
+    <div class="srow"><span class="code">Issued ${esc(fd(new Date(n.at).toISOString().slice(0,10)))} by ${esc(wtWho(n.by))} · ${esc(orgName())}</span></div></div>`;
+  let sign='';
+  if(mine&&mine.status==='declined')sign=`<div class="box"><div class="box-h">${ico('x')}<h2>You declined this notice</h2><span class="pill p-red">${esc(new Date(mine.srv0||mine.at).toLocaleString('en-IN'))}</span></div><div class="srow"><span class="code">Reason: ${esc(mine.reason||'—')}</span><button class="btn sm" data-ntpdf="${esc(mine.id)}">${ico('file-down')}<span>Copy (PDF)</span></button></div></div>`;
+  else if(mine)sign=`<div class="box"><div class="box-h">${ico('check-check')}<h2>Signed by you</h2><span class="pill p-green">${esc(new Date(mine.srv0||mine.at).toLocaleString('en-IN'))}</span></div><div class="srow"><img src="/_blob/${esc(mine.sig.id)}" alt="Your signature" class="nt-sigimg"><span class="code">${esc(mine.typed)} · ${esc(mine.dev||'')}</span>
+    <button class="btn sm" data-ntpdf="${esc(mine.id)}">${ico('file-down')}<span>Signed copy (PDF)</span></button></div></div>`;
+  else if(ntForMe(n)&&n.by!==ME.id&&staffRole()&&!S.viewAs)sign=`<form class="box" id="ntSign" data-id="${esc(n.id)}"><div class="box-h">${ico('pen-tool')}<h2>Sign this notice</h2></div><div class="inst-b">
+    ${n.file&&!(NT.viewed&&NT.viewed[n.id])?`<div class="note">${ico('file-text')}<span>Open <b>View notice (PDF)</b> above and read it first — then you can sign or decline.</span></div>`:''}
+    <label class="pl-chk"><input type="checkbox" name="agree"> I have read and understood this notice, and I agree to it.</label>
+    <label style="display:block;margin-top:10px">Your full name<input name="typed" required minlength="3" value="${esc(ME.name||'')}" autocomplete="name"></label>
+    <div style="margin-top:10px"><span class="code">Sign below with your finger or mouse</span><canvas id="ntPad" class="nt-pad" width="900" height="260" aria-label="Signature pad"></canvas><button type="button" class="btn sm ghost" id="ntPadClear">${ico('eraser')}<span>Clear</span></button></div>
+    <div class="srow" style="padding:12px 0 0;border:0"><button class="btn pri" name="go" value="sign">${ico('check')}<span>Sign</span></button><button type="button" class="btn warn" id="ntDecl">${ico('x')}<span>Decline</span></button><span class="code">Your answer is saved with the date and time and cannot be changed or deleted afterwards.</span></div>
+    <div id="ntDeclBox" hidden><label style="display:block;margin-top:10px">Why are you declining? (the admin will see this)<textarea name="reason" rows="3" placeholder="e.g. I would like to discuss the location recording first"></textarea></label><button class="btn warn" name="go" value="decline">${ico('x')}<span>Decline notice</span></button></div></div></form>`;
+  const who=adm?`<div class="box"><div class="box-h">${ico('users')}<h2>Staff answers</h2><span class="code">${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status!=='declined'&&ntSigOf(n.id,p.account)).length} signed · ${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status==='declined').length} declined · ${ppl.filter(p=>!ntSigOf(n.id,p.account)).length} pending</span></div>
+    ${ppl.map(p=>{const s=ntSigOf(n.id,p.account);return `<div class="srow"><b style="flex:1;min-width:140px">${esc(p.name)}</b><span class="code">${esc(p.role||'')}</span>
+      ${s?`<span class="pill ${s.status==='declined'?'p-red':'p-green'}">${s.status==='declined'?'Declined':'Signed'} ${esc(new Date(s.srv0||s.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</span>${s.status==='declined'&&s.reason?`<span class="code">“${esc(s.reason)}”</span>`:''}<button class="btn sm" data-ntpdf="${esc(s.id)}">${ico('file-down')}<span>PDF</span></button>`
+        :`<span class="pill p-amber">Pending</span>${p.phone?`<button class="btn sm ghost" data-ntremind="${esc(n.id)}|${esc(p.phone)}|${esc(p.name)}">${ico('message-circle')}<span>Remind</span></button>`:''}`}</div>`;}).join('')||'<div class="srow"><span class="code">No staff with BuildMitr log-ins yet (add them in Team).</span></div>'}
+    <div class="srow"><button class="btn sm" data-ntremind="${esc(n.id)}||">${ico('share-2')}<span>Remind everyone</span></button>
+      ${locked?`<button class="btn sm" id="ntNewVer" data-id="${esc(n.id)}">${ico('copy')}<span>New version</span></button><span class="code">Signed notices are locked — changes go in a new version.</span>`:`<button class="btn sm" data-edit="notices:${esc(n.id)}" id="ntEdit">${ico('pencil')}<span>Edit</span></button>`}
+      <button class="btn sm ghost" id="ntWithdraw" data-id="${esc(n.id)}">${n.active===false?'Re-issue':'Withdraw'}</button></div></div>`:'';
+  return header(n.title,`<button class="btn" id="ntBack">${ico('arrow-left')}<span>All notices</span></button>`)+text+sign+who;}
+const NT_SAMPLE=()=>({title:'Notice: recording of work time, log-ins and location',body:`Dear team,
+
+${orgName()} uses BuildMitr to manage projects and office work. To plan work fairly and keep accurate records, the following information is recorded while you use company systems:
+
+1. Log-in log — every time you open BuildMitr on a phone or PC: the date and time, the device type (mobile / tablet / PC / laptop), the app or browser, and your location at that moment (only if you allow location).
+2. Work time on office PCs — through the BuildMitr Windows app: which program is in use (for example AutoCAD, SketchUp, Revit), the name of the drawing file that is open, and idle time (no mouse or keyboard for 5 minutes). No screenshots are taken and nothing you type is recorded. A locked screen is not counted.
+
+Why: to plan projects, check workloads and drawing time, and keep attendance records.
+Who can see it: the company admin / management. You can see your own records in BuildMitr at any time (Staff work time).
+How long it is kept: for as long as you work with us and up to one year after, unless the law requires longer.
+Your rights: under the Digital Personal Data Protection Act, 2023 you may ask to see your data, ask for corrections, and raise any concern with the admin.
+
+By signing below you confirm that you have read and understood this notice and agree to this recording during working hours on company devices and in BuildMitr.`});
+async function ntPdf(sid){const s=(D.noticesign||[]).find(x=>x.id===sid);if(!s)return;const n=(D.notices||[]).find(x=>x.id===s.notice)||{title:s.title,body:''};toast('Preparing the signed copy…');
+  try{await loadJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',()=>window.jspdf);
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),W=210,M=18;let y=20;
+    const line=(t,sz=10.5,b=false,gap=1.5)=>{pdf.setFont('helvetica',b?'bold':'normal');pdf.setFontSize(sz);pdf.splitTextToSize(String(t),W-2*M).forEach(l=>{if(y>275){pdf.addPage();y=20;}pdf.text(l,M,y);y+=sz*.42+gap;});};
+    line(orgName(),11,true);line(n.title||s.title,15,true,3);if(n.file)line(`Notice document: ${n.file.name}`,9.5,true);y+=2;line(`Version ${n.ver||1} · issued ${n.at?new Date(n.at).toLocaleDateString('en-IN'):''}`,9);y+=3;
+    String(n.body||'').split('\n').forEach(p=>p.trim()?line(p):y+=3);
+    y+=6;if(y>220){pdf.addPage();y=20;}pdf.setDrawColor(150);pdf.line(M,y,W-M,y);y+=7;line(s.status==='declined'?'Declined by':'Signed by',12,true);
+    line(`Name: ${s.typed}`);line(`BuildMitr user: ${wtWho(s.user)}`);line(`Signed on (server time): ${new Date(s.srv0||s.at).toLocaleString('en-IN')}`);line(`Device: ${s.dev||''} · ${s.app||''}`);
+    if(s.viewed)line(`Notice opened (device time): ${new Date(s.viewed).toLocaleString('en-IN')}`);
+    if(s.status==='declined'){line(`Reason given: ${s.reason||''}`);}else{line('Statement: "I have read and understood this notice and I agree to it."',10,false);
+    try{const r=await bmBlob(s.sig.id);const b=await r.blob();const u=await new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b);});y+=2;pdf.addImage(u,'PNG',M,y,70,20);y+=24;}catch(_){line('[signature image could not be loaded]',9);}}
+    line(`Notice fingerprint (SHA-256): ${s.hash}`,7.5);line(`Record: ${s.id}`,7.5);
+    saveFile(`${(n.title||'Notice').replace(/[\\\/:*?"<>|]/g,'-').slice(0,60)} - ${s.status==='declined'?'declined':'signed'} by ${s.typed}.pdf`,pdf.output('blob'));}
+  catch(e){toast('Could not make the PDF: '+(e.message||e));}}
+/* signature pad */
+const PAD={on:false,ink:false};
+document.addEventListener('pointerdown',e=>{if(e.target.id!=='ntPad')return;e.preventDefault();const c=e.target,x=c.getContext('2d'),r=c.getBoundingClientRect();
+  PAD.on=true;PAD.ink=true;try{c.setPointerCapture(e.pointerId);}catch(_){}x.lineWidth=3.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#111827';x.beginPath();x.moveTo((e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height);});
+document.addEventListener('pointermove',e=>{if(!PAD.on||e.target.id!=='ntPad')return;e.preventDefault();const c=e.target,x=c.getContext('2d'),r=c.getBoundingClientRect();x.lineTo((e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height);x.stroke();});
+document.addEventListener('pointerup',()=>{PAD.on=false;});
+async function ntSign(f,go){const n=(D.notices||[]).find(x=>x.id===f.dataset.id);if(!n)return;const c=document.getElementById('ntPad');
+  if(n.file&&!(NT.viewed&&NT.viewed[n.id])){toast('Open “View notice (PDF)” and read it first');return;}
+  const typed=f.elements.typed.value.trim();if(typed.length<3){toast('Type your full name');return;}
+  if(go==='decline'){const reason=(f.elements.reason.value||'').trim();if(!reason){toast('Write why you are declining');return;}
+    const hash=await ntHash(n),dev=await devDetail();
+    const ok=await write(()=>db.doc(`noticesign/${ME.id}_${n.id}`).set({user:ME.id,name:ME.name||'',notice:n.id,title:n.title,ver:n.ver||1,hash,typed,status:'declined',reason,viewed:(NT.viewed||{})[n.id]||null,at:Date.now(),dev,app:appKind()}),'Your answer is saved — the admin will be informed');
+    if(ok)render();return;}
+  if(!f.elements.agree.checked){toast('Tick “I have read and understood”');return;}
+  if(!PAD.ink){toast('Please sign in the box');return;}
+  const btn=f.querySelector('.btn.pri');btn.disabled=true;toast('Saving your signature…');
+  try{const blob=await new Promise(ok=>c.toBlob(ok,'image/png'));const r=await A.upload(new File([blob],`Signature ${typed}.png`,{type:'image/png'}),{type:'image/png'});
+    const hash=await ntHash(n),dev=await devDetail();
+    const ok=await write(()=>db.doc(`noticesign/${ME.id}_${n.id}`).set({user:ME.id,name:ME.name||'',notice:n.id,title:n.title,ver:n.ver||1,hash,typed,agree:true,status:'signed',viewed:(NT.viewed||{})[n.id]||null,sig:{id:r.id,name:`Signature ${typed}.png`,type:'image/png'},at:Date.now(),dev,app:appKind()}),'Notice signed — thank you');
+    if(ok){PAD.ink=false;render();}else btn.disabled=false;}
+  catch(e){btn.disabled=false;toast('Could not save: '+(e.message||e));}}
+function ntForm(n){const roles=MOD.team.fields.find(f=>f.k==='role').o.filter(r=>r!=='Client');const to=n&&Array.isArray(n.to)?n.to:null;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>${n&&n.id?'Edit notice':'New notice'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <form id="ntForm" class="pane-b" data-id="${esc((n&&n.id)||'')}" data-ver="${(n&&n.ver)||1}"><label>Title<input name="title" required value="${esc((n&&n.title)||'')}"></label>
+    <label>Notice PDF<input type="file" name="file" accept=".pdf,application/pdf" ${n&&n.file?'':'required'}></label>${n&&n.file?`<div class="code">Uploaded: ${esc(n.file.name)} (choose a file to replace it)</div>`:''}
+    <label>Short message to staff (optional)<textarea name="body" rows="4" placeholder="e.g. Please read the attached notice and sign it by Friday.">${esc((n&&n.body)||'')}</textarea></label>
+    <fieldset class="nt-to"><legend>Who must sign</legend><label class="pl-chk"><input type="radio" name="to" value="all" ${!to?'checked':''}> All staff</label><label class="pl-chk"><input type="radio" name="to" value="roles" ${to?'checked':''}> Only these roles:</label>
+     <div class="nt-roles">${roles.map(r=>`<label class="pl-chk"><input type="checkbox" name="role" value="${esc(r)}" ${to&&to.includes(r)?'checked':''}> ${esc(r)}</label>`).join('')}</div></fieldset>
+    <div class="srow" style="border:0;padding:12px 0 0"><button class="btn pri">${ico('check')}<span>${n&&n.id?'Save':'Post notice'}</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div></div>`;}
+async function ntSave(f){const id=f.dataset.id,old=id?(D.notices||[]).find(x=>x.id===id):null;
+  if(id&&(D.noticesign||[]).some(s=>s.notice===id)){toast('This notice is signed — make a new version instead');return;}
+  const to=f.elements.to.value==='all'?'all':[...f.querySelectorAll('[name=role]:checked')].map(x=>x.value);if(to!=='all'&&!to.length){toast('Choose at least one role');return;}
+  let file=old&&old.file||null;const fi=f.elements.file.files[0];if(!fi&&!file){toast('Upload the notice PDF');return;}if(fi&&!/pdf/i.test(fi.type||fi.name)){toast('Please upload a PDF');return;}
+  if(fi){if(fi.size>10*1024*1024){toast('The file is larger than 10 MB');return;}toast('Uploading the document…');try{const r=await A.upload(fi,{type:fi.type});file={id:r.id,name:fi.name,type:fi.type||fileType(fi.name)};}catch(e){toast('Upload failed: '+(e.message||e));return;}}
+  const d={title:f.elements.title.value.trim(),body:f.elements.body.value,to,file,ver:+f.dataset.ver||1,active:true,by:(old&&old.by)||ME.id,at:(old&&old.at)||Date.now()};d.hash=await ntHash(d);
+  const nid=id||('n'+Date.now().toString(36));const ok=await write(()=>db.doc('notices/'+nid).set(d),id?'Notice saved':'Notice posted');if(ok){closeLayer();NT.open=nid;render();}}
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-wttab]'))){WT.tab=b.dataset.wttab;WT.person='';render();return;}
+  if((b=e.target.closest('[data-ntopen]'))){NT.open=b.dataset.ntopen;render();scrollTo(0,0);return;}
+  if((b=e.target.closest('[data-ntpdf]'))){ntPdf(b.dataset.ntpdf);return;}
+  if((b=e.target.closest('[data-ntview]'))){const n=(D.notices||[]).find(x=>x.id===b.dataset.ntview);if(!n||!n.file)return;NT.viewed=NT.viewed||{};const first=!NT.viewed[n.id];NT.viewed[n.id]=NT.viewed[n.id]||Date.now();
+    openFile(n.file.id,false,n.file.name);if(first)setTimeout(()=>{if(!document.querySelector('#layer .drawer'))render();},300);return;}
+  if((b=e.target.closest('[data-ntremind]'))){const [nid,ph,name]=b.dataset.ntremind.split('|');const n=(D.notices||[]).find(x=>x.id===nid);if(!n)return;
+    shareSheet('Please sign: '+n.title,`Hello${name?' '+name:''},\n\nPlease read and sign this notice in BuildMitr → Notices:\n*${n.title}*\n\n${APP_URL}\n\n— ${ME.name||orgName()}`,ph||'');return;}
+  const id=(e.target.closest('button')||{}).id;
+  if(id==='ntBack'){NT.open='';render();return;}
+  if(id==='ntNew'){ntForm(null);return;}
+  if(id==='ntEdit'){e.preventDefault();e.stopPropagation();ntForm((D.notices||[]).find(x=>x.id===NT.open));return;}
+  if(id==='ntNewVer'){const n=(D.notices||[]).find(x=>x.id===e.target.closest('button').dataset.id);if(n)ntForm({title:n.title,body:n.body,file:n.file,to:n.to,ver:(n.ver||1)+1});return;}
+  if(id==='ntWithdraw'){const nid=e.target.closest('button').dataset.id,n=(D.notices||[]).find(x=>x.id===nid);if(n)write(()=>db.doc('notices/'+nid).update({active:n.active===false}),n.active===false?'Notice re-issued':'Notice withdrawn').then(()=>render());return;}
+  if(id==='ntDecl'){const x=document.getElementById('ntDeclBox');x.hidden=!x.hidden;if(!x.hidden)x.querySelector('textarea').focus();return;}
+  if(id==='ntPadClear'){const c=document.getElementById('ntPad');c.getContext('2d').clearRect(0,0,c.width,c.height);PAD.ink=false;return;}
+  if(id==='llCsv'){llCsv();return;}
+  if(id==='llRetry'){llLocate();return;}
+  if(id==='llOffice'){if(!navigator.geolocation){toast('This device cannot share location');return;}toast('Finding your location…');
+    navigator.geolocation.getCurrentPosition(p=>write(()=>db.doc('org/main').update({office:{lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6)}}),'Office location saved').then(()=>render()),()=>toast('Location not allowed on this device'),{enableHighAccuracy:true,timeout:20000});return;}
+},true);
+document.addEventListener('change',e=>{if(e.target.id==='llWho'){WT.person=e.target.value;render();}},true);
+document.addEventListener('submit',e=>{const f=e.target;if(f.id==='ntSign'){e.preventDefault();ntSign(f,(e.submitter&&e.submitter.value)||'sign');}if(f.id==='ntForm'){e.preventDefault();ntSave(f);}},true);
+/* unsigned notices: shown once per session when BuildMitr opens */
+setInterval(()=>{if(!S.ready||NT.shown||S.view==='notices'||document.querySelector('#layer .drawer'))return;const p=ntPending();if(!p.length)return;NT.shown=true;
+  S.view='notices';NT.open=p[0].id;render();toast(`Please read and sign ${p.length>1?p.length+' notices':'this notice'}`);},2500);
+
+/* demo: a sample notice, signatures and log-ins */
+{const _dd2=demoData;demoData=function(){const X=_dd2();const t=Date.now(),d=isoDate(new Date());const s=NT_SAMPLE();
+  X.notices=[{id:'ndemo',...s,to:'all',ver:1,active:true,by:'dm1',at:t-86400e3*2,hash:'demo'}];
+  X.noticesign=[{id:'dm4_ndemo',user:'dm4',notice:'ndemo',title:s.title,ver:1,hash:'demo',typed:'Kavya',agree:true,sig:{id:'',name:''},at:t-86400e3,srv0:t-86400e3,dev:'Mobile',app:'Android app'}];
+  const base=new Date(d+'T09:12:00').getTime();
+  X.attlog=[['dm4','Laptop','Windows app',0,null,'At Office'],['dm4','Mobile','Android app',5.2,6.1,'At JP Nagar Residence site'],['dm2','PC / Laptop','Chrome on Windows',0.3,null,'At Office'],['dm3','Mobile','Chrome on Android',0.8,8.5,'']].map(([u,dev,app,h,e,place],i)=>({id:`${u}_${d}_${i}`,user:u,date:d,start:base+h*3600e3,srv0:base+h*3600e3,last:base+(e||h+7)*3600e3,end:e?base+e*3600e3:null,endKind:e?'Signed out':'',dev,app,lat:place?12.8915+i*.001:null,lng:place?77.5857:null,acc:place?18:null,place,loc:place?'ok':'Not allowed'}));
+  return X;};}
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -5686,7 +5939,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
