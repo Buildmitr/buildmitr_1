@@ -21,11 +21,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
+      - name: Self-test the work tracker
+        working-directory: desktop
+        run: |
+          set -o pipefail
+          node selftest.js 2>&1 | tee ../build.log
       - name: Build
         working-directory: desktop
         run: |
           set -o pipefail
-          { npm install --no-audit --no-fund && npm run dist; ls -la dist; } 2>&1 | tee ../build.log
+          { npm install --no-audit --no-fund && npm run dist; ls -la dist; } 2>&1 | tee -a ../build.log
       - name: Publish
         run: |
           set -o pipefail
