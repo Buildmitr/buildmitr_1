@@ -1,10 +1,3 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="BuildMitr – construction project management: projects, DPRs, material, labour, wages, invoices and more.">
-<meta name="theme-color" content="#1f3a2e"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="favicon-48.png"><meta name="apple-mobile-web-app-capable" content="yes">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
-
-<script src="config.js"></script>
-</head><body>
 <title>BuildMitr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://script.googleusercontent.com" crossorigin><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -408,7 +401,7 @@ body[data-view="login"] .app{grid-template-columns:1fr}body[data-view="login"] .
 .lg-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}.lg-or::before,.lg-or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .lg-org{justify-content:space-between}
 .linkish{border:0;background:none;color:var(--accent);text-decoration:underline;padding:0;font:inherit;cursor:pointer}
-.lg-foot{text-align:center}
+.lg-foot{text-align:center}.lg-apps{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-top:10px}
 
 /* ---- chat ---- */
 
@@ -3029,8 +3022,16 @@ function vLogin(){
   else if(step==='pick')body=`<div class="lg-form"><h2>Choose organisation</h2>${LG.orgs.map(m=>`<button class="btn lg-org" data-lgorg="${esc(m.org_id)}"><b data-notr>${esc(m.org_name||'Company')}</b><span class="code">${esc(m.role)}</span></button>`).join('')}<button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
   else body=`<div class="lg-form"><h2>Loading…</h2><p class="code">Opening your projects.</p>${err}${err?`<button type="button" class="btn" id="lgRetry">${ico('history')}<span>Try again</span></button><button type="button" class="btn ghost sm" id="lgOut">Sign out</button>`:''}</div>`;
   return `<div class="lg-wrap"><div class="lg-card"><div class="lg-brand">${ico('building-2')}<span data-notr>${brand}</span></div>${langs}${body}</div>
-    <p class="lg-foot code">${location.hostname?`<span data-notr>${esc(location.hostname)}</span> · `:''}<button class="linkish" id="lgDemo">Try the demo</button></p></div>`;
+    <p class="lg-foot code">${location.hostname?`<span data-notr>${esc(location.hostname)}</span> · `:''}<button class="linkish" id="lgDemo">Try the demo</button></p>${lgGetApp()}</div>`;
 }
+/* sign-in page: get the app before signing in (Android app, Windows setup, iPhone home screen) */
+function lgGetApp(){let inst=false;try{inst=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||/src=(android|win)/.test(location.search);}catch(_){}if(inst)return '';
+  const R='https://github.com/Buildmitr/buildmitr_1/releases/download/';
+  return `<div class="lg-apps"><span class="code">Get the BuildMitr app:</span>
+    <a class="btn sm" href="${R}android-latest/BuildMitr.apk" target="_blank" rel="noopener">${ico('smartphone')}<span>Android</span></a>
+    <a class="btn sm" href="${R}windows-latest/BuildMitr-Setup.exe" target="_blank" rel="noopener">${ico('monitor')}<span>Windows PC</span></a>
+    <button type="button" class="btn sm" id="lgIos">${ico('apple')}<span>iPhone / iPad</span></button></div>`;}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#lgIos'))toast('On iPhone / iPad: open this page in Safari → Share → Add to Home Screen');},true);
 function lgSet(step,err){S.authStep=step;LG.err=err||'';LG.busy=false;render();setTimeout(()=>{const i=document.querySelector('#lgEmail,#lgCode,#lgOrgName');i&&i.focus&&i.focus();},30);}
 async function lgSend(){
   const v=(document.getElementById('lgEmail')||{}).value||LG.email;LG.email=v.trim().toLowerCase();
