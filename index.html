@@ -1072,7 +1072,7 @@ function vModule(k){
     <span class="code" style="margin-left:auto;align-self:center">${rows.length} ${rows.length===1?'entry':'entries'}</span></div>
   ${rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
   <tbody>${rows.map(r=>`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
-    <td class="acts">${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
+    <td class="acts">${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
   :`<div class="hero-empty">${ico(m.icon)}<h2>No ${esc(m.label.toLowerCase())} yet</h2><p>${S.proj!=='all'&&!m.noProject?'Nothing recorded for this project.':'Add the first entry to start keeping records here.'}</p>${addBtn(k)}</div>`}</div>`;
 }
 
@@ -1204,7 +1204,7 @@ function vSettings(){
   ${admin?orgLinkBox():''}
   ${admin?letterheadBox():''}
   ${admin?camSettingsBox():''}
-  ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div></div>`:''}
+  ${S.cloud?`<div class="box"><div class="box-h">${ico('user')}<h2>Your login</h2></div><div class="srow"><span style="flex:1">Signed in as <b data-notr>${esc(ME.email||'')}</b> · <span data-notr>${esc(((CLOUD.mem||{}).organizations||{}).name||'')}</span></span><button class="btn" id="pwSet">${ico('lock')}<span>${LG.hasPw?'Change password':'Set a password'}</span></button><button class="btn" id="signOut">${ico('log-in')}<span>Sign out</span></button></div><div class="code" style="padding:0 16px 12px">${LG.hasPw?'You can sign in with your password or with a login code sent to your email. Changing the password needs your current password.':'Set a password so you can sign in with email + password next time (a login code to your email also works).'}</div></div>`:''}
   <div class="box"><div class="box-h">${ico('eye')}<h2>Colour theme</h2></div><div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     ${[['light','Light'],['dark','Dark'],['auto','Automatic (same as phone)']].map(([k,l])=>`<button class="btn ${THEME===k?'pri':''}" data-settheme="${k}">${l}</button>`).join('')}</div></div>
   <div class="box"><div class="box-h">${ico('languages')}<h2>Language</h2></div><div style="padding:14px 16px;display:grid;gap:12px">
@@ -3029,7 +3029,8 @@ function setLang(l){LANG=l;try{localStorage.setItem('bm-lang',LANG)}catch(_){}lo
 const CLOUD={url:'',token:'',org:null,mem:null,user:null,blob:''};
 const cloudCfg=()=>{const c=window.BM_CONFIG||{};return c.googleScriptUrl&&/^https:\/\//.test(c.googleScriptUrl)?c:null;};
 const JOIN_ROLES=['Site engineer','Supervisor','Architect','Structural engineer','Client','Project manager','Accountant','Storekeeper','Sub-contractor','Marketing'];
-const LG={mode:'code',hasPw:true,pwAsked:false,email:'',name:'',phone:'',role:'',busy:false,err:'',sentAt:0,orgs:[],toAdmin:true,owner:false,wait:null};
+const LG={mode:'pw',   // sign-in page opens on password; “Get a login code” and “I have an invite code” are just below
+  hasPw:true,pwAsked:false,email:'',name:'',phone:'',role:'',busy:false,err:'',sentAt:0,orgs:[],toAdmin:true,owner:false,wait:null};
 async function gasApi(action,args){
   let r;
   try{r=await fetch(CLOUD.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:CLOUD.token,org:CLOUD.org,...(args||{})}),redirect:'follow'});}
@@ -3051,24 +3052,27 @@ function vLogin(){
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="username" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Password<input id="lgPw" type="password" autocomplete="current-password" required placeholder="Your password"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
-    <div class="lg-or"><span>first time, or forgot your password?</span></div>
-    <button type="button" class="btn" id="lgUseCode">${ico('lock')}<span>Get a login code from the admin</span></button></form>`;
-  else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code">Enter your details. A 6-digit login code goes to your organisation's admin, who shares it with you — no password needed.</p>
+    <div class="lg-or"><span>first time, no password yet, or forgot it?</span></div>
+    <button type="button" class="btn" id="lgUseCode">${ico('lock')}<span>Get a login code</span></button>
+    <button type="button" class="btn ghost" id="lgHaveCode">${ico('key-round')}<span>I have an invite code</span></button></form>`;
+  else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code"><b>First time:</b> the 6-digit code goes to your organisation's admin, who shares it with you. <b>Signed in before:</b> the code comes to your own email.</p>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Your name (new users)<input id="lgName" autocomplete="name" value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
     ${LG.fixedOrg?`<input type="hidden" id="lgOrg" value="${esc(LG.fixedOrg)}"><div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||'from your invite link')}</b></span></div>`:`<div class="code lg-hint">${ico('link')}<span>New here? Open the sign-in link your company admin sent you.</span></div>`}
     <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
     <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
-    <p class="code">Every sign-in needs a fresh 6-digit code from your admin.</p></form>`;}
+    <div class="lg-or"><span>already set a password?</span></div>
+    <button type="button" class="btn" id="lgUsePw">${ico('lock')}<span>Sign in with password</span></button>
+    <button type="button" class="btn ghost" id="lgHaveCode">${ico('key-round')}<span>I have an invite code</span></button></form>`;}
   else if(step==='wait')body=`<div class="lg-form"><h2>Waiting for approval</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||LG.email)}</b>.</p>
     <div class="note">${ico('history')}<span>The BuildMitr admin has your request and will choose your role. This page opens by itself once you are approved — you can keep it open or come back later.</span></div>${err}
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
     <button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
-  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.toAdmin?`The 6-digit code for <b data-notr>${esc(LG.email)}</b> was sent to your organisation's admin. Call or WhatsApp the admin to get it.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder.`}</p>
+  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.invite?`Enter the 6-digit <b>invite code</b> your admin shared with you for <b data-notr>${esc(LG.email)}</b>. It works once.`:LG.toAdmin?`The 6-digit code for <b data-notr>${esc(LG.email)}</b> was sent to your organisation's admin. Call or WhatsApp the admin to get it.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder.`}</p>
     <label>6-digit code<input id="lgCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="••••••" class="lg-code"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
-    <div class="lg-row"><button type="button" class="btn ghost sm" id="lgBack">Change email</button><button type="button" class="btn ghost sm" id="lgResend" ${Date.now()-LG.sentAt<60000?'disabled':''}>Send the code again</button></div></form>`;
+    <div class="lg-row"><button type="button" class="btn ghost sm" id="lgBack">Change email</button>${LG.invite?'':`<button type="button" class="btn ghost sm" id="lgResend" ${Date.now()-LG.sentAt<60000?'disabled':''}>Send the code again</button>`}</div></form>`;
   else if(step==='org')body=`<form id="lgOrgForm" class="lg-form"><h2>Welcome to BuildMitr</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||'')}</b>, but you are not part of a company yet.</p>
     <div class="note">${ico('info')}<span>Joining your company's team? Ask the admin to add your email on the <b>Team</b> page, then tap <b>Check again</b>.</span></div>
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
@@ -3094,7 +3098,7 @@ async function lgSend(){
   const v=(document.getElementById('lgEmail')||{}).value||LG.email;LG.email=v.trim().toLowerCase();
   const nm=document.getElementById('lgName'),ph=document.getElementById('lgPhone'),rl=document.getElementById('lgRole'),og=document.getElementById('lgOrg');if(nm)LG.name=nm.value.trim();if(ph)LG.phone=ph.value.trim();if(rl)LG.role=rl.value;if(og)LG.org=og.value;
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Please enter a valid email address.');return;}
-  LG.busy=true;render();let j;
+  LG.busy=true;LG.invite=false;render();let j;
   try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role,org:LG.org||''});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.code==='need_org'?'You are not on a company team yet. Open the BuildMitr sign-in link your company admin sent you.':e.message);return;}
   LG.toAdmin=j.to!=='you';
   LG.sentAt=Date.now();lgSet('code');
@@ -3122,17 +3126,20 @@ function pwDialog(first){
     <div class="pane-h"><h2>${first?'Set your password':'Change password'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
     <div class="pane-b">${first?`<div class="note">${ico('lock')}<span>Set a password now so next time you can sign in with your email and password — no code from the admin needed.</span></div>`:''}
       <input type="email" autocomplete="username" value="${esc(ME.email||'')}" hidden>
-      <label class="req">New password (at least 6 characters)<input id="pw1" type="password" autocomplete="new-password" minlength="6" required></label>
-      <label class="req">Type it again<input id="pw2" type="password" autocomplete="new-password" minlength="6" required></label></div>
+      ${!first&&LG.hasPw?`<label class="req">Current password<input id="pw0" type="password" autocomplete="current-password" required></label><div class="code">Forgot it? Sign out, sign in with a login code sent to your email, then set a new password here within 15 minutes (no current password needed then).</div>`:''}
+      <label class="req">New password (at least 8 characters, not your email)<input id="pw1" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label class="req">Type it again<input id="pw2" type="password" autocomplete="new-password" minlength="8" required></label>
+      ${LG.hasPw?`<div class="code">After a change, your other phones and PCs are signed out — sign in there with the new password.</div>`:''}</div>
     <div class="pane-f"><button type="button" class="btn" data-close>${first?'Later':'Cancel'}</button><button class="btn pri" id="pwSave">Save password</button></div></form></div>`;
-  draw();setTimeout(()=>{const i=document.getElementById('pw1');i&&i.focus();},30);
+  draw();setTimeout(()=>{const i=document.getElementById('pw0')||document.getElementById('pw1');i&&i.focus();},30);
 }
 async function pwSave(){
   const a=(document.getElementById('pw1')||{}).value||'',b=(document.getElementById('pw2')||{}).value||'';
-  if(a.length<6){toast('The password needs at least 6 characters.');return;}
+  if(a.length<8){toast('The password needs at least 8 characters.');return;}
   if(a!==b){toast('The two passwords are not the same.');return;}
   const btn=document.getElementById('pwSave');if(btn)btn.disabled=true;
-  try{await gasApi('setPw',{password:a});LG.hasPw=true;document.getElementById('layer').innerHTML='';toast('Password saved. Next time sign in with your email and password.');}
+  const old=(document.getElementById('pw0')||{}).value||'';
+  try{await gasApi('setPw',{password:a,old});LG.hasPw=true;try{localStorage.setItem('bm-haspw','1');}catch(_){}document.getElementById('layer').innerHTML='';toast('Password saved. Next time sign in with your email and password (or a code to your email).');if(S.view==='settings')render();}
   catch(e){if(btn)btn.disabled=false;toast(e.message);}
 }
 async function lgCreateOrg(){
@@ -6021,6 +6028,77 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
   if((b=e.target.closest('[data-ntdel]'))){const id=b.dataset.ntdel;if((D.noticesign||[]).some(s=>s.notice===id)){toast('Staff have answered this notice — it is kept as a record. Withdraw it instead.');return;}
     if(S.confirm!=='nt'+id){S.confirm='nt'+id;b.innerHTML=`${ico('trash-2')}<span>Tap again to delete</span>`;setTimeout(()=>{if(S.confirm==='nt'+id)S.confirm=null;},5000);return;}
     S.confirm=null;const n=(D.notices||[]).find(x=>x.id===id);write(()=>db.doc('notices/'+id).delete(),'Notice deleted').then(ok=>{if(ok){trashFiles(recFileIds(n));NT.open='';render();}});return;}
+},true);
+
+/* ================= Password after the first sign-in =================
+ * First sign-in: a code the organisation admin shares. Then each person can set a password and sign in with
+ * password or a code to their own email; changing the password needs the current one. */
+setInterval(()=>{try{if(LG.hasPw)localStorage.setItem('bm-haspw','1');}catch(_){}},3000);
+/* a gentle note on the dashboard until a password is set (not a pop-up) */
+{const _vd=vDashboard;vDashboard=function(){const out=_vd.apply(this,arguments);if(!S.cloud||S.demo||LG.hasPw||S.viewAs)return out;
+  const note=`<div class="note" id="pwNote">${ico('lock')}<span style="flex:1">Set a password so next time you can sign in with your email and password (a login code to your email also works).</span><button type="button" class="btn sm pri" id="pwSet">Set password</button></div>`;
+  const i=out.indexOf('<div class="box');return i<0?out+note:out.slice(0,i)+note+out.slice(i);};}
+/* ================= Sign-in: invite code → password or email code, remembered devices =================
+ * First sign-in: a one-time invite code from the organisation admin (or the code the admin receives by email).
+ * Then: password or a code to the person's own email. Each phone / PC / browser stays signed in for 90 days after it
+ * was last used. Settings → My devices lists them, with sign-out; the admin can sign a team member out everywhere. */
+Object.assign(ICONS,{'key-round':'<path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>'});
+/* this device: an id kept in the browser + a readable name */
+const DID=(()=>{let d='';try{d=localStorage.getItem('bm-did')||'';}catch(_){}if(!/^d[\w]{8,40}$/.test(d)){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);try{localStorage.setItem('bm-did',d);}catch(_){}}return d;})();
+const devLabel=()=>{try{return `${devKind()} · ${appKind()}`;}catch(_){return 'Device';}};
+{const _api=gasApi;gasApi=async function(action,args){
+  if(action==='verify'||action==='loginPw'||action==='boot')args={...(args||{}),did:DID,dev:devLabel()};
+  const j=await _api(action,args);
+  if(j&&j.token&&['boot','setPw','devOutAll'].includes(action)){CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}}   // renewed login for this device
+  if(j&&j.user&&j.user.email&&(action==='verify'||action==='loginPw')){try{localStorage.setItem('bm-last-email',j.user.email);}catch(_){}if(action==='verify'&&!j.hasPw)LG.askPw=true;}
+  return j;};}
+try{if(!LG.email)LG.email=localStorage.getItem('bm-last-email')||'';}catch(_){}
+/* right after a first code sign-in without a password: ask once to set one */
+setInterval(()=>{if(!LG.askPw||!S.ready||!S.cloud||S.demo||LG.hasPw||document.querySelector('#layer .drawer'))return;LG.askPw=false;pwDialog(true);},1500);
+/* "I have an invite code": go straight to entering it */
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#lgHaveCode');if(!b)return;e.preventDefault();
+  const i=document.getElementById('lgEmail');LG.email=((i&&i.value)||LG.email||'').trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Enter your email first, then tap “I have an invite code”.');return;}
+  LG.toAdmin=false;LG.invite=true;LG.sentAt=Date.now();lgSet('code');},true);
+
+/* ---- Settings → My devices ---- */
+const DV={list:null,busy:false,err:''};
+async function dvLoad(){if(DV.busy||!S.cloud)return;DV.busy=true;try{DV.list=(await gasApi('devices')).devices;DV.err='';}catch(e){DV.err=e.code==='error'&&/Unknown/i.test(e.message)?'old':e.message;}DV.busy=false;if(S.view==='settings')render();}
+function dvBox(){if(!S.cloud||S.demo)return '';if(DV.list===null&&!DV.busy&&!DV.err)setTimeout(dvLoad,0);
+  if(DV.err==='old')return '';
+  const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<2?'now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago';};
+  const L=DV.list||[];
+  return `<div class="box"><div class="box-h">${ico('monitor')}<h2>My devices</h2><span class="code">Signed in — stays signed in for 90 days after last use</span></div>
+    ${DV.list===null?`<div class="srow"><span class="code">${DV.err?esc(DV.err):'Loading…'}</span></div>`:L.map(d=>`<div class="srow"><span style="flex:1;min-width:0">${ico(/Mobile/.test(d.label)?'smartphone':/Tablet/.test(d.label)?'tablet':/Laptop/.test(d.label)?'laptop':'monitor')} <b>${esc(d.label||'Device')}</b>${d.me?' <span class="pill p-green">This device</span>':''}<br><span class="code">First signed in ${esc(fd(isoDate(new Date(d.created))))} · last used ${ago(d.last)}</span></span>
+      ${d.me?'':`<button type="button" class="btn sm" data-dvout="${esc(d.did)}">${ico('log-out')}<span>Sign out</span></button>`}</div>`).join('')||'<div class="srow"><span class="code">Only this device.</span></div>'}
+    ${L.length>1?`<div class="srow"><button type="button" class="btn sm warn" id="dvOutAll">${ico('log-out')}<span>Sign out all other devices</span></button><span class="code">Use this if a phone is lost or someone else used your login.</span></div>`:''}</div>`;}
+{const _vs=vSettings;vSettings=function(){const h=_vs.apply(this,arguments);const box=dvBox();if(!box)return h;const i=h.indexOf('<div class="box"><div class="box-h">'+ico('eye'));return i<0?h+box:h.slice(0,i)+box+h.slice(i);};}
+
+/* ---- Team (admin): invite code and sign out everywhere ---- */
+function teamAuthBtns(r){if(!S.cloud||S.demo||WT.srv!==true||!isAdmin()||!CANW||!r.email||r.account===ME.id||r.role==='Admin'&&!ME.isOwner)return '';
+  return `<button class="btn sm" data-tinv="${esc(r.id)}" title="Make a one-time sign-in code">${ico('key-round')}Invite code</button>${r.account?`<button class="btn sm ghost" data-tout="${esc(r.id)}" title="Sign out of all devices">${ico('log-out')}</button>`:''}`;}
+async function teamInvite(id){const r=D.team.find(x=>x.id===id);if(!r)return;toast('Making the invite code…');let j;
+  try{j=await gasApi('invite',{email:r.email});}catch(e){toast(e.message);return;}
+  const until=new Date(j.expires).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+  const link=typeof orgLink==='function'?orgLink(CLOUD.org,orgName()):APP_URL;
+  const msg=`Hello ${r.name||''},\n\nYour BuildMitr sign-in for ${orgName()}:\n1. Open ${link}\n2. Enter your email: ${r.email}\n3. Tap “I have an invite code” and enter: *${j.code}*\n\nThe code works once, until ${until}. After signing in, set your own password — next time sign in with the password or a code to your email.`;
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane" style="height:auto;max-height:100%"><div class="pane-h"><h2>Invite code for ${esc(r.name||r.email)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><p class="code">Share this code only with ${esc(r.name||'this person')}. It works once, with ${esc(r.email)}, until ${esc(until)}.</p>
+    <div class="lg-code" style="font-size:34px;letter-spacing:8px;font-weight:700;text-align:center;padding:14px;border:1px dashed var(--line);border-radius:12px;user-select:all" aria-label="Invite code">${esc(j.code)}</div>
+    <div class="srow" style="border:0;padding:14px 0 0"><button type="button" class="btn pri" id="tinvShare">${ico('share-2')}<span>Share on WhatsApp / email</span></button><button type="button" class="btn" id="tinvCopy">${ico('copy')}<span>Copy</span></button></div></div></div></div>`;
+  TINV={msg,phone:r.phone||'',name:r.name||'',code:j.code};}
+let TINV=null;
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-tinv]'))){e.stopPropagation();teamInvite(b.dataset.tinv);return;}
+  if((b=e.target.closest('[data-tout]'))){e.stopPropagation();const r=D.team.find(x=>x.id===b.dataset.tout);if(!r)return;
+    if(S.confirm!=='to'+r.id){S.confirm='to'+r.id;toast(`Tap again to sign ${r.name||r.email} out of all devices`);setTimeout(()=>{if(S.confirm==='to'+r.id)S.confirm=null;},5000);return;}
+    S.confirm=null;gasApi('devOutAll',{email:r.email}).then(()=>{toast(`${r.name||r.email} is signed out everywhere — they need a password or code to sign in again`);audit('signed out','team',r.id,r.name||r.email);}).catch(er=>toast(er.message));return;}
+  const id=(e.target.closest('button')||{}).id;
+  if(id==='tinvShare'&&TINV){shareSheet('BuildMitr invite code',TINV.msg,TINV.phone);return;}
+  if(id==='tinvCopy'&&TINV){try{navigator.clipboard.writeText(TINV.msg);toast('Copied');}catch(_){toast('Copy failed — select the code');}return;}
+  if((b=e.target.closest('[data-dvout]'))){gasApi('devOut',{did:b.dataset.dvout}).then(()=>{toast('Signed out on that device');DV.list=null;dvLoad();}).catch(er=>toast(er.message));return;}
+  if(id==='dvOutAll'){if(S.confirm!=='dvall'){S.confirm='dvall';toast('Tap again to sign out all your other devices');setTimeout(()=>{if(S.confirm==='dvall')S.confirm=null;},5000);return;}
+    S.confirm=null;gasApi('devOutAll',{}).then(()=>{toast('All other devices are signed out');DV.list=null;dvLoad();}).catch(er=>toast(er.message));return;}
 },true);
 
 /* ================= CSV export ================= */
