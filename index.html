@@ -73,7 +73,7 @@ svg.i{width:18px;height:18px;stroke-width:1.6;flex:none}
 .main{grid-column:2;grid-row:1;min-width:0;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.bar h1{font-family:var(--f-display);font-size:22px;font-weight:600;margin:0;letter-spacing:-.02em;flex:1;min-width:0;text-wrap:balance}
+.bar h1{font-family:var(--f-display);font-size:22px;font-weight:600;margin:0;letter-spacing:-.02em;flex:1 0 auto;max-width:100%;min-width:0;text-wrap:balance}
 .menu-btn{display:none;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px}
 .psw{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:0 0 0 10px;max-width:100%}
 .psw select{border:0;background:none;padding:8px 10px 8px 0;min-width:0;max-width:260px}
@@ -198,16 +198,16 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .pl-cm{border-left:3px solid var(--accent);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:4px}
 .g-cm{font-size:12px;margin-left:6px}
 .g-row{display:grid;grid-template-columns:240px 1fr;align-items:center;border-bottom:1px solid var(--line);min-height:46px}
-.g-lab{padding:6px 14px;min-width:0}.g-lab b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.g-lab span{font-size:12px;color:var(--muted)}
+.g-lab{padding:8px 14px;min-width:0;overflow-wrap:anywhere}.g-lab b{display:block;font-size:14px;line-height:1.3;white-space:normal}.g-lab span{font-size:12px;color:var(--muted);display:block;line-height:1.4;margin-top:2px}.g-lab .g-dt{white-space:nowrap;display:inline}.g-lab b span{display:inline;font-size:inherit;margin:0;color:var(--muted)}.g-lab .g-acts{display:inline-flex;gap:2px;flex-wrap:wrap}
 .g-track{position:relative;height:100%;min-height:46px;margin-right:14px}
 .g-bar{position:absolute;top:50%;transform:translateY(-50%);height:16px;border-radius:4px;background:var(--accent-soft);border:1px solid var(--accent);overflow:hidden;z-index:1}
 .g-bar i{display:block;height:100%;background:var(--accent)}
 .g-bar.late{border-color:var(--red-ink);background:var(--red)}.g-bar.late i{background:var(--red-ink)}
-.g-head{min-height:30px;background:var(--bg)}.g-head .g-track{min-height:30px}
+.g-head{min-height:44px;background:var(--bg)}.g-head .g-track{min-height:44px}
 .g-tick{position:absolute;top:6px;font-size:11px;color:var(--muted);transform:translateX(-50%);white-space:nowrap}
 .g-today{position:absolute;top:0;bottom:0;border-left:2px dashed var(--amber-ink)}
-.g-today em{position:absolute;top:6px;left:4px;font-size:11px;font-style:normal;color:var(--amber-ink);font-weight:600}
-.g-foot{min-height:0;border:0;align-items:stretch;position:absolute;inset:30px 0 0 0;pointer-events:none}.g-foot .g-track{min-height:0}
+.g-today em{position:absolute;top:24px;left:4px;background:var(--bg);padding:0 3px;border-radius:3px;z-index:2;font-size:11px;font-style:normal;color:var(--amber-ink);font-weight:600}
+.g-foot{min-height:0;border:0;align-items:stretch;position:absolute;inset:44px 0 0 0;pointer-events:none}.g-foot .g-track{min-height:0}
 .g-line{position:absolute;top:0;bottom:0;border-left:1px solid var(--line)}
 @media (max-width:1024px){
   .app{grid-template-columns:68px 1fr}
@@ -297,7 +297,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
   .mtbl td.num{text-align:right}
   .mtbl tfoot td,.mtbl tr:last-child td{border:0}
   .board{grid-auto-columns:84vw;scroll-snap-type:x mandatory}.bcol{scroll-snap-align:start}
-  .g-row{grid-template-columns:150px 1fr}
+  .g-row{grid-template-columns:minmax(150px,44vw) 1fr}.g-lab{padding:8px 10px}.g-lab b{font-size:13px}.g-lab span{font-size:11.5px}.gantt{min-width:calc(44vw + 420px)}
   .fhead{grid-template-columns:1fr}
   .seg-b{padding:7px 9px;font-size:12px}
   .ra-chip{min-width:0;flex:1 1 140px}
@@ -348,7 +348,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .dm-prev{display:grid;gap:12px;padding:12px 16px 16px;max-height:calc(100vh - 210px);overflow:auto;background:var(--bg)}.dm-page{width:100%;height:auto;box-shadow:0 1px 6px rgba(0,0,0,.18);border-radius:2px;background:#fff}
 .dm-acts{gap:8px}.lh-wrap{display:flex;gap:16px;padding:12px 16px;flex-wrap:wrap;align-items:flex-start}.lh-thumb{width:150px;flex:none}.lh-thumb img{width:150px;border:1px solid var(--line);border-radius:4px;display:block}
 @media(max-width:900px){.dm-grid{grid-template-columns:1fr}.dm-side{position:static}.dm-prev{max-height:none}}
-.st-tbl input,.st-tbl select{font-size:13px;padding:6px 8px}.st-tbl input[type=date]{width:140px}
+.st-tbl input,.st-tbl select{font-size:13px;padding:6px 8px}.st-tbl input[type=checkbox]{width:auto}.st-tbl select{min-width:128px}.st-tbl td:nth-child(3) input{min-width:260px}.st-dup td{background:var(--red)}.st-bar{flex-wrap:wrap;gap:6px;border-top:1px solid var(--line)}.st-tbl input[type=date]{width:140px}
 #saveChip{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;font-size:12.5px;padding:6px 12px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.12);display:none}#saveChip.on{display:block}#saveChip.offline{background:var(--amber);color:var(--amber-ink)}
 .fv .fv-pane{width:min(1100px,100%);max-width:100%}
 .qr-box{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1/1;max-height:60vh}.qr-box video{width:100%;height:100%;object-fit:cover}.qr-frame{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
@@ -1344,7 +1344,7 @@ const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;
 function vSchedule(){
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
   const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
-  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Import schedule</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
+  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}${D.tasks.some(t=>inProj(t))?`<button class="btn" id="schedXls">${ico('file-down')}Download Excel</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Upload Excel</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
   if(!ts.length)return header(label('schedule'),btn)+`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`;
   const day=s=>new Date(s+'T00:00').getTime()/864e5;
   let min=Math.min(...ts.map(t=>day(t.s)),day(today()))-2,max=Math.max(...ts.map(t=>day(t.e)),day(today()))+3;
@@ -1352,12 +1352,14 @@ function vSchedule(){
   const ticks=[];const st=new Date(min*864e5);st.setDate(1);
   for(let d=new Date(st);d.getTime()/864e5<=max;d.setMonth(d.getMonth()+1)){const v=d.getTime()/864e5;if(v>=min)ticks.push([v,d.toLocaleDateString(LOC(),{month:'short',year:'2-digit'})]);}
   if(span<75){ticks.length=0;for(let v=Math.ceil(min);v<=max;v+=7)ticks.push([v,new Date(v*864e5).toLocaleDateString(LOC(),{day:'numeric',month:'short'})]);}
+  {const vw=innerWidth||1000,trackW=Math.max(vw<=720?vw*0.44+420:760,Math.min(vw,1400)-300)-(vw<=720?vw*0.44:240),need=58,step=Math.max(1,Math.ceil(need/(trackW/Math.max(1,ticks.length))));   // keep month labels apart on narrow screens
+    const keep=ticks.filter((t,i)=>i%step===0);ticks.length=0;ticks.push(...keep);}
   const tdy=day(today());
   if(S.schedTable&&ed)return header(label('schedule'),btn)+schedTable(ts);
   const SE=schedSeason(ts,min,max,pos);
   const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
-    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)} <button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></div>
+    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${(()=>{const w=S.proj==='all'?pname(t.project):(t.who?nm(t.who):'');return w&&w!=='—'?esc(w)+' · ':'';})()}<span class="g-dt">${fd(t.s)} → ${fd(t.e)}</span> <span class="g-acts"><button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></span></div>
       <div class="g-track"${ed?` data-sedit="${esc(t.id)}" style="cursor:pointer" title="Tap to edit"`:''}>${SE.bands}${SE.hl}<div class="g-bar ${late?'late':SE.wet(t)?'pl-wet':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
@@ -3398,8 +3400,8 @@ function vCctv(){
 
 /* ================= Schedule import (Excel, CSV, MS Project XML, Primavera XER, paste) ================= */
 const IMP={rows:[],cols:[],map:{},source:''};
-const IMP_FIELDS=[['title','Activity / task name'],['wbs','WBS / ID'],['start','Start'],['due','Finish / due'],['progress','% complete'],['resource','Resource / assigned to'],['pred','Predecessors'],['duration','Duration'],['summary','Summary row (skip)']];
-const GUESS={title:/^(task|activity|name|task name|activity name|description|work|item)/i,wbs:/^(wbs|outline|id|activity id|task code|s\.?\s?no|sl\.?\s?no|code)/i,start:/start|begin|from/i,due:/finish|end|due|complete by|to date|^to$/i,progress:/%|percent|progress|complete/i,resource:/resource|assign|owner|responsib|gang|by/i,pred:/pred|depend/i,duration:/dur|days/i,summary:/summary/i};
+const IMP_FIELDS=[['bmid','BuildMitr ID (matches rows)'],['title','Activity / task name'],['wbs','WBS / ID'],['start','Start'],['due','Finish / due'],['progress','% complete'],['resource','Resource / assigned to'],['pred','Predecessors'],['duration','Duration'],['status','Status'],['notes','Notes'],['summary','Summary row (skip)']];
+const GUESS={bmid:/^(buildmitr|bm) ?id/i,status:/^status/i,notes:/^(notes?|remarks?|comments?)$/i,title:/^(task|activity|name|task name|activity name|description|work|item)/i,wbs:/^(wbs|outline|id|activity id|task code|s\.?\s?no|sl\.?\s?no|code)/i,start:/start|begin|from/i,due:/finish|end|due|complete by|to date|^to$/i,progress:/%|percent|progress|complete/i,resource:/resource|assign|owner|responsib|gang|by/i,pred:/pred|depend/i,duration:/dur|days/i,summary:/summary/i};
 function loadSheetJS(){if(window.XLSX)return Promise.resolve();return new Promise((ok,bad)=>{const j=document.createElement('script');j.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';j.onload=ok;j.onerror=bad;document.head.appendChild(j);});}
 function isoDate(v){
   if(v==null||v==='')return '';
@@ -3466,18 +3468,21 @@ function impBuild(){
     let pr=parseFloat(String(g('progress')).replace('%',''));if(!isNaN(pr)&&pr>0&&pr<=1&&String(g('progress')).indexOf('%')<0&&IMP.rows.some(x=>parseFloat(x[m.progress])>1)===false)pr=pr*100;
     pr=isNaN(pr)?0:Math.max(0,Math.min(100,Math.round(pr)));
     const res=String(g('resource')||'').trim();const mem=res?D.members.find(x=>nm(x.id).toLowerCase()===res.toLowerCase()):null;
-    return {project:pid,title,wbs:String(g('wbs')||'').trim(),start,due,progress:pr,status:pr>=100?'Completed':pr>0?'In progress':'Not started',resource:res,who:mem?mem.id:'',pred:String(g('pred')||'').trim(),source:IMP.source};
+    const SO=MOD.tasks.fields.find(f=>f.k==='status').o,sv=String(g('status')||'').trim(),so=SO.find(o=>o.toLowerCase()===sv.toLowerCase());
+    const o={project:pid,title,wbs:String(g('wbs')||'').trim(),start,due,progress:so==='Completed'?100:pr,status:so||(pr>=100?'Completed':pr>0?'In progress':'Not started'),resource:res,who:mem?mem.id:'',pred:String(g('pred')||'').trim(),source:IMP.source};
+    const bm=String(g('bmid')||'').trim();if(bm)o.bmid=bm;if(m.notes)o.notes=String(g('notes')||'');return o;
   }).filter(Boolean);
 }
 function impRender(){
   const body=document.getElementById('impBody');if(!body)return;
   if(!IMP.rows.length){body.innerHTML='';return;}
   const rows=impBuild();const pid=(document.getElementById('imp-proj')||{}).value;
-  const exist=D.tasks.filter(t=>t.project===pid);const upd=rows.filter(r=>exist.some(t=>t.title.trim().toLowerCase()===r.title.toLowerCase())).length;
+  const exist=D.tasks.filter(t=>t.project===pid);const upd=rows.filter(r=>impMatch(r,exist)).length;const gone=exist.filter(t=>!rows.some(r=>impMatch(r,[t]))).length;
   const noDate=rows.filter(r=>!r.start&&!r.due).length;
   body.innerHTML=`<div class="code"><b>${IMP.rows.length}</b> rows read from ${esc(IMP.source)}. Check which column is which:</div>
   <div class="imp-map">${IMP_FIELDS.map(([k,l])=>`<label>${esc(l)}<select data-impmap="${k}"><option value="">— not in file —</option>${IMP.cols.map(c=>`<option ${IMP.map[k]===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label>`).join('')}</div>
-  <div class="note">${ico('info')}<span><b>${rows.length}</b> activities will be imported${upd?` · <b>${upd}</b> with the same name already exist and will be <b>updated</b> (dates and progress)`:''}${noDate?` · ${noDate} have no dates and won't show on the timeline`:''}. Nothing is deleted.</span></div>
+  <div class="note">${ico('info')}<span><b>${rows.length}</b> activities will be imported${upd?` · <b>${upd}</b> with the same name already exist and will be <b>updated</b>`:''}${noDate?` · ${noDate} have no dates and won't show on the timeline`:''}.</span></div>
+  ${gone?`<label class="pl-chk"><input type="checkbox" id="imp-del" ${IMP.del?'checked':''}> Delete the ${gone} activit${gone>1?'ies':'y'} of this project that ${gone>1?'are':'is'} not in the file (use when you deleted rows in Excel)</label>`:''}
   <div class="tbl-wrap" style="max-height:260px;border:1px solid var(--line);border-radius:8px"><table><thead><tr><th>WBS</th><th>Activity</th><th>Start</th><th>Finish</th><th class="num">%</th><th>Resource</th></tr></thead><tbody>
   ${rows.slice(0,60).map(r=>`<tr><td class="code">${esc(r.wbs)}</td><td>${esc(r.title)}</td><td>${fd(r.start)}</td><td>${fd(r.due)}</td><td class="num">${r.progress}</td><td>${esc(r.resource)}</td></tr>`).join('')}
   ${rows.length>60?`<tr><td colspan="6" class="code">…and ${rows.length-60} more</td></tr>`:''}</tbody></table></div>`;
@@ -3498,19 +3503,36 @@ function openImport(){
     </div>
     <div class="pane-f"><button type="button" class="btn" data-close>Cancel</button><button class="btn pri" id="impGo" disabled>Import</button></div></form></div>`;
 }
+function impMatch(r,list){return (r.bmid&&list.find(t=>t.id===r.bmid))||(r.wbs&&list.find(t=>String(t.wbs||'')===r.wbs&&t.title.trim().toLowerCase()===r.title.toLowerCase()))||list.find(t=>t.title.trim().toLowerCase()===r.title.toLowerCase());}
+document.addEventListener('change',e=>{if(e.target.id==='imp-del')IMP.del=e.target.checked;});
 async function runImport(){
   if(S.demo){toast('Exit the demo to import into your real projects.');return;}
   const rows=impBuild();const pid=(document.getElementById('imp-proj')||{}).value;if(!rows.length||!pid)return;
-  const btn=document.getElementById('impGo');btn.disabled=true;
-  let added=0,updated=0;
-  for(const r of rows){
-    const ex=D.tasks.find(t=>t.project===pid&&t.title.trim().toLowerCase()===r.title.toLowerCase());
-    const ok=ex?await write(()=>db.doc('tasks/'+ex.id).update({wbs:r.wbs||ex.wbs||'',start:r.start||ex.start||'',due:r.due||ex.due||'',progress:r.progress,status:r.status,pred:r.pred||ex.pred||'',resource:r.resource||ex.resource||'',source:r.source}))
-              :await write(()=>db.collection('tasks').add({...r,by:ME.id,at:Date.now()}));
-    if(!ok)break;ex?updated++:added++;btn.textContent=`Importing… ${added+updated}/${rows.length}`;
-  }
-  closeLayer();S.proj=pid;S.view='schedule';render();toast(`Imported: ${added} new, ${updated} updated`);
+  const btn=document.getElementById('impGo');btn.disabled=true;btn.textContent='Importing…';
+  const exist=D.tasks.filter(t=>t.project===pid),used=new Set(),now=Date.now(),list=[];let added=0,updated=0;
+  const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  for(const r0 of rows){const {bmid,...r}=r0;const ex=impMatch(r0,exist.filter(t=>!used.has(t.id)));
+    if(ex){used.add(ex.id);list.push(['tasks',ex.id,{...recOf(ex),wbs:r.wbs||ex.wbs||'',title:r.title,start:r.start||ex.start||'',due:r.due||ex.due||'',progress:r.progress,status:r.status,pred:r.pred,resource:r.resource||ex.resource||'',...(r.notes!==undefined?{notes:r.notes}:{}),source:ex.source||r.source,upd:now}]);updated++;}
+    else{list.push(['tasks',nid(),{...r,by:ME.id,at:now}]);added++;}}
+  const del=IMP.del&&document.getElementById('imp-del')&&document.getElementById('imp-del').checked?exist.filter(t=>!used.has(t.id)):[];
+  const ok=await write(async()=>{for(let k=0;k<list.length;k+=60)await dbBatch(list.slice(k,k+60));for(const t of del)await db.doc('tasks/'+t.id).delete();});
+  IMP.del=false;closeLayer();S.proj=pid;S.view='schedule';render();if(ok)toast(`Uploaded: ${added} new, ${updated} updated${del.length?`, ${del.length} deleted`:''}`);
 }
+/* download the schedule as Excel — edit it and upload it back (rows are matched by the BuildMitr ID column) */
+async function schedExport(){
+  try{await loadSheetJS();}catch(_){toast('Could not load the Excel tool — check the internet.');return;}
+  const ts=D.tasks.filter(t=>inProj(t)).sort((a,b)=>schWbsKey(a.wbs).localeCompare(schWbsKey(b.wbs))||String(a.start||'').localeCompare(String(b.start||'')));
+  const dt=v=>v?new Date(v+'T00:00'):'';const all=S.proj==='all';
+  const head=['WBS / No.','Activity',...(all?['Project']:[]),'Start','Finish','Days','Progress %','Status','Predecessors','Resource','Notes','BuildMitr ID'];
+  const aoa=[head,...ts.map(t=>[t.wbs||'',t.title||'',...(all?[pname(t.project)]:[]),dt(t.start),dt(t.due),t.start&&t.due?dDiff(t.due,t.start)+1:'',t.status==='Completed'?100:(+t.progress||0),t.status||'Not started',t.pred||'',t.resource||'',t.notes||'',t.id])];
+  const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true,dateNF:'dd-mmm-yyyy'});
+  ws['!cols']=[{wch:9},{wch:46},...(all?[{wch:22}]:[]),{wch:13},{wch:13},{wch:6},{wch:10},{wch:13},{wch:14},{wch:22},{wch:30},{wch:24}];ws['!autofilter']={ref:ws['!ref']};
+  const rm=XLSX.utils.aoa_to_sheet([['How to edit this schedule'],[''],['1. Change numbers, names, dates, progress or status in the Schedule sheet.'],['2. Add new rows at the bottom (leave BuildMitr ID empty). Delete rows you do not need.'],['3. In BuildMitr: Activity schedule → Upload Excel → choose this file.'],['4. Rows are matched by the BuildMitr ID column, so renamed activities update instead of duplicating.'],['5. To remove deleted rows from BuildMitr too, tick "Delete the activities … not in the file" before uploading.'],['Status can be: '+MOD.tasks.fields.find(f=>f.k==='status').o.join(', ')]]);rm['!cols']=[{wch:100}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Schedule');XLSX.utils.book_append_sheet(wb,rm,'Read me');
+  const nmF=(all?'All projects':pname(S.proj)).replace(/[\\/:*?"<>|]+/g,' ').replace(/\s*[·•]\s*/g,' - ').replace(/[^\x20-\x7e]/g,'').replace(/\s+/g,' ').trim()||'Project';await saveFile(`${nmF} - activity schedule ${today()}.xlsx`,new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));toast('Excel downloaded — edit it and use Upload Excel to bring it back');
+}
+function schSave(wb,fn){const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+const schWbsKey=w=>String(w||'~').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
 
 /* ================= AI assistant ================= */
 const AI={sample:null,turns:[],busy:false,ctl:null};
@@ -4956,19 +4978,58 @@ document.addEventListener('submit',async e=>{if(e.target.id!=='seForm')return;e.
   if(patch.status==='Completed')patch.progress=100;if(patch.start&&patch.due&&patch.due<patch.start){toast('Finish is before start.');return;}
   if(await schedApply(t,patch,g('mode'))){document.getElementById('layer').innerHTML='';render();}},true);
 /* table editing */
+Object.assign(ICONS,{'list-ordered':ICONS['list-ordered']||'<path d="M10 12h11"/><path d="M10 18h11"/><path d="M10 6h11"/><path d="M4 10h2"/><path d="M4 6h1v4"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>'});
+/* edit the whole schedule as a table: number, name, dates, days, progress, status, links; add, delete, duplicates */
+const schDupKey=t=>[t.project,String(t.title||'').trim().toLowerCase(),t.start||'',t.due||''].join('|');
+function schDups(ts){const seen={},d=[];ts.forEach(t=>{const k=schDupKey(t);if(seen[k])d.push(t);else seen[k]=t;});return d;}
 function schedTable(ts){
-  return `<div class="box"><div class="box-h"><h2>Edit activities</h2><label class="code" style="display:flex;gap:6px;align-items:center">When a finish date changes:<select id="st-mode"><option value="linked" ${S.stMode==='linked'||!S.stMode?'selected':''}>move linked activities</option><option value="later" ${S.stMode==='later'?'selected':''}>move all later activities</option><option value="none" ${S.stMode==='none'?'selected':''}>move only that one</option></select></label></div>
-  <div class="tbl-wrap"><table class="pl-tbl st-tbl"><thead><tr><th>WBS</th><th>Activity</th><th>Start</th><th>Finish</th><th class="num">Days</th><th class="num">Progress</th><th>Status</th><th></th></tr></thead><tbody>
-  ${ts.map(t=>`<tr><td class="code">${esc(t.wbs||'')}</td><td><input data-st="${t.id}:title" value="${esc(t.title||'')}" style="min-width:220px;width:100%">${S.proj==='all'?`<div class="code">${esc(pname(t.project))}</div>`:''}</td>
-    <td><input type="date" data-st="${t.id}:start" value="${esc(t.start||'')}"></td><td><input type="date" data-st="${t.id}:due" value="${esc(t.due||'')}"></td>
-    <td class="num code">${t.start&&t.due?dDiff(t.due,t.start)+1:''}</td><td class="num"><input data-st="${t.id}:progress" value="${esc(t.status==='Completed'?100:(t.progress??''))}" inputmode="numeric" style="width:64px;text-align:right"></td>
-    <td><select data-st="${t.id}:status">${MOD.tasks.fields.find(f=>f.k==='status').o.map(o=>`<option ${t.status===o?'selected':''}>${o}</option>`).join('')}</select></td>
+  if(!S.stSel)S.stSel=new Set();const sel=S.stSel;[...sel].forEach(id=>{if(!ts.some(t=>t.id===id))sel.delete(id);});
+  if(S.stSort==='date')ts=[...ts].sort((a,b)=>String(a.s).localeCompare(String(b.s))||schWbsKey(a.wbs).localeCompare(schWbsKey(b.wbs)));
+  const dups=new Set(schDups(ts).map(t=>t.id)),SO=MOD.tasks.fields.find(f=>f.k==='status').o;
+  return `<div class="box"><div class="box-h" style="flex-wrap:wrap;gap:8px"><h2>Edit activities</h2>
+    <label class="code" style="display:flex;gap:6px;align-items:center">Sort by<select id="st-sort"><option value="wbs" ${S.stSort!=='date'?'selected':''}>number</option><option value="date" ${S.stSort==='date'?'selected':''}>start date</option></select></label>
+    <label class="code" style="display:flex;gap:6px;align-items:center">When a finish date changes:<select id="st-mode"><option value="linked" ${S.stMode==='linked'||!S.stMode?'selected':''}>move linked activities</option><option value="later" ${S.stMode==='later'?'selected':''}>move all later activities</option><option value="none" ${S.stMode==='none'?'selected':''}>move only that one</option></select></label></div>
+  <div class="srow st-bar">${S.proj!=='all'?`<button type="button" class="btn sm" id="stAdd">${ico('plus')}<span>Add row</span></button>`:''}
+    <button type="button" class="btn sm" id="stRenum" title="Number the activities 1, 2, 3… in the order shown">${ico('list-ordered')}<span>Renumber</span></button>
+    ${dups.size?`<button type="button" class="btn sm warn" id="stDups">${ico('copy')}<span>Remove ${dups.size} duplicate${dups.size>1?'s':''}</span></button>`:''}
+    <button type="button" class="btn sm ${sel.size?'warn':''}" id="stDelSel" ${sel.size?'':'disabled'}>${ico('trash-2')}<span>Delete selected${sel.size?' ('+sel.size+')':''}</span></button>
+    <button type="button" class="btn sm" id="schedXls">${ico('file-down')}<span>Download Excel</span></button><button type="button" class="btn sm" data-import="1">${ico('file-up')}<span>Upload Excel</span></button></div>
+  <div class="tbl-wrap"><table class="pl-tbl st-tbl"><thead><tr><th><input type="checkbox" id="stAll" aria-label="Select all" ${sel.size&&sel.size===ts.length?'checked':''}></th><th>No.</th><th>Activity</th><th>Start</th><th>Finish</th><th class="num">Days</th><th class="num">Progress</th><th>Status</th><th>After</th><th></th></tr></thead><tbody>
+  ${ts.map(t=>`<tr class="${dups.has(t.id)?'st-dup':''}"><td><input type="checkbox" data-stsel="${t.id}" ${sel.has(t.id)?'checked':''} aria-label="Select ${esc(t.title||'')}"></td>
+    <td><input data-st="${t.id}:wbs" value="${esc(t.wbs||'')}" style="width:62px" aria-label="Number"></td>
+    <td><input data-st="${t.id}:title" value="${esc(t.title||'')}" style="min-width:220px;width:100%" aria-label="Activity">${S.proj==='all'?`<div class="code">${esc(pname(t.project))}</div>`:''}${dups.has(t.id)?'<span class="pill p-red">Duplicate</span>':''}</td>
+    <td><input type="date" data-st="${t.id}:start" value="${esc(t.start||'')}" aria-label="Start"></td><td><input type="date" data-st="${t.id}:due" value="${esc(t.due||'')}" aria-label="Finish"></td>
+    <td class="num"><input data-st="${t.id}:days" value="${t.start&&t.due?dDiff(t.due,t.start)+1:''}" inputmode="numeric" style="width:54px;text-align:right" aria-label="Days"></td>
+    <td class="num"><input data-st="${t.id}:progress" value="${esc(t.status==='Completed'?100:(t.progress??''))}" inputmode="numeric" style="width:58px;text-align:right" aria-label="Progress"></td>
+    <td><select data-st="${t.id}:status" aria-label="Status">${SO.map(o=>`<option ${t.status===o?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><input data-st="${t.id}:pred" value="${esc(t.pred||'')}" style="width:80px" placeholder="e.g. 2.1" aria-label="After (numbers)"></td>
     <td class="acts"><button type="button" class="btn sm ghost" data-sedit="${t.id}" aria-label="More">${ico('pencil')}</button><button type="button" class="btn sm ghost" data-tcm="${t.id}" aria-label="Comments">💬${(t.comments||[]).length||''}</button></td></tr>`).join('')}
-  </tbody></table></div><div class="code" style="padding:10px 16px">Changes save as soon as you leave a box.</div></div>`;
+  </tbody></table></div><div class="code" style="padding:10px 16px">Changes save as soon as you leave a box. Changing <b>Days</b> moves the finish date. Edit many rows at once in Excel: <b>Download Excel</b> → change → <b>Upload Excel</b>.</div></div>`;
 }
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='st-sort'){S.stSort=t.value;render();return;}
+  if(t.id==='stAll'){S.stSel=new Set(t.checked?[...document.querySelectorAll('[data-stsel]')].map(x=>x.dataset.stsel):[]);render();return;}
+  if(t.dataset&&t.dataset.stsel){if(!S.stSel)S.stSel=new Set();t.checked?S.stSel.add(t.dataset.stsel):S.stSel.delete(t.dataset.stsel);
+    const b=document.getElementById('stDelSel');if(b){b.disabled=!S.stSel.size;b.classList.toggle('warn',!!S.stSel.size);b.querySelector('span').textContent=`Delete selected${S.stSel.size?' ('+S.stSel.size+')':''}`;}}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#stAdd,#stRenum,#stDups,#stDelSel');if(!b)return;
+  const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due));
+  if(b.id==='stAdd'){const last=ts.reduce((m,t)=>(t.due||'')>m?t.due:m,'');const st=last?addD(last,1):today();
+    const nums=ts.map(t=>parseInt(String(t.wbs||'').split('.')[0])).filter(x=>!isNaN(x)),w=nums.length?String(Math.max(...nums)+1):'1';
+    if(await write(()=>db.collection('tasks').add({project:S.proj,wbs:w,title:'New activity',start:st,due:addD(st,4),progress:0,status:'Not started',by:ME.id,at:Date.now()}),'Row added at the end — type its name'))
+      {render();setTimeout(()=>{const x=[...document.querySelectorAll('[data-st$=":title"]')].find(i=>i.value==='New activity');if(x){x.scrollIntoView({block:'center'});x.focus();x.select();}},120);}return;}
+  if(b.id==='stRenum'){const rows=[...document.querySelectorAll('[data-st$=":wbs"]')].map(x=>x.dataset.st.split(':')[0]);const by={};
+    const list=rows.map((id,i)=>{const t=D.tasks.find(x=>x.id===id);by[t.wbs||'']=String(i+1);return [t,String(i+1)];});
+    const out=list.map(([t,w])=>['tasks',t.id,{...recOf(t),wbs:w,pred:String(t.pred||'').split(/\s*,\s*/).filter(Boolean).map(p=>by[p]||p).join(', ')}]);
+    if(await write(()=>dbBatch(out),`Renumbered 1 to ${out.length}`))render();return;}
+  if(b.id==='stDups'){const G={};ts.forEach(t=>(G[schDupKey(t)]=G[schDupKey(t)]||[]).push(t));const ids=[];
+    Object.values(G).filter(g=>g.length>1).forEach(g=>{g.sort((a,c)=>((+c.progress||0)*10+(c.comments||[]).length)-((+a.progress||0)*10+(a.comments||[]).length));g.slice(1).forEach(t=>ids.push(t.id));});if(await write(async()=>{for(const id of ids)await db.doc('tasks/'+id).delete();},`${ids.length} duplicate${ids.length>1?'s':''} removed`))render();return;}
+  if(b.id==='stDelSel'){const ids=[...(S.stSel||[])];if(!ids.length)return;if(!b.dataset.sure){b.dataset.sure=1;b.querySelector('span').textContent=`Tap again to delete ${ids.length}`;return;}
+    if(await write(async()=>{for(const id of ids)await db.doc('tasks/'+id).delete();},`${ids.length} activit${ids.length>1?'ies':'y'} deleted`)){S.stSel=new Set();render();}return;}});
 document.addEventListener('change',async e=>{const t0=e.target;if(t0.id==='st-mode'){S.stMode=t0.value;return;}
   const k=t0.dataset&&t0.dataset.st;if(!k)return;const [id,fld]=k.split(':');const t=D.tasks.find(x=>x.id===id);if(!t)return;
   let v=t0.value;if(fld==='progress')v=v===''?'':Math.max(0,Math.min(100,n(v)));if(fld==='title'&&!v.trim()){t0.value=t.title;return;}
+  if(fld==='days'){const d=Math.round(n(v));if(!t.start||!(d>=1)){toast(t.start?'Days must be 1 or more':'Set the start date first');t0.value=t.start&&t.due?dDiff(t.due,t.start)+1:'';return;}await schedApply(t,{due:addD(t.start,d-1)},S.stMode||'linked');return;}
+  if(fld==='wbs'||fld==='pred'){v=v.trim();await write(()=>db.doc('tasks/'+id).update({[fld]:v}),'Saved');return;}
   const patch={[fld]:v};if(fld==='status'&&v==='Completed')patch.progress=100;
   if(fld==='start'&&t.start&&t.due&&v){patch.due=addD(t.due,dDiff(v,t.start));}   // moving the start keeps the duration
   if((patch.due||t.due)&&(patch.start||t.start)&&(patch.due||t.due)<(patch.start||t.start)){toast('Finish is before start.');t0.value=t[fld]||'';return;}
@@ -4995,6 +5056,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
     write(()=>db.doc('tasks/'+id).delete(),'Activity deleted').then(ok=>{if(ok){document.getElementById('layer').innerHTML='';render();}});return;}}
   const id=(e.target.closest('button')||{}).id;
   if(id==='schedTbl'){S.schedTable=!S.schedTable;render();return;}
+  if(id==='schedXls'){schedExport();return;}
   if(id==='schedShift'){schedShiftDialog();return;}
   if(id==='schedPlan'){plOpen(S.proj!=='all'?S.proj:'');return;}
 },true);
