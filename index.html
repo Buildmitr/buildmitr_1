@@ -363,7 +363,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .back-btn{flex:none}.back-btn span{font-weight:600}
 .dl-floors .srow{gap:10px}
 .dl-prog{display:flex;gap:10px;align-items:center;padding:0 16px 10px;flex-wrap:wrap}.dl-prog .prog{flex:1;min-width:140px}
-.dl-list{border-top:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
+.dl-list{border-top:1px solid var(--line)}.dl-grp{padding:10px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
 .dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
 .dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -715,7 +715,7 @@ const MOD={
     extra:[{l:'Cost',num:1,f:r=>inr(equipCost(r))}]},
   documents:{label:'Drawings & documents',te:'డ్రాయింగ్‌లు & పత్రాలు',icon:'folder-open',fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'title',l:'Title',t:'text',req:1,list:1},
-    {k:'cat',l:'Type',t:'select',o:['Architectural drawing','Structural drawing','Electrical / plumbing','Approval / permit','Agreement','BOQ / estimate','Report','Other'],list:1},{k:'disc',l:'Drawings library section',t:'select',o:['Architecture','Structure','MEP']},
+    {k:'cat',l:'Type',t:'select',o:['Architectural drawing','Structural drawing','Electrical / plumbing','3D view / render','Interior drawing','Approval / permit','Agreement','BOQ / estimate','Report','Other'],list:1},{k:'disc',l:'Drawings library section',t:'select',o:['Architecture','Structure','MEP','3D views','Interiors']},
     {k:'rev',l:'Revision',t:'text',list:1},{k:'status',l:'Status',t:'select',o:['Draft','For approval','Approved','Superseded'],list:1},{k:'files',l:'Files (DWG, PDF, photos and more — up to 10 MB each)',t:'files',list:1},
     {k:'link',l:'Or link (Drive / Dropbox for DWG, Revit, Excel)',t:'url',list:1},{k:'notes',l:'Notes',t:'textarea'}]},
   campaigns:{label:'Campaigns',te:'ప్రచారాలు',icon:'megaphone',noProject:true,fields:[
@@ -5211,14 +5211,34 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
  * a new upload becomes the next revision and the older one is marked Superseded. Any file can be shared by WhatsApp,
  * email, copied link, or sent as the file itself from a phone. Saved in the existing "documents" list. */
 Object.assign(ICONS,{'file':ICONS.file||'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>','library':'<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>'});
-const DL_DISC=['Architecture','Structure','MEP'];
+const DL_DISC=['Architecture','Structure','MEP','3D views','Interiors'];
+/* sections with a drop-down of groups (3D views, Interiors) */
+const DL_GROUPS={
+  '3D views':{
+    'Exterior & elevations':['Front elevation 3D','Side & corner views 3D','Rear view 3D',"Bird's-eye view 3D",'Night view render','Elevation colour options'],
+    'Interiors':['Living room 3D','Dining 3D','Kitchen 3D','Master bedroom 3D','Bedrooms 3D','Kids bedroom 3D','Pooja room 3D','Toilets 3D','Home theatre / family lounge 3D','Staircase & lobby 3D'],
+    'Landscape':['Landscape & garden 3D','Terrace garden 3D','Compound wall & gate 3D','Driveway & car parking 3D','Swimming pool / water feature 3D'],
+    'Walkthrough & 3D model':['Walkthrough video','360° panorama views','3D model file (SketchUp / Revit)']},
+  'Interiors':{
+    'Ceiling':['False ceiling layout','False ceiling sections & details','Cove & profile light details'],
+    'Lighting & electrical':['Lighting layout','Switchboard & electrical points layout','Light fixture schedule'],
+    'Furniture':['Furniture layout','Loose furniture layout','Loft layout','Furniture details'],
+    'Wardrobes & storage':['Wardrobe details','Loft details','TV unit details','Crockery unit details','Shoe rack & foyer unit','Study table & bookshelf','Dressing unit details','Bed back panel & headboard'],
+    'Kitchen & utility':['Modular kitchen layout','Kitchen elevations & details','Utility area details'],
+    'Pooja, walls & partitions':['Pooja unit details','Wall panelling details','Partition & glass details','Wallpaper & paint layout'],
+    'Bathrooms':['Toilet layout & vanity details','Toilet wall & floor tile layout','Shower partition details'],
+    'Flooring':['Flooring layout','Skirting & threshold details'],
+    'Schedules':['Material & finish schedule','Hardware & fittings schedule','Interior BOQ']}};
+const dlGrpOf=(disc,k,c)=>{const G=DL_GROUPS[disc];if(!G)return '';const b=String(k).split(' — ')[0];for(const g in G)if(G[g].includes(b)||G[g].includes(b+'s'))return g;return (c&&c.grp)||'Other';};
 const DL_STD={
-  Architecture:['Site plan','Floor plans','Terrace plan','Elevations','Sections','Door & window schedule','Staircase details','Toilet details','Kitchen details','Flooring layout','Ceiling layout (RCP)','Furniture layout','Compound wall & gate','Municipal approval drawings','3D views / renders'],
+  Architecture:['Site plan','Floor plans','Terrace plan','Elevations','Sections','Door & window schedule','Staircase details','Toilet details','Kitchen details','Compound wall & gate','Municipal approval drawings'],
   Structure:['Soil investigation report','Centre line / column marking','Footing layout & details','Column layout & schedule','Plinth beam layout','Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details','Staircase reinforcement','Sump & septic tank','Headroom / overhead tank','Structural design report'],
-  MEP:['Electrical layout','Electrical single-line diagram','Lighting layout','Water supply (plumbing) layout','Drainage layout','Rainwater harvesting','Sump & overhead tank piping','AC / HVAC layout','Fire safety layout','Solar layout','CCTV, data & low-voltage layout','Earthing & lightning protection']};
-const DL_CAT={Architecture:'Architectural drawing',Structure:'Structural drawing',MEP:'Electrical / plumbing'};
+  MEP:['Electrical layout','Electrical single-line diagram','Lighting layout','Water supply (plumbing) layout','Drainage layout','Rainwater harvesting','Sump & overhead tank piping','AC / HVAC layout','Fire safety layout','Solar layout','CCTV, data & low-voltage layout','Earthing & lightning protection'],
+  '3D views':Object.values(DL_GROUPS['3D views']).flat(),
+  Interiors:Object.values(DL_GROUPS.Interiors).flat()};
+const DL_CAT={Architecture:'Architectural drawing',Structure:'Structural drawing',MEP:'Electrical / plumbing','3D views':'3D view / render',Interiors:'Interior drawing'};
 /* drawings made once for every floor (listed as "Floor plans — First floor" …); roof drawings are per floor roof */
-const DL_PERFLOOR={Architecture:['Floor plans','Furniture layout','Ceiling layout (RCP)','Flooring layout'],Structure:['Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details'],MEP:['Electrical layout','Lighting layout','Water supply (plumbing) layout','Drainage layout','AC / HVAC layout']};
+const DL_PERFLOOR={Architecture:['Floor plans'],Structure:['Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details'],MEP:['Electrical layout','Lighting layout','Water supply (plumbing) layout','Drainage layout','AC / HVAC layout'],Interiors:['False ceiling layout','Lighting layout','Furniture layout','Flooring layout']};
 const FLOOR_NAMES=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor','Seventh floor','Eighth floor','Ninth floor','Tenth floor'];
 const dlKey=p=>`${n(p.nfloors)||''}|${p.base||''}`;
 function dlFloors(pid){const p=proj(pid)||{};
@@ -5227,9 +5247,10 @@ function dlFloors(pid){const p=proj(pid)||{};
   const ef=((p.estimate||{}).floors||[]).map(f=>f.n).filter(Boolean);return ef.length?ef:['Ground floor'];}
 const dlRoof=f=>/ floor$/i.test(f)?f.replace(/ floor$/i,' floor roof'):f+' roof';
 function dlFloorList({n,cellar,stilt}){const out=[];if(cellar)out.push('Cellar');if(stilt)out.push('Stilt floor');for(let i=0;i<n;i++)out.push(FLOOR_NAMES[i]||`Floor ${i}`);return out;}
-const DL={disc:'Architecture'};
-const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?o:DL_STD;};
-const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream'};
+const DL={disc:'Architecture',grp:''};
+document.addEventListener('change',e=>{if(!e.target.matches||!e.target.matches('[data-dlgrp]'))return;DL.grp=e.target.value;render();});
+const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?{...DL_STD,...o}:DL_STD;};
+const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream',mp4:'video/mp4',mov:'video/quicktime',glb:'model/gltf-binary',gltf:'model/gltf+json',obj:'model/obj',fbx:'application/octet-stream'};
 const fileType=n=>FILE_TYPES[(String(n).split('.').pop()||'').toLowerCase()]||'';
 const fileIco=f=>/pdf/.test(f.type||'')?'file-text':/^image\/(jpe?g|png|webp)/.test(f.type||'')?'image':'file';
 const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):driveView(f.id);
@@ -5240,29 +5261,32 @@ function dlItems(pid,disc){
   const names=(dlStd()[disc]||[]).flatMap(k=>per.includes(k)?fl.map(f=>`${k.replace(/s$/,'')} — ${/roof|slab|beam/i.test(k)?dlRoof(f):f}`):[k]);
   docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
   return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=all.find(d=>d.status!=='Superseded')||all[0];
-    return {k,all,cur,has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
+    return {k,all,cur,grp:dlGrpOf(disc,k,cur),has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
 }
 function vDrawLib(){
   const pid=S.proj!=='all'?S.proj:'';
-  if(!pid)return header('Drawings library')+`<div class="box hero-empty">${ico('library')}<h2>Choose a project</h2><p>Pick a project at the top to see its Architecture, Structure and MEP drawings.</p></div>`;
-  const tabs=DL_DISC.map(d=>{const it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${d}">${d} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
-  const items=dlItems(pid,DL.disc),n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
+  if(!pid)return header('Drawings library')+`<div class="box hero-empty">${ico('library')}<h2>Choose a project</h2><p>Pick a project at the top to see its Architecture, Structure, MEP, 3D views and Interior drawings.</p></div>`;
+  const tabs=DL_DISC.map(d=>{const it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${d}">${d}${DL_GROUPS[d]?' ▾':''} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
+  const G=DL_GROUPS[DL.disc],grps=G?[...Object.keys(G),...(dlItems(pid,DL.disc).some(x=>x.grp==='Other')?['Other']:[])]:[];
+  if(!grps.includes(DL.grp))DL.grp='';
+  const allItems=dlItems(pid,DL.disc),items=DL.grp?allItems.filter(x=>x.grp===DL.grp):allItems,n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
+  const grpSel=G?`<div class="srow" style="padding-top:0"><label class="code" for="dlGrp">${DL.disc==='3D views'?'Show 3D views of':'Show interior drawings for'}</label><select id="dlGrp" data-dlgrp style="max-width:320px">${['',...grps].map(g=>{const it=g?allItems.filter(x=>x.grp===g):allItems;return `<option value="${esc(g)}" ${DL.grp===g?'selected':''}>${g?esc(g):'All'} (${it.filter(x=>x.has).length}/${it.length})</option>`;}).join('')}</select></div>`:'';
   const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':apStatus(c);
-    return `<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
+    return `${G&&!DL.grp&&(i===0||items[i-1].grp!==x.grp)?`<div class="dl-grp">${esc(x.grp)}</div>`:''}<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
       ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
       ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}
       ${x.has?apChips(c):''}${x.has?apLog(c):''}</div>
-      <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept=".dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc" data-dlup="${esc(x.k)}"></label>`:''}
+      <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept="${DL.disc==='3D views'?'.jpg,.jpeg,.png,.webp,.pdf,.mp4,.mov,.skp,.rvt,.glb,.gltf,.obj,.fbx,.zip':'.dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc'}" data-dlup="${esc(x.k)}"></label>`:''}
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
         ${x.has?apButtons(c,x.k):''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
-   dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>
-    <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.disc)} drawings uploaded</span>
-      ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.disc)}</span></button>`:''}</div>
+   dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>${grpSel}
+    <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.grp||DL.disc)} ${DL.disc==='3D views'?'views':'drawings'} uploaded</span>
+      ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||DL.disc)}</span></button>`:''}</div>
     <div class="dl-list">${rows}</div>
-    ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
-    <div class="code" style="padding:0 16px 14px">DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each. A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.<br>
+    ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="${DL.disc==='3D views'?'Add another 3D view, e.g. Balcony 3D':DL.disc==='Interiors'?'Add another interior drawing, e.g. Bar unit details':`Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details`}" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
+    <div class="code" style="padding:0 16px 14px">${DL.disc==='3D views'?'Renders (JPG, PNG, PDF), walkthrough videos (MP4) and 3D model files (SketchUp, Revit, GLB, OBJ, ZIP) — up to 10 MB each. For a bigger walkthrough video, put it on Drive or YouTube and add the link with ✎.':'DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each.'} A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.<br>
       Approval: ① Drafted (draftsman uploads) → ② Checked (architect / project manager) → ③ Approved (senior architect). Upload a PDF or image print with the DWG to use <b>Mark up</b> (pen, arrows, boxes, text).</div></div>`;
 }
 function dlFloorBox(pid){
@@ -5297,7 +5321,7 @@ async function dlUpload(key,files){
   if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
   else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
     const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-    list.push(['documents',id,{project:pid,disc:DL.disc,dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
+    list.push(['documents',id,{project:pid,disc:DL.disc,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
   await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();
 }
 /* ---------- share a file ---------- */
@@ -5333,15 +5357,15 @@ async function shareFilesTo(k){
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-fsto]');if(b){shareFilesTo(b.dataset.fsto);return;}}
   {const b=e.target.closest('[data-fshare]');if(b){e.preventDefault();e.stopPropagation();const [id,name,type,t]=b.dataset.fshare.split('|');shareFiles([{id,name,type}],t||name);return;}}
-  {const b=e.target.closest('[data-dldisc]');if(b){DL.disc=b.dataset.dldisc;render();return;}}
+  {const b=e.target.closest('[data-dldisc]');if(b){if(DL.disc!==b.dataset.dldisc)DL.grp='';DL.disc=b.dataset.dldisc;render();return;}}
   {const b=e.target.closest('[data-dlshare]');if(b){const x=dlItems(S.proj,DL.disc).find(y=>y.k===b.dataset.dlshare);if(x&&x.cur)shareFiles(x.cur.files||[],`${x.k}${x.cur.rev?' '+x.cur.rev:''}`);return;}}
-  {const b=e.target.closest('[data-dlshareall]');if(b){const fs=dlItems(S.proj,DL.disc).filter(x=>x.has&&x.cur).flatMap(x=>x.cur.files||[]);if(fs.length)shareFiles(fs,`${DL.disc} drawings`);return;}}
+  {const b=e.target.closest('[data-dlshareall]');if(b){const fs=dlItems(S.proj,DL.disc).filter(x=>x.has&&x.cur&&(!DL.grp||x.grp===DL.grp)).flatMap(x=>x.cur.files||[]);if(fs.length)shareFiles(fs,`${DL.grp||DL.disc} ${DL.disc==='3D views'?'views':'drawings'}`);return;}}
   {const b=e.target.closest('[data-dlok]');if(b){const d=D.documents.find(x=>x.id===b.dataset.dlok);if(d)write(()=>db.doc('documents/'+d.id).update({status:'Approved'}),'Approved').then(()=>render());return;}}
 },true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.dlup){const fs=t.files;dlUpload(t.dataset.dlup,fs);t.value='';}},true);
 document.addEventListener('submit',e=>{if(e.target.id!=='dlAdd')return;e.preventDefault();const v=(e.target.elements.t.value||'').trim();if(!v)return;
   if(dlItems(S.proj,DL.disc).some(x=>x.k.toLowerCase()===v.toLowerCase())){toast('Already in the list');return;}
-  write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,dkey:v,title:v,cat:DL_CAT[DL.disc],status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
+  write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,...(DL.grp&&DL.grp!=='Other'?{grp:DL.grp}:{}),dkey:v,title:v,cat:DL_CAT[DL.disc],status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
 
 /* ================= Sign-in link for each organisation ================= */
 Object.assign(ICONS,{'link':ICONS.link||'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'});
