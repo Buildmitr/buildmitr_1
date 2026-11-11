@@ -3048,7 +3048,7 @@ function vLogin(){
   const err=LG.err?`<div class="lg-err" role="alert">${esc(LG.err)}</div>`:'';
   let body='';
   if(step==='email'&&LG.fixedOrg)lgLoadOrgs();
-  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in${LG.fixedOrg&&(LG.orgList||[]).find(o=>o.id===LG.fixedOrg)?` to <span data-notr>${esc(LG.orgList.find(o=>o.id===LG.fixedOrg).name)}</span>`:''}</h2>
+  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in${LG.fixedOrg&&(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName)?` to <span data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName)}</span>`:''}</h2>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="username" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Password<input id="lgPw" type="password" autocomplete="current-password" required placeholder="Your password"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
