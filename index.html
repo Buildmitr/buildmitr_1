@@ -1261,7 +1261,7 @@ function openForm(k,id,preset){
   const isP=k==='projects';
   const m=isP?{label:'Project',fields:[
     {k:'prefix',l:'Project code / prefix',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'description',l:'Description',t:'textarea'},
-    {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'nfloors',l:'Number of floors above ground (incl. ground floor)',t:'number',max:40},{k:'base',l:'Below / stilt',t:'select',o:['None','Cellar','Stilt floor','Cellar + Stilt floor']},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
+    {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'nfloors',l:'Number of floors above ground (incl. ground floor)',t:'number',max:40},{k:'base',l:'Below / stilt',t:'select',o:['None','Cellar','Stilt floor','Cellar + Stilt floor']},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id||!isAdmin()?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
   const r=id?D[k].find(x=>x.id===id):null;
   DRAFT.k=k;DRAFT.id=id||null;DRAFT.fields=m.fields;DRAFT.photos={};DRAFT.files={};DRAFT.fresh=new Set();DRAFT.removed=[];
   if(k==='invoices'&&!r){preset={...(preset||{})};preset.no=preset.no||nextInvNo(preset.kind||'Tax invoice');preset.sac=preset.sac||orgVal('sac')||'995411';}
@@ -1647,7 +1647,7 @@ function vProject(){
   const by=c=>D[c].filter(x=>x.project===p.id);const ts=by('tasks');
   const pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;
   return header(esc(p.name),`<button class="btn" data-go="projects">${ico('arrow-left')}Projects</button>`)+
-  `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
+  `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW&&(isAdmin()||(canEditView('projects')&&p.by===ME.id))?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
   <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>
   <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}</div></div>`;
 }
@@ -1834,7 +1834,7 @@ function myProjSet(){
   const t=myTeamRec();if(!t)return S.demo?'all':new Set();
   return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);
 }
-const projOK=pid=>{const s=myProjSet();return s==='all'||s.has(pid);};
+const projOK=pid=>{const s=myProjSet();return s==='all'||s.has(pid)||((D.projects.find(p=>p.id===pid)||{}).by===ME.id&&!!ME.id);};   // a project you added is always yours to open
 const PJ=()=>D.projects.filter(p=>projOK(p.id)&&!p.archived);
 const canMoney=()=>canView('payments');
 function vNoAccess(){
@@ -2530,7 +2530,7 @@ const RA_MAIN=['Site engineer','Architect','Client','Marketing'];
 const RA_MORE=['Supervisor','Storekeeper','Structural engineer','Sub-contractor','Accountant'];
 const ROLE_KEY=r=>String(r).toLowerCase().replace(/[^a-z0-9]+/g,'-');
 const EDIT_TIE={pipeline:'leads',followups:'leads',leadimp:'leads',estimator:'leads',content:'cflags',attbulk:'attendance',schedule:'tasks',forms:'forms'};
-const raEditable=k=>!!MOD[k]||k in EDIT_TIE;
+const raEditable=k=>!!MOD[k]||k in EDIT_TIE||k==='projects';
 const RA_SKIP=new Set(['settings','audit','roleaccess','adminpanel','team','dashboard','cflags']);
 const PKEY=id=>'person-'+id;
 function curPerson(){if(S.viewAsPerson)return D.team.find(t=>t.id===S.viewAsPerson)||null;if(S.viewAs)return null;if(isAdmin())return null;return myTeamRec()||null;}
@@ -2538,8 +2538,9 @@ function personOv(pid){if(!pid)return null;const o=D.roleaccess.find(x=>x.id===P
 function raValP(t,k){const po=personOv(t&&t.id);if(po&&po[k])return po[k];return raVal(t.role,k);}
 function raOverride(role){const o=D.roleaccess.find(x=>x.id===ROLE_KEY(role));return o&&o.v?o.v:null;}
 function raDefaultEdit(role,k){
+  if(k==='projects')return ['Architect','Senior architect','Accountant'].includes(role);   // who may add projects (the admin and project manager always can)
   if(role==='Client')return k==='changes';
-  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms'].includes(k);
+  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms'].includes(k)||(k==='projects'&&['Architect','Senior architect'].includes(role));
   return true;
 }
 function raVal(role,k){
@@ -5389,12 +5390,12 @@ function vProjects(){
   const canEd=CANW&&canEditView('projects'),admin=isAdmin();
   const all=D.projects.filter(p=>projOK(p.id)),arch=all.filter(p=>p.archived);if(PV.arch&&!arch.length)PV.arch=false;
   const q=S.q.toLowerCase(),list=projOrdered(all.filter(p=>!!p.archived===!!PV.arch).filter(p=>[p.prefix,p.name,p.address,p.description,cname(p.client)].join(' ').toLowerCase().includes(q)));
-  const btn=CANW?`<button class="btn pri" data-add="projects">${ico('plus')}New project</button>`:'';
+  const btn=CANW&&canEditView('projects')?`<button class="btn pri" data-add="projects">${ico('plus')}New project</button>`:'';
   if(!D.projects.length)return header(label('projects'))+`<div class="box hero-empty">${ico('building-2')}<h2>No projects yet</h2><p>Start by creating your first project. Then record daily reports, tasks, material, labour and payments against it.</p>${btn}</div>`;
   const stats=p=>{const ts=D.tasks.filter(t=>t.project===p.id),pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;return {pc,open:D.issues.filter(i=>i.project===p.id&&i.status!=='Resolved').length};};
-  const moveOK=canEd&&PV.sort==='order'&&!q&&!PV.arch;
+  const moveOK=canEd&&admin&&PV.sort==='order'&&!q&&!PV.arch;
   const acts=(p,i)=>`${moveOK?`<button type="button" class="btn sm ghost" data-pmove="${p.id}|-1" ${i===0?'disabled':''} aria-label="Move ${esc(p.name)} up">${ico('arrow-up')}</button><button type="button" class="btn sm ghost" data-pmove="${p.id}|1" ${i===list.length-1?'disabled':''} aria-label="Move ${esc(p.name)} down">${ico('arrow-down')}</button>`:''}
-    ${canEd?`<button type="button" class="btn sm ghost" data-edit="projects:${p.id}" aria-label="Edit ${esc(p.name)}">${ico('pencil')}</button>`:''}
+    ${canEd&&(admin||p.by===ME.id)?`<button type="button" class="btn sm ghost" data-edit="projects:${p.id}" aria-label="Edit ${esc(p.name)}">${ico('pencil')}</button>`:''}
     ${admin?(p.archived?`<button type="button" class="btn sm ghost" data-parch="${p.id}|0">${ico('rotate-ccw')}<span>Restore</span></button>`:`<button type="button" class="btn sm ghost" data-parch="${p.id}|1" aria-label="Archive ${esc(p.name)}">${ico('archive')}</button>`)+`<button type="button" class="btn sm ghost warn" data-pdel="${p.id}" aria-label="Delete ${esc(p.name)}">${ico('trash-2')}</button>`:''}`;
   const card=(p,i)=>{const s=stats(p);return `<div class="pcard-w"><button class="pcard" data-proj="${p.id}">${p.prefix?`<span class="code">${esc(p.prefix)}</span>`:''}<h3>${esc(p.name)}${p.archived?' <span class="pill p-grey">Archived</span>':''}</h3>
       <div class="meta"><span>${ico('map-pin')}${esc(p.address||'—')}</span>${p.loc?'<span class="pill p-green">Pinned</span>':''}</div>
@@ -6381,7 +6382,7 @@ document.addEventListener('submit',async e=>{
   const ok=id?await write(()=>db.doc(k+'/'+id).update(body),'Saved')
     :await write(async()=>{const r=await db.collection(k).add({...body,by:ME.id,at:Date.now(),...(k==='projects'?{created:Date.now()}:{})});newId=r.id;if(DRAFT.ms){await db.doc('milestones/'+DRAFT.ms).update({inv:r.id});}if(k==='projects'&&DRAFT.lead){await db.doc('leads/'+DRAFT.lead).update({stage:'Won',project:r.id});}if(k==='projects'){S.proj=r.id;try{localStorage.setItem('bm-proj',r.id)}catch(_){}S.view='dashboard';}},k==='projects'?'Project created':'Saved');
   if(ok){const rm=(DRAFT.removed||[]).slice();DRAFT.removed=[];if(rm.length)trashFiles(rm);audit(id?'edited':'created',k,id||newId,recLabel(k,body));closeLayer();render();
-    if(tplPick&&tplPick!=='None'&&newId)await seedProject(newId,tplPick,body.start,body.value);}
+    if(tplPick&&tplPick!=='None'&&newId&&isAdmin())await seedProject(newId,tplPick,body.start,body.value);}
 });
 
 /* ================= Start ================= */
