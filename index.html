@@ -391,7 +391,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .nt-i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent);flex:none}
 .nt-body{padding:14px 16px;line-height:1.65;white-space:normal;max-width:78ch}
 .nt-pad{display:block;width:100%;max-width:560px;height:150px;border:1.5px dashed var(--line-strong,#b8c4bf);border-radius:10px;background:#fff;touch-action:none;margin:6px 0;cursor:crosshair}
-.nt-sigimg{height:56px;background:#fff;border:1px solid var(--line);border-radius:6px}
+.nt-agree{font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;align-items:flex-start}.nt-agree input{width:22px;height:22px;flex:none;margin-top:1px}.nt-sigimg{height:56px;background:#fff;border:1px solid var(--line);border-radius:6px}
 .nt-to{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:10px}.nt-roles{display:flex;flex-wrap:wrap;gap:4px 14px;padding:4px 0 4px 22px}
 .ll-s{display:grid;grid-template-columns:110px 170px minmax(180px,1.2fr) minmax(160px,1fr);gap:8px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
 .ll-s svg{width:15px;height:15px;vertical-align:-2px;margin-right:5px}.ll-bad{color:#b42318;font-weight:600}
@@ -5843,35 +5843,33 @@ function llCsv(){const [a,b]=wtRange();let rs=(D.attlog||[]).filter(r=>r.date>=a
 /* ---------- Notices page ---------- */
 function vNotices(){const adm=isAdmin()&&!S.viewAs;
   if(S.cloud&&WT.srv===null)wtSrv();
-  if(WT.srv===false)return header('Notices')+`<div class="box"><div class="box-h">${ico('file-signature')}<h2>Notices to sign</h2><span class="pill p-amber">Server update needed</span></div><div class="inst-b"><p>Notices are ready in the app, but your BuildMitr server needs a small update first (Apps Script → new version). After that you can upload notices here for staff to view and sign.</p></div></div>`;
+  if(WT.srv===false)return header('Notices')+`<div class="box"><div class="box-h">${ico('file-signature')}<h2>Notices to accept</h2><span class="pill p-amber">Server update needed</span></div><div class="inst-b"><p>Notices are ready in the app, but your BuildMitr server needs a small update first (Apps Script → new version). After that you can upload notices here for staff to view and sign.</p></div></div>`;
   if(NT.open){const n=(D.notices||[]).find(x=>x.id===NT.open);if(n)return ntOne(n,adm);}
   const L=(D.notices||[]).filter(n=>adm||ntForMe(n)).sort((a,b)=>(b.at||0)-(a.at||0));
   const pend=ntPending();
   const list=L.length?`<div class="box">${L.map(n=>{const ppl=ntPeople(n),signed=ppl.filter(p=>ntSigOf(n.id,p.account)).length,mine=ntSigOf(n.id);
       return `<button type="button" class="nt-row" data-ntopen="${esc(n.id)}"><span class="nt-i">${ico('file-signature')}</span><span style="flex:1;min-width:0"><b>${esc(n.title)}</b>${n.ver>1?` <span class="code">v${n.ver}</span>`:''}<br><span class="code">${esc(fd(new Date(n.at).toISOString().slice(0,10)))} · ${esc(n.to==='all'||!n.to?'All staff':n.to.join(', '))}${n.active===false?' · Withdrawn':''}</span></span>
-        ${adm?`<span class="pill ${signed===ppl.length&&ppl.length?'p-green':'p-amber'}">${signed}/${ppl.length} answered</span>`:mine?(mine.status==='declined'?`<span class="pill p-red">Declined</span>`:`<span class="pill p-green">Signed</span>`):n.by===ME.id?'':`<span class="pill p-amber">Please view & sign</span>`}</button>`;}).join('')}</div>`
-    :`<div class="box hero-empty">${ico('file-signature')}<h2>No notices yet</h2><p>${adm?'Post a notice for your staff to read and sign — for example the work time and log-in recording notice.':'Notices from your company will appear here for you to read and sign.'}</p></div>`;
+        ${adm?`<span class="pill ${signed===ppl.length&&ppl.length?'p-green':'p-amber'}">${signed}/${ppl.length} answered</span>`:mine?(mine.status==='declined'?`<span class="pill p-red">Declined</span>`:`<span class="pill p-green">Signed</span>`):n.by===ME.id?'':`<span class="pill p-amber">Please view & accept</span>`}</button>`;}).join('')}</div>`
+    :`<div class="box hero-empty">${ico('file-signature')}<h2>No notices yet</h2><p>${adm?'Post a notice for your staff to read and accept — for example the work time and log-in recording notice.':'Notices from your company will appear here for you to read and accept.'}</p></div>`;
   return header('Notices',adm?`<button class="btn pri" id="ntNew">${ico('plus')}<span>New notice</span></button>`:'')+
-    (adm?`<div class="box"><div class="srow"><span class="code" style="flex:1">Upload a notice as a PDF. Each staff member can only <b>view</b> it and <b>sign</b> or <b>decline</b> it — they cannot edit or delete anything, and their answer is final. You see who signed, declined or has not answered yet.</span></div></div>`:'')+
-    (pend.length&&!adm?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('file-signature')}<span>${pend.length} notice${pend.length>1?'s':''} to view and sign.</span></div>`:'')+list;}
+    (adm?`<div class="box"><div class="srow"><span class="code" style="flex:1">Upload a notice as a PDF. Each staff member can only <b>view</b> it and tick to <b>accept</b> it, or <b>decline</b> it — they cannot edit or delete anything, and their answer is final. You see who signed, declined or has not answered yet.</span></div></div>`:'')+
+    (pend.length&&!adm?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('file-signature')}<span>${pend.length} notice${pend.length>1?'s':''} to view and accept.</span></div>`:'')+list;}
 function ntOne(n,adm){const ppl=ntPeople(n),mine=ntSigOf(n.id),locked=(D.noticesign||[]).some(s=>s.notice===n.id);
   const att=n.file?`<div class="srow"><button type="button" class="btn pri" data-ntview="${esc(n.id)}">${ico('file-text')}<span>View notice (PDF)</span></button><span class="code">${esc(n.file.name)}</span>${NT.viewed&&NT.viewed[n.id]?`<span class="pill p-green">Viewed</span>`:''}</div>`:'';
   const text=`<div class="box"><div class="box-h">${ico('file-signature')}<h2>${esc(n.title)}</h2>${n.ver>1?`<span class="code">Version ${n.ver}</span>`:''}</div>${n.body?`<div class="nt-body">${esc(n.body).replace(/\n/g,'<br>')}</div>`:''}${att}
     <div class="srow"><span class="code">Issued ${esc(fd(new Date(n.at).toISOString().slice(0,10)))} by ${esc(wtWho(n.by))} · ${esc(orgName())}</span></div></div>`;
   let sign='';
   if(mine&&mine.status==='declined')sign=`<div class="box"><div class="box-h">${ico('x')}<h2>You declined this notice</h2><span class="pill p-red">${esc(new Date(mine.srv0||mine.at).toLocaleString('en-IN'))}</span></div><div class="srow"><span class="code">Reason: ${esc(mine.reason||'—')}</span><button class="btn sm" data-ntpdf="${esc(mine.id)}">${ico('file-down')}<span>Copy (PDF)</span></button></div></div>`;
-  else if(mine)sign=`<div class="box"><div class="box-h">${ico('check-check')}<h2>Signed by you</h2><span class="pill p-green">${esc(new Date(mine.srv0||mine.at).toLocaleString('en-IN'))}</span></div><div class="srow"><img src="/_blob/${esc(mine.sig.id)}" alt="Your signature" class="nt-sigimg"><span class="code">${esc(mine.typed)} · ${esc(mine.dev||'')}</span>
-    <button class="btn sm" data-ntpdf="${esc(mine.id)}">${ico('file-down')}<span>Signed copy (PDF)</span></button></div></div>`;
-  else if(ntForMe(n)&&n.by!==ME.id&&staffRole()&&!S.viewAs)sign=`<form class="box" id="ntSign" data-id="${esc(n.id)}"><div class="box-h">${ico('pen-tool')}<h2>Sign this notice</h2></div><div class="inst-b">
-    ${n.file&&!(NT.viewed&&NT.viewed[n.id])?`<div class="note">${ico('file-text')}<span>Open <b>View notice (PDF)</b> above and read it first — then you can sign or decline.</span></div>`:''}
-    <label class="pl-chk"><input type="checkbox" name="agree"> I have read and understood this notice, and I agree to it.</label>
-    <label style="display:block;margin-top:10px">Your full name<input name="typed" required minlength="3" value="${esc(ME.name||'')}" autocomplete="name"></label>
-    <div style="margin-top:10px"><span class="code">Sign below with your finger or mouse</span><canvas id="ntPad" class="nt-pad" width="900" height="260" aria-label="Signature pad"></canvas><button type="button" class="btn sm ghost" id="ntPadClear">${ico('eraser')}<span>Clear</span></button></div>
-    <div class="srow" style="padding:12px 0 0;border:0"><button class="btn pri" name="go" value="sign">${ico('check')}<span>Sign</span></button><button type="button" class="btn warn" id="ntDecl">${ico('x')}<span>Decline</span></button><span class="code">Your answer is saved with the date and time and cannot be changed or deleted afterwards.</span></div>
+  else if(mine)sign=`<div class="box"><div class="box-h">${ico('check-check')}<h2>Accepted by you</h2><span class="pill p-green">${esc(new Date(mine.srv0||mine.at).toLocaleString('en-IN'))}</span></div><div class="srow">${mine.sig&&mine.sig.id?`<img src="/_blob/${esc(mine.sig.id)}" alt="Your signature" class="nt-sigimg">`:`<span class="pill p-green">${ico('check')} I have read and accept this notice</span>`}<span class="code">${esc(mine.typed||'')} · ${esc(mine.dev||'')}</span>
+    <button class="btn sm" data-ntpdf="${esc(mine.id)}">${ico('file-down')}<span>Copy (PDF)</span></button></div></div>`;
+  else if(ntForMe(n)&&n.by!==ME.id&&staffRole()&&!S.viewAs)sign=`<form class="box" id="ntSign" data-id="${esc(n.id)}"><div class="box-h">${ico('check-check')}<h2>Your acceptance</h2></div><div class="inst-b">
+    ${n.file&&!(NT.viewed&&NT.viewed[n.id])?`<div class="note">${ico('file-text')}<span>Open <b>View notice (PDF)</b> above and read it first — then you can accept or decline.</span></div>`:''}
+    <label class="pl-chk nt-agree"><input type="checkbox" name="agree"> <span>I, <b>${esc(ME.name||ME.email||'')}</b>, have read and understood this notice, and I accept it.</span></label>
+    <div class="srow" style="padding:12px 0 0;border:0"><button class="btn pri" name="go" value="sign">${ico('check')}<span>Accept</span></button><button type="button" class="btn warn" id="ntDecl">${ico('x')}<span>Decline</span></button><span class="code">Your answer is saved with the date and time and cannot be changed or deleted afterwards.</span></div>
     <div id="ntDeclBox" hidden><label style="display:block;margin-top:10px">Why are you declining? (the admin will see this)<textarea name="reason" rows="3" placeholder="e.g. I would like to discuss the location recording first"></textarea></label><button class="btn warn" name="go" value="decline">${ico('x')}<span>Decline notice</span></button></div></div></form>`;
-  const who=adm?`<div class="box"><div class="box-h">${ico('users')}<h2>Staff answers</h2><span class="code">${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status!=='declined'&&ntSigOf(n.id,p.account)).length} signed · ${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status==='declined').length} declined · ${ppl.filter(p=>!ntSigOf(n.id,p.account)).length} pending</span></div>
+  const who=adm?`<div class="box"><div class="box-h">${ico('users')}<h2>Staff answers</h2><span class="code">${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status!=='declined'&&ntSigOf(n.id,p.account)).length} accepted · ${ppl.filter(p=>(ntSigOf(n.id,p.account)||{}).status==='declined').length} declined · ${ppl.filter(p=>!ntSigOf(n.id,p.account)).length} pending</span></div>
     ${ppl.map(p=>{const s=ntSigOf(n.id,p.account);return `<div class="srow"><b style="flex:1;min-width:140px">${esc(p.name)}</b><span class="code">${esc(p.role||'')}</span>
-      ${s?`<span class="pill ${s.status==='declined'?'p-red':'p-green'}">${s.status==='declined'?'Declined':'Signed'} ${esc(new Date(s.srv0||s.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</span>${s.status==='declined'&&s.reason?`<span class="code">“${esc(s.reason)}”</span>`:''}<button class="btn sm" data-ntpdf="${esc(s.id)}">${ico('file-down')}<span>PDF</span></button>`
+      ${s?`<span class="pill ${s.status==='declined'?'p-red':'p-green'}">${s.status==='declined'?'Declined':'Accepted'} ${esc(new Date(s.srv0||s.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</span>${s.status==='declined'&&s.reason?`<span class="code">“${esc(s.reason)}”</span>`:''}<button class="btn sm" data-ntpdf="${esc(s.id)}">${ico('file-down')}<span>PDF</span></button>`
         :`<span class="pill p-amber">Pending</span>${p.phone?`<button class="btn sm ghost" data-ntremind="${esc(n.id)}|${esc(p.phone)}|${esc(p.name)}">${ico('message-circle')}<span>Remind</span></button>`:''}`}</div>`;}).join('')||'<div class="srow"><span class="code">No staff with BuildMitr log-ins yet (add them in Team).</span></div>'}
     <div class="srow"><button class="btn sm" data-ntremind="${esc(n.id)}||">${ico('share-2')}<span>Remind everyone</span></button>
       ${locked?`<button class="btn sm" id="ntNewVer" data-id="${esc(n.id)}">${ico('copy')}<span>New version</span></button><span class="code">Signed notices are locked — changes go in a new version.</span>`:`<button class="btn sm" data-edit="notices:${esc(n.id)}" id="ntEdit">${ico('pencil')}<span>Edit</span></button>`}
@@ -5896,13 +5894,13 @@ async function ntPdf(sid){const s=(D.noticesign||[]).find(x=>x.id===sid);if(!s)r
     const line=(t,sz=10.5,b=false,gap=1.5)=>{pdf.setFont('helvetica',b?'bold':'normal');pdf.setFontSize(sz);pdf.splitTextToSize(String(t),W-2*M).forEach(l=>{if(y>275){pdf.addPage();y=20;}pdf.text(l,M,y);y+=sz*.42+gap;});};
     line(orgName(),11,true);line(n.title||s.title,15,true,3);if(n.file)line(`Notice document: ${n.file.name}`,9.5,true);y+=2;line(`Version ${n.ver||1} · issued ${n.at?new Date(n.at).toLocaleDateString('en-IN'):''}`,9);y+=3;
     String(n.body||'').split('\n').forEach(p=>p.trim()?line(p):y+=3);
-    y+=6;if(y>220){pdf.addPage();y=20;}pdf.setDrawColor(150);pdf.line(M,y,W-M,y);y+=7;line(s.status==='declined'?'Declined by':'Signed by',12,true);
-    line(`Name: ${s.typed}`);line(`BuildMitr user: ${wtWho(s.user)}`);line(`Signed on (server time): ${new Date(s.srv0||s.at).toLocaleString('en-IN')}`);line(`Device: ${s.dev||''} · ${s.app||''}`);
+    y+=6;if(y>220){pdf.addPage();y=20;}pdf.setDrawColor(150);pdf.line(M,y,W-M,y);y+=7;line(s.status==='declined'?'Declined by':'Accepted by',12,true);
+    line(`Name: ${s.typed}`);line(`BuildMitr user: ${wtWho(s.user)}`);line(`${s.status==='declined'?'Declined':'Accepted'} on (server time): ${new Date(s.srv0||s.at).toLocaleString('en-IN')}`);line(`Device: ${s.dev||''} · ${s.app||''}`);
     if(s.viewed)line(`Notice opened (device time): ${new Date(s.viewed).toLocaleString('en-IN')}`);
-    if(s.status==='declined'){line(`Reason given: ${s.reason||''}`);}else{line('Statement: "I have read and understood this notice and I agree to it."',10,false);
-    try{const r=await bmBlob(s.sig.id);const b=await r.blob();const u=await new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b);});y+=2;pdf.addImage(u,'PNG',M,y,70,20);y+=24;}catch(_){line('[signature image could not be loaded]',9);}}
+    if(s.status==='declined'){line(`Reason given: ${s.reason||''}`);}else{line('[✓] Ticked: "I have read and understood this notice, and I accept it."',10,false);
+    if(s.sig&&s.sig.id)try{const r=await bmBlob(s.sig.id);const b=await r.blob();const u=await new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b);});y+=2;pdf.addImage(u,'PNG',M,y,70,20);y+=24;}catch(_){line('[signature image could not be loaded]',9);}}
     line(`Notice fingerprint (SHA-256): ${s.hash}`,7.5);line(`Record: ${s.id}`,7.5);
-    saveFile(`${(n.title||'Notice').replace(/[\\\/:*?"<>|]/g,'-').slice(0,60)} - ${s.status==='declined'?'declined':'signed'} by ${s.typed}.pdf`,pdf.output('blob'));}
+    saveFile(`${(n.title||'Notice').replace(/[\\\/:*?"<>|]/g,'-').slice(0,60)} - ${s.status==='declined'?'declined':'accepted'} by ${s.typed}.pdf`,pdf.output('blob'));}
   catch(e){toast('Could not make the PDF: '+(e.message||e));}}
 /* signature pad */
 const PAD={on:false,ink:false};
@@ -5910,20 +5908,18 @@ document.addEventListener('pointerdown',e=>{if(e.target.id!=='ntPad')return;e.pr
   PAD.on=true;PAD.ink=true;try{c.setPointerCapture(e.pointerId);}catch(_){}x.lineWidth=3.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#111827';x.beginPath();x.moveTo((e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height);});
 document.addEventListener('pointermove',e=>{if(!PAD.on||e.target.id!=='ntPad')return;e.preventDefault();const c=e.target,x=c.getContext('2d'),r=c.getBoundingClientRect();x.lineTo((e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height);x.stroke();});
 document.addEventListener('pointerup',()=>{PAD.on=false;});
-async function ntSign(f,go){const n=(D.notices||[]).find(x=>x.id===f.dataset.id);if(!n)return;const c=document.getElementById('ntPad');
+async function ntSign(f,go){const n=(D.notices||[]).find(x=>x.id===f.dataset.id);if(!n)return;
   if(n.file&&!(NT.viewed&&NT.viewed[n.id])){toast('Open “View notice (PDF)” and read it first');return;}
-  const typed=f.elements.typed.value.trim();if(typed.length<3){toast('Type your full name');return;}
+  const typed=ME.name||ME.email||'';
   if(go==='decline'){const reason=(f.elements.reason.value||'').trim();if(!reason){toast('Write why you are declining');return;}
     const hash=await ntHash(n),dev=await devDetail();
     const ok=await write(()=>db.doc(`noticesign/${ME.id}_${n.id}`).set({user:ME.id,name:ME.name||'',notice:n.id,title:n.title,ver:n.ver||1,hash,typed,status:'declined',reason,viewed:(NT.viewed||{})[n.id]||null,at:Date.now(),dev,app:appKind()}),'Your answer is saved — the admin will be informed');
     if(ok)render();return;}
-  if(!f.elements.agree.checked){toast('Tick “I have read and understood”');return;}
-  if(!PAD.ink){toast('Please sign in the box');return;}
-  const btn=f.querySelector('.btn.pri');btn.disabled=true;toast('Saving your signature…');
-  try{const blob=await new Promise(ok=>c.toBlob(ok,'image/png'));const r=await A.upload(new File([blob],`Signature ${typed}.png`,{type:'image/png'}),{type:'image/png'});
-    const hash=await ntHash(n),dev=await devDetail();
-    const ok=await write(()=>db.doc(`noticesign/${ME.id}_${n.id}`).set({user:ME.id,name:ME.name||'',notice:n.id,title:n.title,ver:n.ver||1,hash,typed,agree:true,status:'signed',viewed:(NT.viewed||{})[n.id]||null,sig:{id:r.id,name:`Signature ${typed}.png`,type:'image/png'},at:Date.now(),dev,app:appKind()}),'Notice signed — thank you');
-    if(ok){PAD.ink=false;render();}else btn.disabled=false;}
+  if(!f.elements.agree.checked){toast('Tick the box to accept the notice');return;}
+  const btn=f.querySelector('.btn.pri');btn.disabled=true;
+  try{const hash=await ntHash(n),dev=await devDetail();
+    const ok=await write(()=>db.doc(`noticesign/${ME.id}_${n.id}`).set({user:ME.id,name:ME.name||'',notice:n.id,title:n.title,ver:n.ver||1,hash,typed,agree:true,status:'accepted',viewed:(NT.viewed||{})[n.id]||null,at:Date.now(),dev,app:appKind()}),'Notice accepted — thank you');
+    if(ok)render();else btn.disabled=false;}
   catch(e){btn.disabled=false;toast('Could not save: '+(e.message||e));}}
 function ntForm(n){const roles=MOD.team.fields.find(f=>f.k==='role').o.filter(r=>r!=='Client');const to=n&&Array.isArray(n.to)?n.to:null;
   document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>${n&&n.id?'Edit notice':'New notice'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
@@ -5947,7 +5943,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
   if((b=e.target.closest('[data-ntview]'))){const n=(D.notices||[]).find(x=>x.id===b.dataset.ntview);if(!n||!n.file)return;NT.viewed=NT.viewed||{};const first=!NT.viewed[n.id];NT.viewed[n.id]=NT.viewed[n.id]||Date.now();
     openFile(n.file.id,false,n.file.name);if(first)setTimeout(()=>{if(!document.querySelector('#layer .drawer'))render();},300);return;}
   if((b=e.target.closest('[data-ntremind]'))){const [nid,ph,name]=b.dataset.ntremind.split('|');const n=(D.notices||[]).find(x=>x.id===nid);if(!n)return;
-    shareSheet('Please sign: '+n.title,`Hello${name?' '+name:''},\n\nPlease read and sign this notice in BuildMitr → Notices:\n*${n.title}*\n\n${APP_URL}\n\n— ${ME.name||orgName()}`,ph||'');return;}
+    shareSheet('Please accept: '+n.title,`Hello${name?' '+name:''},\n\nPlease read this notice in BuildMitr → Notices and tick to accept it:\n*${n.title}*\n\n${APP_URL}\n\n— ${ME.name||orgName()}`,ph||'');return;}
   const id=(e.target.closest('button')||{}).id;
   if(id==='ntBack'){NT.open='';render();return;}
   if(id==='ntNew'){ntForm(null);return;}
@@ -5965,7 +5961,7 @@ document.addEventListener('change',e=>{if(e.target.id==='llWho'){WT.person=e.tar
 document.addEventListener('submit',e=>{const f=e.target;if(f.id==='ntSign'){e.preventDefault();ntSign(f,(e.submitter&&e.submitter.value)||'sign');}if(f.id==='ntForm'){e.preventDefault();ntSave(f);}},true);
 /* unsigned notices: shown once per session when BuildMitr opens */
 setInterval(()=>{if(!S.ready||NT.shown||S.view==='notices'||document.querySelector('#layer .drawer'))return;const p=ntPending();if(!p.length)return;NT.shown=true;
-  S.view='notices';NT.open=p[0].id;render();toast(`Please read and sign ${p.length>1?p.length+' notices':'this notice'}`);},2500);
+  S.view='notices';NT.open=p[0].id;render();toast(`Please read and accept ${p.length>1?p.length+' notices':'this notice'}`);},2500);
 
 /* demo: a sample notice, signatures and log-ins */
 {const _dd2=demoData;demoData=function(){const X=_dd2();const t=Date.now(),d=isoDate(new Date());const s=NT_SAMPLE();
