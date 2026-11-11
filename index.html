@@ -193,7 +193,7 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .pl-hol{position:absolute;top:0;bottom:0;width:2px;background:rgba(220,120,40,.45);pointer-events:none}
 .g-bar.pl-wet{border-color:#3884dc;background:rgba(56,132,220,.22)}
 .pl-key{display:inline-block;width:12px;height:10px;border-radius:2px;vertical-align:middle;margin:0 3px 0 10px}.pl-key.rain{background:rgba(56,132,220,.12)}.pl-key.hv{background:rgba(56,132,220,.3)}.pl-key.hol{background:rgba(220,120,40,.6);width:3px}
-.pl-months{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:14px 16px}.pl-mon{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pl-months{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:14px 16px}.pl-mon{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.pl-mon.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.pl-key.wet{background:rgba(56,132,220,.22);border:1px solid #3884dc}
 .pl-mh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}.pl-mon ul{margin:6px 0 0;padding-left:18px;font-size:13px}.pl-mon li{margin:3px 0}
 .pl-cm{border-left:3px solid var(--accent);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:4px}
 .g-cm{font-size:12px;margin-left:6px}
@@ -396,6 +396,8 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .ll-s{display:grid;grid-template-columns:110px 170px minmax(180px,1.2fr) minmax(160px,1fr);gap:8px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
 .ll-s svg{width:15px;height:15px;vertical-align:-2px;margin-right:5px}.ll-bad{color:#b42318;font-weight:600}
 @media (max-width:760px){.ll-s{grid-template-columns:1fr 1fr}.ll-d,.ll-l{grid-column:1/-1}}
+.fl-chip{display:flex;align-items:center;gap:6px}.fl-chip .btn{padding:2px 6px;min-height:0}
+.ph-chip{position:relative;display:inline-block}.ph-chip button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:#111827;color:#fff;display:grid;place-items:center;padding:0;cursor:pointer}.ph-chip button svg{width:12px;height:12px}
 .dl-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lg-orgfix{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
 .pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.pl-bar #q{flex:1;min-width:200px;margin:0}.seg{display:flex;gap:4px}
@@ -1246,11 +1248,11 @@ function fieldInput(f,v){
     case 'projects':return D.projects.length?`<div id="${id}" class="checks">${D.projects.map(p=>`<label><input type="checkbox" value="${p.id}" ${(v||[]).includes(p.id)?'checked':''}>${esc(pname(p.id))}</label>`).join('')}<label><input type="checkbox" value="all" ${(v||[]).includes('all')?'checked':''}><b>All projects (now and future)</b></label></div>`:'<span class="code">Create a project first.</span>';
     case 'equipment':return sel(D.equipment.map(x=>[x.id,`${x.name}${x.own?' · '+x.own:''}`]),v);
     case 'url':return `<input id="${id}" type="url" placeholder="https://…" value="${esc(v||'')}" ${req}>`;
-    case 'files':return `<div id="fl-list" style="display:grid;gap:4px">${(DRAFT.files[f.k]||[]).map(x=>`<span class="code">${ico(fileIco(x))} ${esc(x.name)}</span>`).join('')}</div>
+    case 'files':return `<div id="fl-list" data-fllist="${f.k}" style="display:grid;gap:4px">${flChips(f.k)}</div>
       ${A?`<label class="btn sm" style="width:max-content">${ico('upload')}Add files<input type="file" accept=".pdf,image/*,.dwg,.dxf,.dwf,.skp,.xlsx,.xls,.docx,.doc,.zip,.rvt,.ifc" multiple hidden data-files="${f.k}"></label>`:'<span class="code">File upload needs Contributor access.</span>'}`;
     case 'material':{const mats=[...new Set([...MAT_KEYS].flatMap(k=>D[k].map(r=>(r.material||'').trim())).filter(Boolean))].sort();
       return `<input id="${id}" list="matlist" value="${esc(v||'')}" placeholder="e.g. Cement OPC 53" ${req}><datalist id="matlist">${mats.map(m=>`<option value="${esc(m)}">`).join('')}</datalist>`;}
-    case 'photos':return `<div id="ph-list" style="display:flex;gap:6px;flex-wrap:wrap">${(DRAFT.photos[f.k]||[]).map(pid=>`<img src="/_blob/${esc(pid)}" alt="" style="width:56px;height:56px;border-radius:6px;object-fit:cover">`).join('')}</div>
+    case 'photos':return `<div id="ph-list" data-phlist="${f.k}" style="display:flex;gap:6px;flex-wrap:wrap">${phChips(f.k)}</div>
       ${A?`<label class="btn sm" style="width:max-content">${ico('camera')}Add photos<input type="file" accept="image/*" multiple hidden data-photos="${f.k}"></label>`:'<span class="code">Photo upload needs Contributor access.</span>'}`;
     default:return `<input id="${id}" value="${esc(v||'')}" ${req}>`;
   }
@@ -1261,7 +1263,7 @@ function openForm(k,id,preset){
     {k:'prefix',l:'Project code / prefix',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'description',l:'Description',t:'textarea'},
     {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'nfloors',l:'Number of floors above ground (incl. ground floor)',t:'number',max:40},{k:'base',l:'Below / stilt',t:'select',o:['None','Cellar','Stilt floor','Cellar + Stilt floor']},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
   const r=id?D[k].find(x=>x.id===id):null;
-  DRAFT.k=k;DRAFT.id=id||null;DRAFT.fields=m.fields;DRAFT.photos={};DRAFT.files={};
+  DRAFT.k=k;DRAFT.id=id||null;DRAFT.fields=m.fields;DRAFT.photos={};DRAFT.files={};DRAFT.fresh=new Set();DRAFT.removed=[];
   if(k==='invoices'&&!r){preset={...(preset||{})};preset.no=preset.no||nextInvNo(preset.kind||'Tax invoice');preset.sac=preset.sac||orgVal('sac')||'995411';}
   const pv=r||preset||null;m.fields.filter(f=>f.t==='photos').forEach(f=>DRAFT.photos[f.k]=[...(pv&&pv[f.k])||[]]);
   m.fields.filter(f=>f.t==='files').forEach(f=>DRAFT.files[f.k]=[...(r&&r[f.k])||[]]);
@@ -1272,7 +1274,7 @@ function openForm(k,id,preset){
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="entryForm">
     <div class="pane-h"><h2>${r?'Edit':isP?'Create':'Add'} ${esc((isP?'project':m.label.replace(/s$/,'')).toLowerCase())}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
     <div class="pane-b">${body}</div>
-    <div class="pane-f"><button type="button" class="btn" data-close>Cancel</button><button class="btn pri">${r?'Save changes':isP?'Create project':'Save'}</button></div></form></div>`;
+    <div class="pane-f">${r&&!isP&&canDelFiles()?`<button type="button" class="btn ghost warn" data-fdelrec="${esc(k)}:${esc(id)}" style="margin-right:auto">${ico('trash-2')}<span>Delete</span></button>`:''}<button type="button" class="btn" data-close>Cancel</button><button class="btn pri">${r?'Save changes':isP?'Create project':'Save'}</button></div></form></div>`;
   draw();
   const first=document.querySelector('.pane-b input:not([type=date]):not(#locSearch):not(#locPaste),.pane-b textarea');if(first)first.focus();
   if(m.fields.some(f=>f.t==='location')&&S.web)initMap();
@@ -1287,8 +1289,8 @@ async function addPhotos(files,fk){
     if(!type){toast(`${file.name}: use JPG or PNG photos.`);continue;}
     if(file.size>20*1048576){toast(`${file.name} is over 20 MB.`);continue;}
     toast('Uploading photo…');
-    try{const r=await A.upload(file,{type});DRAFT.photos[fk].push(r.id);
-      const l=document.getElementById('ph-list');if(l){const im=document.createElement('img');im.src=r.url;im.alt='';im.style.cssText='width:56px;height:56px;border-radius:6px;object-fit:cover';l.appendChild(im);}
+    try{const r=await A.upload(file,{type});DRAFT.photos[fk].push(r.id);DRAFT.fresh&&DRAFT.fresh.add(r.id);flDraw();
+      
       toast('Photo added');}
     catch(e){toast({too_large:'Photo is too large.',quota_or_state:'Storage is full.',rate_limited:'Too many uploads. Wait a moment.'}[e&&e.code]||'Photo upload failed.');}
   }
@@ -1303,8 +1305,8 @@ async function addFiles(files,fk){
     if(!type){toast(`${ext.toUpperCase()} files can't be uploaded here. Use the link box instead.`);continue;}
     if(file.size>10*1048576){toast(`${file.name} is over 10 MB. Save it as PDF, zip it, or use the link box.`);continue;}
     toast(`Uploading ${file.name}…`);
-    try{const r=await A.upload(file,{type});DRAFT.files[fk].push({id:r.id,name:file.name,type});
-      const l=document.getElementById('fl-list');if(l){const s=document.createElement('span');s.className='code';s.textContent='✓ '+file.name;l.appendChild(s);}
+    try{const r=await A.upload(file,{type});DRAFT.files[fk].push({id:r.id,name:file.name,type});DRAFT.fresh&&DRAFT.fresh.add(r.id);flDraw();
+      
       toast(`${file.name} added`);}
     catch(e){toast({too_large:'File is too large.',quota_or_state:'Storage is full.',rate_limited:'Too many uploads. Wait a moment.'}[e&&e.code]||'Upload failed.');}
   }
@@ -1352,18 +1354,53 @@ function vSchedule(){
   if(span<75){ticks.length=0;for(let v=Math.ceil(min);v<=max;v+=7)ticks.push([v,new Date(v*864e5).toLocaleDateString(LOC(),{day:'numeric',month:'short'})]);}
   const tdy=day(today());
   if(S.schedTable&&ed)return header(label('schedule'),btn)+schedTable(ts);
+  const SE=schedSeason(ts,min,max,pos);
   const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
     return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${esc(S.proj==='all'?pname(t.project):nm(t.who))} · ${fd(t.s)} → ${fd(t.e)} <button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></div>
-      <div class="g-track"${ed?` data-sedit="${esc(t.id)}" style="cursor:pointer" title="Tap to edit"`:''}><div class="g-bar ${late?'late':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
+      <div class="g-track"${ed?` data-sedit="${esc(t.id)}" style="cursor:pointer" title="Tap to edit"`:''}>${SE.bands}${SE.hl}<div class="g-bar ${late?'late':SE.wet(t)?'pl-wet':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
-  return header(label('schedule'),btn)+`<div class="box tiles"><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div></div>
-  <div class="box"><div class="tbl-wrap"><div class="gantt">
-    <div class="g-row g-head"><div class="g-lab"></div><div class="g-track">${ticks.map(([v,l])=>`<span class="g-tick" style="left:${pos(v)}">${l}</span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"><em>Today</em></span></div></div>
+  const s0=ts.reduce((m,t)=>t.s<m?t.s:m,ts[0].s),e0=ts.reduce((m,t)=>t.e>m?t.e:m,ts[0].e);
+  return header(label('schedule'),btn)+`<div class="grid2"><div class="box"><div class="box-h"><h2>Timeline</h2><span class="code">${fd(s0)} → ${fd(e0)}${SE.city?' · '+esc(SE.city):''}</span></div><div class="tiles"><div class="tile"><b>${((day(e0)-day(s0)+1)/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div><div class="tile"><b>${SE.hs.length}</b><span>Holidays inside</span></div></div></div>
+  <div class="box"><div class="box-h"><h2>Season & time check</h2></div>${SE.warn.length?`<div class="pl-warn">${SE.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${esc(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>No season or time problems found.</span></div>`}</div></div>
+  <div class="box"><div class="box-h"><h2>Calendar view</h2><span class="code"><span class="pl-key rain"></span> monsoon <span class="pl-key hv"></span> heavy monsoon <span class="pl-key hol"></span> holiday <span class="pl-key wet"></span> outdoor work in monsoon</span></div><div class="tbl-wrap"><div class="gantt">
+    <div class="g-row g-head"><div class="g-lab"></div><div class="g-track">${SE.bands}${ticks.map(([v,l])=>`<span class="g-tick" style="left:${pos(v)}">${l}</span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"><em>Today</em></span></div></div>
     ${rows}<div class="g-row g-foot"><div class="g-lab"></div><div class="g-track">${ticks.map(([v])=>`<span class="g-line" style="left:${pos(v)}"></span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"></span></div></div>
-  </div></div><div class="code" style="padding:10px 16px">Bar = planned start to due date · dark fill = progress · red = past due and not complete.</div></div>`;
+  </div></div><div class="code" style="padding:10px 16px">Bar = planned start to due date · dark fill = progress · red = past due and not complete · blue = outdoor work in monsoon · 💬 comments.</div></div>${schedMonths(ts,SE)}`;
 }
+/* the planner's season view for the Activity schedule: monsoon months, holidays, warnings, month by month */
+const SCH_WET=/excavat|footing|foundation|plinth|slab|casting|concret|column|beam|roof|terrace|external|exterior|outer|waterproof|compound|elevation|landscap|sump|septic|earth|backfill|shuttering|centering|brick ?work|masonry/i;
+const SCH_POUR=/slab|casting|concret|column|beam|footing|raft/i;
+function schedCity(ts){for(const t of ts){const m=String(t.source||'').match(/planner \(([^,)]+)/);if(m&&PL_RAIN[m[1]])return m[1];}
+  const p=proj(ts[0]&&ts[0].project)||{},a=String((p.address||'')+' '+(p.city||'')+' '+(orgMain().address||''));
+  return /bangal|bengal/i.test(a)?'Bangalore':/guntur|vijayawada|tier/i.test(a)?'Tier-2 town (Guntur, Vijayawada…)':'Hyderabad';}
+function schedSeason(ts,min,max,pos){const city=schedCity(ts),rain=PL_RAIN[city]||{},hol=plHolidays(),day=s=>new Date(s+'T00:00').getTime()/864e5;
+  const iso=d=>isoDate(d);const bands=[];const d0=new Date(min*864e5);d0.setDate(1);
+  for(let d=new Date(d0);d.getTime()/864e5<=max;d.setMonth(d.getMonth()+1)){const f=rain[d.getMonth()];if(f>1){const a=Math.max(min,d.getTime()/864e5),e=new Date(d);e.setMonth(e.getMonth()+1);const b=Math.min(max,e.getTime()/864e5);
+    bands.push(`<span class="pl-rain ${f>=1.3?'hv':''}" style="left:${pos(a)};width:${((b-a)/(max-min)*100).toFixed(2)}%"></span>`);}}
+  const hs=Object.entries(hol).filter(([d])=>day(d)>=min&&day(d)<=max).sort();
+  const hl=hs.map(([d,n])=>`<span class="pl-hol" style="left:${pos(day(d))}" title="${esc(fd(d)+' '+n)}"></span>`).join('');
+  const monthsOf=t=>{const out=[];const d=new Date(t.s+'T00:00');d.setDate(1);while(iso(d)<=t.e){out.push(d.getMonth());d.setMonth(d.getMonth()+1);}return out;};
+  const wet=t=>SCH_WET.test(t.title||'')&&monthsOf(t).some(m=>(rain[m]||1)>1);
+  const MN=m=>new Date(2026,m,1).toLocaleDateString(LOC(),{month:'short'});const warn=[];
+  const open=ts.filter(t=>t.status!=='Completed');
+  const lateN=open.filter(t=>t.e<today()).length;if(lateN)warn.push(['high',`${lateN} activit${lateN>1?'ies are':'y is'} past the due date and not complete — update progress or shift the schedule.`]);
+  open.filter(t=>SCH_WET.test(t.title||'')).forEach(t=>{const hv=monthsOf(t).filter(m=>(rain[m]||1)>=1.3),md=monthsOf(t).filter(m=>(rain[m]||1)>1&&(rain[m]||1)<1.3);
+    if(hv.length)warn.push(['high',`${t.title} runs in heavy monsoon (${[...new Set(hv)].map(MN).join(', ')}) in ${city} — plan covers, dewatering and extra days.`]);
+    else if(md.length)warn.push(['med',`${t.title} runs in the monsoon (${[...new Set(md)].map(MN).join(', ')}) — keep a few days spare for rain.`]);});
+  open.filter(t=>SCH_POUR.test(t.title||'')&&monthsOf(t).some(m=>PL_HOT.includes(m))).slice(0,3).forEach(t=>warn.push(['low',`${t.title} falls in the hot months (Apr–May) — longer curing, avoid noon pours.`]));
+  const hIn=t=>hs.filter(([d])=>d>=t.s&&d<=t.e).length;const busy=open.filter(t=>hIn(t)>=2&&SCH_POUR.test(t.title||''));busy.slice(0,2).forEach(t=>warn.push(['low',`${t.title} has ${hIn(t)} holidays inside — labour may be short.`]));
+  return {city,rain,hs,bands:bands.join(''),hl,wet,warn:warn.slice(0,8)};}
+function schedMonths(ts,SE){if(!ts.length)return '';const s0=ts.reduce((m,t)=>t.s<m?t.s:m,ts[0].s),e0=ts.reduce((m,t)=>t.e>m?t.e:m,ts[0].e),out=[];const d=new Date(s0+'T00:00');d.setDate(1);let n=0;
+  while(isoDate(d)<=e0&&n++<48){const a=isoDate(d),e=new Date(d);e.setMonth(e.getMonth()+1);e.setDate(0);const b=isoDate(e);
+    const acts=ts.filter(t=>t.s<=b&&t.e>=a),hs=SE.hs.filter(([x])=>x>=a&&x<=b),f=SE.rain[d.getMonth()]||1;
+    out.push(`<div class="pl-mon ${a.slice(0,7)===today().slice(0,7)?'now':''}"><div class="pl-mh"><b>${d.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</b>${a.slice(0,7)===today().slice(0,7)?'<span class="pill p-green">this month</span>':''}${f>1?`<span class="pill ${f>=1.3?'p-red':'p-amber'}">☂ ${f>=1.3?'heavy':'moderate'} monsoon</span>`:''}${PL_HOT.includes(d.getMonth())?'<span class="pill p-amber">hot</span>':''}</div>
+      ${hs.length?`<div class="code">Holidays: ${hs.map(([x,n_])=>esc(`${new Date(x+'T00:00').getDate()} ${n_}`)).join(', ')}</div>`:''}
+      <ul>${acts.map(t=>{const p=t.status==='Completed'?100:+t.progress||0,late=t.status!=='Completed'&&t.e<today();const cm=(t.comments||[]).slice(-1)[0];
+        return `<li>${esc(t.title)} <span class="code">${fd(t.s)} → ${fd(t.e)}</span> <span class="pill ${p>=100?'p-green':late?'p-red':p?'p-blue':'p-grey'}">${p>=100?'Done':late?'Late · '+p+'%':p+'%'}</span>${cm&&cm.t?`<div class="code">💬 ${esc(cm.t)}</div>`:''}</li>`;}).join('')||'<li class="code">—</li>'}</ul></div>`);
+    d.setMonth(d.getMonth()+1);}
+  return `<div class="box"><div class="box-h"><h2>Month by month</h2></div><div class="pl-months">${out.join('')}</div></div>`;}
 
 /* ================= Printable invoice / PO ================= */
 async function downloadDoc(k,id){
@@ -4425,8 +4462,8 @@ function vPlanner(){
     ${on.length?`<div class="tiles"><div class="tile"><b>${(wdTot/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${on.length}</b><span>Activities</span></div>
       <div class="tile"><b>${c.hs.length}</b><span>Holidays inside</span></div><div class="tile"><b style="color:${c.feasible?'inherit':'var(--red-ink)'}">${PL.months?(c.feasible?'Fits':'Too short'):'Normal pace'}</b><span>${PL.months?`Target ${PL.months} months`:`Normal finish ${fd(c.natEnd)}`}</span></div></div>
     ${c.warn.length?`<div class="pl-warn">${c.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${L(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>No season or time problems found.</span></div>`}
-    <div class="srow">${CANW?`<button class="btn pri" id="plSave" ${PL.pid?'':'disabled'}>${ico('check')}<span>Save to project</span></button>`:''}<label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="pl-ms" ${PL.ms!==false?'checked':''} style="width:auto">Add payment stages linked to activities</label>
-      <button class="btn" id="plShare">${ico('share-2')}<span>Share</span></button>${PL.pid?'':'<span class="code">Choose a project to save.</span>'}</div>`:`<div class="empty">Enter the slab area of each floor to see the schedule.</div>`}</div>`;
+    <div class="srow">${CANW?`<button class="btn pri" id="plSave" ${PL.pid?'':'disabled'}>${ico('check')}<span>${PL.pid&&plTasks(PL.pid).length?'Update activity schedule':'Save to project'}</span></button>`:''}<label class="code" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="pl-ms" ${PL.ms!==false?'checked':''} style="width:auto">Add payment stages linked to activities</label>
+      <button class="btn" id="plShare">${ico('share-2')}<span>Share</span></button>${PL.pid?'':'<span class="code">Choose a project to save.</span>'}</div>${PL.pid&&plTasks(PL.pid).length?`<div class="code" style="padding:0 16px 12px">${esc(pname(PL.pid))} already has ${plTasks(PL.pid).length} activities from the planner. <b>Update activity schedule</b> changes them to match this plan — dates and titles follow the planner, unticked steps are removed (unless work has started), new steps are added. Progress, status, comments and photos stay; completed activities keep their dates. Activities you added by hand are not touched.</div>`:''}`:`<div class="empty">Enter the slab area of each floor to see the schedule.</div>`}</div>`;
   const table=on.length||c.rows.length?`<div class="box"><div class="box-h"><h2>Activities</h2><span class="code">Days = working days · ☂ = monsoon extra · change anything; blank = automatic ${Object.keys(PL.ed).length?`<button type="button" class="linkish" id="plUndo">Undo my changes</button>`:''}</span></div>
     <div class="tbl-wrap"><table class="pl-tbl"><thead><tr><th></th><th>Activity</th><th class="num">Days</th><th>Fixed start</th><th>Start</th><th>Finish</th><th>Comment</th></tr></thead><tbody>
     ${c.rows.map(r=>{const e=PL.ed[r.key]||{};return `<tr class="${r.off?'pl-off':''}"><td><input type="checkbox" data-plon="${r.key}" ${r.off?'':'checked'} aria-label="Include"></td>
@@ -4463,22 +4500,44 @@ function plMonths(c){
 function plText(){const c=plCalc(),on=c.rows.filter(r=>!r.off);
   return [`*${orgName()} — work schedule*`,PL.pid?pname(PL.pid):'',`${fd(c.start)} → ${fd(c.end)} (${((dOf(c.end)-dOf(c.start))/864e5/30.4).toFixed(1)} months) · ${c.city}`,'',
     ...on.map(r=>`• ${r.title}: ${fd(r.start)} → ${fd(r.due)}${r.comment?` — ${r.comment}`:''}`),'',...c.warn.map(([,t])=>'⚠ '+t)].filter(Boolean).join('\n');}
+/* Save the planner to the project's Activity schedule. Saving again UPDATES the same activities (matched by
+   planner step): changed dates / titles are applied, unticked steps are removed (unless work has started on them),
+   new steps are added. Progress, status, comments and photos already entered stay; completed activities keep their dates. */
+const plTasks=pid=>D.tasks.filter(t=>t.project===pid&&(t.plk||/^BuildMitr planner/.test(t.source||'')));
 async function plSave(){
   const c=plCalc(),p=proj(PL.pid);if(!p||!c.rows.length)return;
   const on=c.rows.filter(r=>!r.off),nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-  const ids={},recs=[],now=Date.now();on.forEach(r=>ids[r.key]=nid());
+  const old=plTasks(p.id),used=new Set(),prev={};
+  const match=r=>{let t=old.find(x=>!used.has(x.id)&&x.plk===r.key);if(!t)t=old.find(x=>!used.has(x.id)&&!x.plk&&x.title===r.title);if(t)used.add(t.id);return t;};
+  const ids={},recs=[],now=Date.now();on.forEach(r=>{const t=match(r);ids[r.key]=t?t.id:nid();if(t)prev[r.key]=t;});
   const wbs={};let grp={pre:1,soil:1,exc:2,ftg:2,plinth:2,sump:2,cwall:2,struct:3,head:3,bw:4,mep:4,ipl:4,dw:4};const cnt={};
   on.forEach(r=>{const g=grp[r.sc]||(['fc','mk','ward','tv','light','wallp','furn'].includes(r.sc)?6:r.sc==='clean'?7:5);cnt[g]=(cnt[g]||0)+1;wbs[r.key]=`${g}.${cnt[g]}`;});
-  on.forEach(r=>recs.push(['tasks',ids[r.key],{project:p.id,wbs:wbs[r.key],title:r.title,resource:r.res,start:r.start,due:r.due,progress:0,status:'Not started',
-    pred:r.after.filter(k=>ids[k]).map(k=>wbs[k]).join(', '),source:`BuildMitr planner (${c.city}${PL.months?', '+PL.months+' months':''})`,notes:[r.comment,r.f>1?`Monsoon: ${Math.round((r.f-1)*100)}% extra time included.`:''].filter(Boolean).join(' '),
-    comments:r.comment?[{t:r.comment,by:ME.name||ME.email,at:now}]:[],by:ME.id,at:now}]));
+  let upd=0,add=0;
+  on.forEach(r=>{const t=prev[r.key],done=t&&t.status==='Completed';
+    const cm=[...((t&&t.comments)||[])];if(r.comment&&!cm.some(x=>x.t===r.comment))cm.push({t:r.comment,by:ME.name||ME.email,at:now});
+    const fresh={project:p.id,plk:r.key,wbs:wbs[r.key],title:r.title,resource:r.res,start:done?t.start:r.start,due:done?t.due:r.due,
+      pred:r.after.filter(k=>ids[k]).map(k=>wbs[k]).join(', '),source:`BuildMitr planner (${c.city}${PL.months?', '+PL.months+' months':''})`,notes:[r.comment,r.f>1?`Monsoon: ${Math.round((r.f-1)*100)}% extra time included.`:''].filter(Boolean).join(' '),comments:cm};
+    if(t){const {id:_x,...keep}=t;recs.push(['tasks',t.id,{...keep,...fresh,progress:t.progress||0,status:t.status||'Not started',upd:now}]);upd++;}
+    else{recs.push(['tasks',ids[r.key],{...fresh,progress:0,status:'Not started',by:ME.id,at:now}]);add++;}});
+  /* planner activities that are no longer in the plan */
+  const gone=old.filter(t=>!used.has(t.id)),started=t=>(t.status&&t.status!=='Not started')||(+t.progress||0)>0;
+  const del=gone.filter(t=>!started(t)),keepOff=gone.filter(started);
+  keepOff.forEach(t=>{const {id:_x,...keep}=t;recs.push(['tasks',t.id,{...keep,plk:'',source:(t.source||'')+' — removed from the plan (work had started)',upd:now}]);});
+  /* payment stages made by the planner: replaced, except ones already invoiced */
+  const oldIds=new Set(old.map(t=>t.id)),oldMs=D.milestones.filter(m=>m.project===p.id&&(m.plm||oldIds.has(m.task)));
+  const msDel=[],msKeep=new Set();
   if(document.getElementById('pl-ms')&&document.getElementById('pl-ms').checked){
+    oldMs.forEach(m=>{if(m.inv)msKeep.add(m.stage);else msDel.push(m.id);});
     const k=x=>ids[x]?x:null,slabs=on.filter(r=>/^slab\d+$/.test(r.key)),se=slabs.length?+(30/slabs.length).toFixed(1):0;
     const lastOf=pre=>{const xs=on.filter(r=>r.key.startsWith(pre));return xs.length?xs[xs.length-1].key:null;};
     const ms=[['Booking / agreement',5,null],['Foundation & footings',10,k('ftg')],['Plinth beam',5,k('plinth')],...slabs.map(r=>[r.title.replace('Beams & roof slab — ','')+' roof slab',se,r.key]),
       ['Brickwork / blockwork',10,lastOf('bw')],['Plastering',10,k('epl')||lastOf('ipl')],['Flooring & tiling',10,lastOf('fl')],['Doors, windows, electrical & plumbing',10,k('fit')],['Painting & handover',10,k('clean')]];
-    const tot=ms.reduce((s,m)=>s+m[1],0);ms.forEach(([st,pc,key])=>recs.push(['milestones',nid(),{project:p.id,stage:st,pct:+(pc*100/tot).toFixed(1),...(key?{task:ids[key]}:{due:c.start}),by:ME.id,at:now}]));}
-  const ok=await write(async()=>{await dbBatch(recs);await db.doc('projects/'+p.id).update({start:c.start,end:c.end});},`Schedule saved: ${on.length} activities, ${fd(c.start)} → ${fd(c.end)}`);
+    const tot=ms.reduce((s,m)=>s+m[1],0);ms.filter(([st])=>!msKeep.has(st)).forEach(([st,pc,key])=>recs.push(['milestones',nid(),{project:p.id,stage:st,pct:+(pc*100/tot).toFixed(1),plm:1,...(key?{task:ids[key]}:{due:c.start}),by:ME.id,at:now}]));}
+  const plan=JSON.parse(JSON.stringify({start:PL.start,months:PL.months,city:PL.city,sun:PL.sun,floors:PL.floors,rooms:PL.rooms,toilets:PL.toilets,kitchens:PL.kitchens,lifts:PL.lifts,scope:PL.scope,hol:PL.hol,ed:PL.ed,ms:!!(document.getElementById('pl-ms')||{}).checked,at:now}));
+  const msg=old.length?`Activity schedule updated: ${upd} changed${add?`, ${add} added`:''}${del.length?`, ${del.length} removed`:''}${keepOff.length?` (${keepOff.length} already started kept)`:''} · ${fd(c.start)} → ${fd(c.end)}`
+    :`Schedule saved: ${on.length} activities, ${fd(c.start)} → ${fd(c.end)}`;
+  const ok=await write(async()=>{await dbBatch(recs);for(const t of del)await db.doc('tasks/'+t.id).delete();for(const id of msDel)await db.doc('milestones/'+id).delete();
+    await db.doc('projects/'+p.id).update({start:c.start,end:c.end,plan});},msg);
   if(ok){S.proj=p.id;try{localStorage.setItem('bm-proj',p.id);}catch(_){}S.view='schedule';render();scrollTo(0,0);}
 }
 /* open the planner, optionally filled from a project / estimate */
@@ -4486,8 +4545,9 @@ function plFromEst(est){const hd=(est.heads||[]).filter(h=>h.amt).map(h=>h.hd).j
   [['fc',/ceiling/i],['mk',/modular kitchen/i],['ward',/wardrobe/i],['tv',/tv unit|panelling/i],['light',/lighting/i],['wallp',/wallpaper|texture/i],['furn',/furniture/i]].forEach(([k,re])=>{if(re.test(hd))PL.scope[k]=true;});}
 function plOpen(pid,o){
   PL.pid=pid||PL.pid;const p=proj(PL.pid),est=(p&&p.estimate)||{};
-  if(o){Object.assign(PL,o);}else if(est.floors&&est.floors.length){plFromEst(est);PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
-  if(p&&p.start&&!PL.start)PL.start=p.start;PL.ed={};S.view='planner';render();scrollTo(0,0);
+  const sv=!o&&p&&p.plan&&typeof p.plan==='object'?JSON.parse(JSON.stringify(p.plan)):null;
+  if(o){Object.assign(PL,o);}else if(sv){const {at:_a,ms,...rest}=sv;Object.assign(PL,{scope:{},ed:{},hol:''},rest);PL.ms=ms;}else if(est.floors&&est.floors.length){plFromEst(est);PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
+  if(p&&p.start&&!PL.start)PL.start=p.start;if(!sv)PL.ed={};S.view='planner';render();scrollTo(0,0);
 }
 /* comments on saved activities (Activity schedule) */
 function taskComments(id){
@@ -5186,7 +5246,7 @@ function vDrawLib(){
       ${x.has?apChips(c):''}${x.has?apLog(c):''}</div>
       <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept=".dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc" data-dlup="${esc(x.k)}"></label>`:''}
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
-        ${x.has?apButtons(c,x.k):''}
+        ${x.has?apButtons(c,x.k):''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
    dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>
@@ -5425,7 +5485,7 @@ function apButtons(d,key){if(!d||!((d.files||[]).length||d.link)||d.status==='Su
 function apLog(d){const L=((d&&d.rv)||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0));if(!L.length)return '';
   const one=x=>`<div class="ap-note ${x.k==='back'?'back':''}">${x.img?`<a href="/_blob/${esc(x.img.id)}" target="_blank" rel="noopener" aria-label="${esc(x.img.name)}" class="ap-thumb"><img src="/_blob/${esc(x.img.id)}" alt="Marked-up drawing" loading="lazy"></a>`:''}
     <div><b>${esc(nm(x.by))}</b> <span class="code">${esc(x.k==='back'?'sent it back':x.k==='mark'?'marked it up':x.k==='go'?AP_STEPS[(x.st||1)-1].n.toLowerCase():'commented')} · ${esc(fd(new Date(x.at).toISOString().slice(0,10)))}</span>${x.t?`<div>${esc(x.t)}</div>`:''}
-    ${x.img?`<button type="button" class="btn sm ghost" data-fshare="${esc(x.img.id)}|${esc(x.img.name)}|image/jpeg|${esc(x.img.name)}">${ico('share-2')}<span>Share</span></button>`:''}</div></div>`;
+    ${canDelFiles()?`<button type="button" class="btn sm ghost warn" data-rvdel="${esc(d.id)}|${esc(x.at)}">${ico('trash-2')}<span>Remove</span></button>`:''}${x.img?`<button type="button" class="btn sm ghost" data-fshare="${esc(x.img.id)}|${esc(x.img.name)}|image/jpeg|${esc(x.img.name)}">${ico('share-2')}<span>Share</span></button>`:''}</div></div>`;
   return `<details class="ap-log" ${L[0].k==='back'&&d.status==='Sent back'?'open':''}><summary>${ico('message-square')} ${L.length} comment${L.length>1?'s':''} & markup${L[0].t?` — <i>${esc(String(L[0].t).slice(0,60))}</i>`:''}</summary>${L.map(one).join('')}</details>`;}
 
 /* the dialog for a stage / send back: who, comment, and a WhatsApp nudge to the next person */
@@ -5808,7 +5868,7 @@ function ntOne(n,adm){const ppl=ntPeople(n),mine=ntSigOf(n.id),locked=(D.notices
         :`<span class="pill p-amber">Pending</span>${p.phone?`<button class="btn sm ghost" data-ntremind="${esc(n.id)}|${esc(p.phone)}|${esc(p.name)}">${ico('message-circle')}<span>Remind</span></button>`:''}`}</div>`;}).join('')||'<div class="srow"><span class="code">No staff with BuildMitr log-ins yet (add them in Team).</span></div>'}
     <div class="srow"><button class="btn sm" data-ntremind="${esc(n.id)}||">${ico('share-2')}<span>Remind everyone</span></button>
       ${locked?`<button class="btn sm" id="ntNewVer" data-id="${esc(n.id)}">${ico('copy')}<span>New version</span></button><span class="code">Signed notices are locked — changes go in a new version.</span>`:`<button class="btn sm" data-edit="notices:${esc(n.id)}" id="ntEdit">${ico('pencil')}<span>Edit</span></button>`}
-      <button class="btn sm ghost" id="ntWithdraw" data-id="${esc(n.id)}">${n.active===false?'Re-issue':'Withdraw'}</button></div></div>`:'';
+      <button class="btn sm ghost" id="ntWithdraw" data-id="${esc(n.id)}">${n.active===false?'Re-issue':'Withdraw'}</button>${locked?'':`<button class="btn sm ghost warn" data-ntdel="${esc(n.id)}">${ico('trash-2')}<span>Delete</span></button>`}</div></div>`:'';
   return header(n.title,`<button class="btn" id="ntBack">${ico('arrow-left')}<span>All notices</span></button>`)+text+sign+who;}
 const NT_SAMPLE=()=>({title:'Notice: recording of work time, log-ins and location',body:`Dear team,
 
@@ -5907,6 +5967,61 @@ setInterval(()=>{if(!S.ready||NT.shown||S.view==='notices'||document.querySelect
   const base=new Date(d+'T09:12:00').getTime();
   X.attlog=[['dm4','Laptop','Windows app',0,null,'At Office'],['dm4','Mobile','Android app',5.2,6.1,'At JP Nagar Residence site'],['dm2','PC / Laptop','Chrome on Windows',0.3,null,'At Office'],['dm3','Mobile','Chrome on Android',0.8,8.5,'']].map(([u,dev,app,h,e,place],i)=>({id:`${u}_${d}_${i}`,user:u,date:d,start:base+h*3600e3,srv0:base+h*3600e3,last:base+(e||h+7)*3600e3,end:e?base+e*3600e3:null,endKind:e?'Signed out':'',dev,app,lat:place?12.8915+i*.001:null,lng:place?77.5857:null,acc:place?18:null,place,loc:place?'ok':'Not allowed'}));
   return X;};}
+
+/* ================= Admin: remove uploaded files and delete data =================
+ * In any form the admin can remove saved files / photos (✕); anyone can remove a file they just added before saving.
+ * Records, drawing revisions, mark-ups and unanswered notices can be deleted by the admin.
+ * Removed files go to the Google Drive trash on the server (recoverable there for 30 days). */
+Object.assign(ICONS,{'trash-2':ICONS['trash-2']||'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>'});
+const canDelFiles=()=>isAdmin()&&CANW&&!S.viewAs;
+/* every uploaded file id inside a record (files lists, photos, a single file, signature, mark-up images…) */
+function recFileIds(r){const out=new Set();const walk=(v,k)=>{if(!v)return;
+  if(Array.isArray(v)){v.forEach(x=>typeof x==='string'?(/^(photos|pics|images)$/i.test(k||'')&&out.add(x)):walk(x,k));return;}
+  if(typeof v==='object'){if(v.id&&(v.name||v.type)&&typeof v.id==='string')out.add(v.id);Object.entries(v).forEach(([kk,x])=>{if(typeof x==='object')walk(x,kk);});}};
+  Object.entries(r||{}).forEach(([k,v])=>walk(v,k));return [...out].filter(id=>/^[\w-]{2,100}$/.test(id));}
+async function trashFiles(ids){ids=[...new Set((ids||[]).filter(Boolean))];if(!ids.length||!S.cloud||!canDelFiles())return;
+  try{const c=await caches.open('bm-files');await Promise.all(ids.map(id=>c.delete('/_blob/'+id)));}catch(_){}
+  if(WT.srv!==true)return;   // older server: the record no longer points to the file; the Drive copy stays
+  try{await gasApi('delFile',{ids});}catch(_){}}
+
+/* ---- form: file and photo lists with ✕ ---- */
+function flChips(fk){return (DRAFT.files[fk]||[]).map((x,i)=>{const can=canDelFiles()||(DRAFT.fresh&&DRAFT.fresh.has(x.id));
+  return `<span class="code fl-chip">${ico(fileIco(x))} <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(x.name)}</span>${can?`<button type="button" class="btn sm ghost" data-flrm="${esc(fk)}|${i}" aria-label="Remove ${esc(x.name)}" title="Remove">${ico('x')}</button>`:''}</span>`;}).join('');}
+function phChips(fk){return (DRAFT.photos[fk]||[]).map((pid,i)=>{const can=canDelFiles()||(DRAFT.fresh&&DRAFT.fresh.has(pid));
+  return `<span class="ph-chip"><img src="/_blob/${esc(pid)}" alt="" style="width:56px;height:56px;border-radius:6px;object-fit:cover">${can?`<button type="button" data-phrm="${esc(fk)}|${i}" aria-label="Remove photo" title="Remove">${ico('x')}</button>`:''}</span>`;}).join('');}
+function flDraw(){document.querySelectorAll('[data-fllist]').forEach(l=>l.innerHTML=flChips(l.dataset.fllist));document.querySelectorAll('[data-phlist]').forEach(l=>l.innerHTML=phChips(l.dataset.phlist));}
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-flrm]'))){e.preventDefault();const [fk,i]=b.dataset.flrm.split('|');const x=(DRAFT.files[fk]||[])[+i];if(!x)return;
+    DRAFT.files[fk].splice(+i,1);if(!(DRAFT.fresh&&DRAFT.fresh.has(x.id)))DRAFT.removed.push(x.id);else trashFiles([x.id]);flDraw();toast(`${x.name} removed — Save to confirm`);return;}
+  if((b=e.target.closest('[data-phrm]'))){e.preventDefault();const [fk,i]=b.dataset.phrm.split('|');const pid=(DRAFT.photos[fk]||[])[+i];if(!pid)return;
+    DRAFT.photos[fk].splice(+i,1);if(!(DRAFT.fresh&&DRAFT.fresh.has(pid)))DRAFT.removed.push(pid);else trashFiles([pid]);flDraw();toast('Photo removed — Save to confirm');return;}
+  /* delete the whole record from its form */
+  if((b=e.target.closest('[data-fdelrec]'))){e.preventDefault();const [k,id]=b.dataset.fdelrec.split(':');
+    if(S.confirm!=='rec'+id){S.confirm='rec'+id;b.innerHTML=`${ico('trash-2')}<span>Tap again to delete</span>`;setTimeout(()=>{if(S.confirm==='rec'+id)S.confirm=null;},5000);return;}
+    S.confirm=null;delRecord(k,id).then(ok=>{if(ok)closeLayer();});return;}
+},true);
+async function delRecord(k,id){const r=(D[k]||[]).find(x=>x.id===id);if(!r)return false;const lb=recLabel(k,r),files=recFileIds(r);
+  const ok=await write(()=>db.doc(k+'/'+id).delete(),'Deleted');if(ok){audit('deleted',k,id,lb);trashFiles(files);render();}return ok;}
+
+/* ---- Drawings library: delete the current revision (the one before becomes current again) and mark-ups ---- */
+function dlDelBtn(c){return c&&canDelFiles()?`<button type="button" class="btn sm ghost warn" data-dldel="${esc(c.id)}" title="Delete this revision" aria-label="Delete this revision">${ico('trash-2')}</button>`:'';}
+async function dlDelete(id){const d=D.documents.find(x=>x.id===id);if(!d)return;
+  const prev=D.documents.filter(x=>x.id!==id&&x.project===d.project&&(x.dkey||x.title)===(d.dkey||d.title)&&(x.disc||'')===(d.disc||'')).sort((a,b)=>(b.at||0)-(a.at||0))[0];
+  const files=recFileIds(d);const ok=await write(async()=>{await db.doc('documents/'+id).delete();
+    if(prev&&prev.status==='Superseded'){const a=prev.appr||{};await db.doc('documents/'+prev.id).update({status:a.s3?'Approved':a.s2?'For approval':a.s1?'For checking':'Draft'});}},
+    prev?`${d.rev||'Revision'} deleted — ${prev.rev||'the previous revision'} is current again`:'Drawing deleted');
+  if(ok){audit('deleted','documents',id,`${d.dkey||d.title} ${d.rev||''}`);trashFiles(files);render();}}
+async function dlMarkDel(id,at){const d=D.documents.find(x=>x.id===id);if(!d)return;const x=(d.rv||[]).find(v=>String(v.at)===String(at));if(!x)return;
+  const ok=await write(()=>db.doc('documents/'+id).update({rv:(d.rv||[]).filter(v=>v!==x)}),x.k==='mark'?'Mark-up removed':'Comment removed');if(ok){if(x.img)trashFiles([x.img.id]);render();}}
+document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-dldel]'))){const id=b.dataset.dldel;if(S.confirm!=='dl'+id){S.confirm='dl'+id;b.innerHTML=`${ico('trash-2')}<span>Tap again to delete</span>`;setTimeout(()=>{if(S.confirm==='dl'+id){S.confirm=null;render();}},5000);return;}
+    S.confirm=null;dlDelete(id);return;}
+  if((b=e.target.closest('[data-rvdel]'))){const [id,at]=b.dataset.rvdel.split('|');if(S.confirm!=='rv'+at){S.confirm='rv'+at;b.textContent='Tap again';setTimeout(()=>{if(S.confirm==='rv'+at)S.confirm=null;},5000);return;}
+    S.confirm=null;dlMarkDel(id,at);return;}
+  if((b=e.target.closest('[data-ntdel]'))){const id=b.dataset.ntdel;if((D.noticesign||[]).some(s=>s.notice===id)){toast('Staff have answered this notice — it is kept as a record. Withdraw it instead.');return;}
+    if(S.confirm!=='nt'+id){S.confirm='nt'+id;b.innerHTML=`${ico('trash-2')}<span>Tap again to delete</span>`;setTimeout(()=>{if(S.confirm==='nt'+id)S.confirm=null;},5000);return;}
+    S.confirm=null;const n=(D.notices||[]).find(x=>x.id===id);write(()=>db.doc('notices/'+id).delete(),'Notice deleted').then(ok=>{if(ok){trashFiles(recFileIds(n));NT.open='';render();}});return;}
+},true);
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
@@ -6011,7 +6126,7 @@ document.addEventListener('click',e=>{
   if(d.proj){S.proj=d.proj;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}S.view='project';render();scrollTo(0,0);return;}
   if(d.add){openForm(d.add);return;}
   if(d.edit){const[k,id]=d.edit.split(':');openForm(k,id);return;}
-  if(d.del){const[k,id]=d.del.split(':');if(S.confirm!==id){S.confirm=id;render();return;}S.confirm=null;const lb=recLabel(k,D[k].find(x=>x.id===id)||{});write(()=>db.doc(k+'/'+id).delete(),'Deleted').then(ok=>{if(ok)audit('deleted',k,id,lb);});return;}
+  if(d.del){const[k,id]=d.del.split(':');if(S.confirm!==id){S.confirm=id;render();return;}S.confirm=null;const rec0=D[k].find(x=>x.id===id)||{};const lb=recLabel(k,rec0),fids=recFileIds(rec0);write(()=>db.doc(k+'/'+id).delete(),'Deleted').then(ok=>{if(ok){audit('deleted',k,id,lb);trashFiles(fids);}});return;}
   if(d.export){exportCsv(d.export);return;}
   if(d.reset){if(S.confirm!=='reset'){S.confirm='reset';toast('Tap Reset demo again to clear your changes and reload sample data.');return;}db.reset();return;}
   if(d.demo){setDemo(d.demo==='on');return;}
@@ -6191,7 +6306,7 @@ document.addEventListener('submit',async e=>{
   let newId=null;
   const ok=id?await write(()=>db.doc(k+'/'+id).update(body),'Saved')
     :await write(async()=>{const r=await db.collection(k).add({...body,by:ME.id,at:Date.now(),...(k==='projects'?{created:Date.now()}:{})});newId=r.id;if(DRAFT.ms){await db.doc('milestones/'+DRAFT.ms).update({inv:r.id});}if(k==='projects'&&DRAFT.lead){await db.doc('leads/'+DRAFT.lead).update({stage:'Won',project:r.id});}if(k==='projects'){S.proj=r.id;try{localStorage.setItem('bm-proj',r.id)}catch(_){}S.view='dashboard';}},k==='projects'?'Project created':'Saved');
-  if(ok){audit(id?'edited':'created',k,id||newId,recLabel(k,body));closeLayer();render();
+  if(ok){const rm=(DRAFT.removed||[]).slice();DRAFT.removed=[];if(rm.length)trashFiles(rm);audit(id?'edited':'created',k,id||newId,recLabel(k,body));closeLayer();render();
     if(tplPick&&tplPick!=='None'&&newId)await seedProject(newId,tplPick,body.start,body.value);}
 });
 
