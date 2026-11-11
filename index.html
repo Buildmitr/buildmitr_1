@@ -363,7 +363,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .back-btn{flex:none}.back-btn span{font-weight:600}
 .dl-floors .srow{gap:10px}
 .dl-prog{display:flex;gap:10px;align-items:center;padding:0 16px 10px;flex-wrap:wrap}.dl-prog .prog{flex:1;min-width:140px}
-.dl-list{border-top:1px solid var(--line)}.dl-grp{padding:10px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
+.dl-list{border-top:1px solid var(--line)}.dl-edit-row{display:flex;justify-content:flex-end;padding:10px 16px 0}.dle-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.dle-grp{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;background:var(--bg)}.dle-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dle-row input[type=text]{flex:1;min-width:160px}.dle-row .pl-chk{white-space:nowrap;font-size:13px;display:inline-flex;flex-direction:row;align-items:center;gap:4px;margin:0}.dle-row .pl-chk input{margin:0}@media(max-width:560px){.dle-row{gap:4px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.dle-row input[type=text]{flex-basis:100%}.dle-row .pl-chk{margin-right:auto}.dle-foot .btn{padding:8px 10px;font-size:14px}}.dle-ghead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dle-ghead input{flex:1;min-width:160px;font-weight:600}.dl-grp{padding:10px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
 .dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
 .dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -5229,7 +5229,7 @@ const DL_GROUPS={
     'Bathrooms':['Toilet layout & vanity details','Toilet wall & floor tile layout','Shower partition details'],
     'Flooring':['Flooring layout','Skirting & threshold details'],
     'Schedules':['Material & finish schedule','Hardware & fittings schedule','Interior BOQ']}};
-const dlGrpOf=(disc,k,c)=>{const G=DL_GROUPS[disc];if(!G)return '';const b=String(k).split(' — ')[0];for(const g in G)if(G[g].includes(b)||G[g].includes(b+'s'))return g;return (c&&c.grp)||'Other';};
+const dlGrpOf=(disc,k,c,pid)=>{const t=dlTab(disc,pid);if(!dlHasDrop(t))return '';const b=String(k).split(' — ')[0];for(const G of t.groups)if(G.items.some(i=>i.n===b||i.n===b+'s'||i.n===k))return G.g||'General';return (c&&c.grp)||'Other';};
 const DL_STD={
   Architecture:['Site plan','Floor plans','Terrace plan','Elevations','Sections','Door & window schedule','Staircase details','Toilet details','Kitchen details','Compound wall & gate','Municipal approval drawings'],
   Structure:['Soil investigation report','Centre line / column marking','Footing layout & details','Column layout & schedule','Plinth beam layout','Roof shuttering layouts','Slab reinforcement details','Beam reinforcement details','Staircase reinforcement','Sump & septic tank','Headroom / overhead tank','Structural design report'],
@@ -5245,6 +5245,7 @@ function dlFloors(pid){const p=proj(pid)||{};
   if(Array.isArray(p.floors)&&p.floors.length&&(!n(p.nfloors)||p.floorsKey===dlKey(p)))return p.floors;   // edited in the library
   if(n(p.nfloors))return dlFloorList({n:Math.min(40,Math.round(n(p.nfloors))),cellar:/cellar/i.test(p.base||''),stilt:/stilt/i.test(p.base||'')});
   const ef=((p.estimate||{}).floors||[]).map(f=>f.n).filter(Boolean);return ef.length?ef:['Ground floor'];}
+const dlFloorKey=(k,f)=>`${k.replace(/s$/,'')} — ${/roof|slab|beam/i.test(k)?dlRoof(f):f}`;
 const dlRoof=f=>/ floor$/i.test(f)?f.replace(/ floor$/i,' floor roof'):f+' roof';
 function dlFloorList({n,cellar,stilt}){const out=[];if(cellar)out.push('Cellar');if(stilt)out.push('Stilt floor');for(let i=0;i<n;i++)out.push(FLOOR_NAMES[i]||`Floor ${i}`);return out;}
 const DL={disc:'Architecture',grp:''};
@@ -5269,27 +5270,108 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(!ids.length){toast('No approved drawings waiting to be released');return;}relSet(ids,true);});
 document.addEventListener('change',e=>{if(!e.target.matches||!e.target.matches('[data-dlgrp]'))return;DL.grp=e.target.value;render();});
 const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?{...DL_STD,...o}:DL_STD;};
+/* the editable list: folders (tabs) → sub-folders (drop-down) → drawings; "pf" = one per floor.
+   Saved for the company (org/drawlib) or for one project (project.drawLib); the standard list is the fallback. */
+function dlDefault(){const std=dlStd();return DL_DISC.map(k=>{const per=DL_PERFLOOR[k]||[],it=n=>({n,pf:per.includes(n)});
+  const G=DL_GROUPS[k];return {k,l:k,groups:G?Object.entries(G).map(([g,a])=>({g,items:a.map(it)})):[{g:'',items:(std[k]||[]).map(it)}]};});}
+const dlValid=L=>Array.isArray(L)&&L.length&&L.every(t=>t&&t.k&&Array.isArray(t.groups));
+function dlLib(pid){const p=pid&&proj(pid);if(p&&dlValid(p.drawLib))return p.drawLib;const o=(D.org.find(x=>x.id==='drawlib')||{}).tabs;return dlValid(o)?o:dlDefault();}
+const dlTab=(k,pid)=>dlLib(pid===undefined?S.proj:pid).find(t=>t.k===k);
+const dlHasDrop=t=>!!t&&(t.groups.length>1||!!(t.groups[0]&&t.groups[0].g));
+const dlCat=k=>DL_CAT[k]||'Drawing';
+Object.assign(ICONS,{'folder-plus':ICONS['folder-plus']||'<path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>'});
+/* ---------- Edit list: add / rename / remove / reorder folders, sub-folders and drawings ---------- */
+const DLE={L:null,t:0};
+function dleOpen(){DLE.L=JSON.parse(JSON.stringify(dlLib(S.proj))).map(t=>({...t,groups:t.groups.map(g=>({...g,items:g.items.map(i=>({...i,o:i.o||i.n}))}))}));
+  DLE.t=Math.max(0,DLE.L.findIndex(t=>t.k===DL.disc));DLE.own=!!(proj(S.proj)||{}).drawLib;dleDraw();}
+function dleDraw(){const L=DLE.L,T=L[DLE.t];
+  const up=(a,i,dir)=>`<button type="button" class="btn sm ghost" data-dlemv="${a}|${i}|${dir}" aria-label="Move ${dir<0?'up':'down'}">${dir<0?'↑':'↓'}</button>`;
+  const grp=(G,gi)=>`<div class="dle-grp"><div class="dle-ghead">${ico('folder-open')}<input type="text" value="${esc(G.g)}" data-dleg="${gi}" placeholder="${T.groups.length>1?'Sub-folder name':'Sub-folder name (optional)'}" aria-label="Sub-folder name">
+      ${up('g',gi,-1)}${up('g',gi,1)}<button type="button" class="btn sm ghost warn" data-dledelg="${gi}" aria-label="Remove sub-folder">${ico('trash-2')}</button></div>
+    ${G.items.map((it,ii)=>`<div class="dle-row"><input type="text" value="${esc(it.n)}" data-dlei="${gi}|${ii}" aria-label="Drawing name">
+      <label class="pl-chk"><input type="checkbox" data-dlepf="${gi}|${ii}" ${it.pf?'checked':''}> Each floor</label>
+      ${up('i',gi+':'+ii,-1)}${up('i',gi+':'+ii,1)}<button type="button" class="btn sm ghost warn" data-dledeli="${gi}|${ii}" aria-label="Remove ${esc(it.n)}">${ico('trash-2')}</button></div>`).join('')}
+    <button type="button" class="btn sm" data-dleaddi="${gi}">${ico('plus')}<span>Add drawing</span></button></div>`;
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane"><div class="pane-h"><h2>Edit drawings list</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b" id="dleBody">
+    <div class="code" style="margin-bottom:8px">Folders are the tabs; sub-folders make the drop-down. Tick “Each floor” to list a drawing once per floor.</div>
+    <div class="dle-tabs">${L.map((t,i)=>`<button type="button" class="btn sm ${i===DLE.t?'pri':''}" data-dlet="${i}">${esc(t.l||t.k)}</button>`).join('')}<button type="button" class="btn sm ghost" data-dleaddt>${ico('plus')}<span>Folder</span></button></div>
+    ${T?`<div class="dle-ghead"><label class="code" style="min-width:90px">Folder name</label><input type="text" value="${esc(T.l||T.k)}" data-dletl aria-label="Folder name">
+      <button type="button" class="btn sm ghost" data-dlemvt="-1" aria-label="Move folder left">←</button><button type="button" class="btn sm ghost" data-dlemvt="1" aria-label="Move folder right">→</button>
+      <button type="button" class="btn sm ghost warn" data-dledelt>${ico('trash-2')}<span>Remove folder</span></button></div>
+    ${T.groups.map(grp).join('')}
+    <button type="button" class="btn sm" data-dleaddg>${ico('folder-plus')}<span>Add sub-folder</span></button>`:''}
+   </div>
+   <div class="pane-f srow dle-foot" style="flex-wrap:wrap;gap:8px">
+    <button type="button" class="btn pri" data-dlesave="all">${ico('check')}<span>Save for all projects</span></button>
+    <button type="button" class="btn" data-dlesave="proj">${ico('check')}<span>Only for ${esc(pname(S.proj))}</span></button>
+    ${DLE.own?`<button type="button" class="btn ghost" data-dlesave="unproj">Use company list for this project</button>`:''}
+    <button type="button" class="btn ghost" data-dlesave="reset">Back to standard list</button>
+    <button type="button" class="btn ghost" data-close>Cancel</button></div></div></div>`;}
+function dleUsed(disc,names){return D.documents.filter(d=>d.disc===disc&&((d.files||[]).length||d.link)&&(!names||names.some(n=>{const k=d.dkey||d.title;return k===n||String(k).startsWith(n.replace(/s$/,'')+' — ');})));}
+document.addEventListener('input',e=>{if(!DLE.L||!e.target.closest||!e.target.closest('#dleBody'))return;const t=e.target,T=DLE.L[DLE.t],ds=t.dataset;
+  if('dletl' in ds)T.l=t.value;
+  else if(ds.dleg!==undefined)T.groups[+ds.dleg].g=t.value;
+  else if(ds.dlei){const [g,i]=ds.dlei.split('|').map(Number);T.groups[g].items[i].n=t.value;}
+  else if(ds.dlepf){const [g,i]=ds.dlepf.split('|').map(Number);T.groups[g].items[i].pf=t.checked;}});
+document.addEventListener('change',e=>{const ds=e.target.dataset||{};if(DLE.L&&ds.dlepf){const [g,i]=ds.dlepf.split('|').map(Number);DLE.L[DLE.t].groups[g].items[i].pf=e.target.checked;}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-dledit],[data-dlet],[data-dleaddt],[data-dledelt],[data-dlemvt],[data-dleaddg],[data-dledelg],[data-dleaddi],[data-dledeli],[data-dlemv],[data-dlesave]');if(!b)return;
+  const ds=b.dataset;if('dledit' in ds){dleOpen();return;}
+  const L=DLE.L;if(!L)return;const T=L[DLE.t];const swap=(a,i,j)=>{if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];};
+  const focusLast=sel=>setTimeout(()=>{const x=[...document.querySelectorAll(sel)].pop();if(x){x.focus();x.select&&x.select();}},30);
+  if(ds.dlet!==undefined){DLE.t=+ds.dlet;dleDraw();return;}
+  if('dleaddt' in ds){let n='New folder',i=2;while(L.some(t=>t.k===n||t.l===n))n='New folder '+i++;L.push({k:n,l:n,groups:[{g:'',items:[]}],nw:1});DLE.t=L.length-1;dleDraw();focusLast('[data-dletl]');return;}
+  if('dledelt' in ds){const u=dleUsed(T.k);if(u.length){toast(`“${T.l||T.k}” has ${u.length} uploaded drawing${u.length>1?'s':''} — delete or move them first`);return;}if(L.length<2){toast('Keep at least one folder');return;}L.splice(DLE.t,1);DLE.t=Math.max(0,DLE.t-1);dleDraw();return;}
+  if(ds.dlemvt){const j=DLE.t+ +ds.dlemvt;if(j>=0&&j<L.length){swap(L,DLE.t,j);DLE.t=j;dleDraw();}return;}
+  if('dleaddg' in ds){T.groups.push({g:'',items:[]});dleDraw();focusLast('[data-dleg]');return;}
+  if(ds.dledelg!==undefined){const G=T.groups[+ds.dledelg];const u=dleUsed(T.k,G.items.map(i=>i.o||i.n));
+    if(u.length&&!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ico('trash-2')}<span>Remove? ${u.length} uploaded stay under “Other”</span>`;return;}
+    T.groups.splice(+ds.dledelg,1);if(!T.groups.length)T.groups.push({g:'',items:[]});dleDraw();return;}
+  if(ds.dleaddi!==undefined){T.groups[+ds.dleaddi].items.push({n:'',pf:false});dleDraw();focusLast(`[data-dlei^="${ds.dleaddi}|"]`);return;}
+  if(ds.dledeli){const [g,i]=ds.dledeli.split('|').map(Number);T.groups[g].items.splice(i,1);dleDraw();return;}
+  if(ds.dlemv){const [a,ix,dir]=ds.dlemv.split('|');if(a==='g')swap(T.groups,+ix,+ix + +dir);else{const [g,i]=ix.split(':').map(Number);swap(T.groups[g].items,i,i+ +dir);}dleDraw();return;}
+  if(ds.dlesave)dleSave(ds.dlesave);});
+async function dleSave(how){const pid=S.proj;
+  if(how==='reset'||how==='unproj'){const list=[];if(how==='reset')list.push(['org','drawlib',{tabs:null}]);if(proj(pid)&&proj(pid).drawLib)list.push(['projects',pid,{...recOf(proj(pid)),drawLib:null}]);
+    if(await write(()=>dbBatch(list),how==='reset'?'Back to the standard drawings list':'This project now uses the company list')){closeLayer();render();}return;}
+  const L=[],seen=new Set();
+  for(const t of DLE.L){const l=String(t.l||t.k).trim();if(!l){toast('A folder needs a name');return;}if(seen.has(l.toLowerCase())){toast(`Two folders are called “${l}”`);return;}seen.add(l.toLowerCase());
+    const k=t.nw?l:t.k;const gs=[],gseen=new Set();
+    for(const g of t.groups){const gn=String(g.g||'').trim();if(gn&&gseen.has(gn.toLowerCase())){toast(`Two sub-folders in “${l}” are called “${gn}”`);return;}gseen.add(gn.toLowerCase());
+      const items=g.items.map(i=>({n:String(i.n||'').trim(),pf:!!i.pf,o:i.o})).filter(i=>i.n);gs.push({g:gn,items});}
+    if(gs.length>1&&gs.some(g=>!g.g)){toast(`Name every sub-folder in “${l}”`);return;}
+    L.push({k,l,groups:gs});}
+  /* renamed drawings keep their uploads */
+  const mig=[];L.forEach(t=>t.groups.forEach(g=>g.items.forEach(i=>{if(i.o&&i.o!==i.n){const ob=i.o.replace(/s$/,''),nb=i.n.replace(/s$/,'');
+    D.documents.filter(d=>d.disc===t.k&&(how!=='proj'||d.project===pid)).forEach(d=>{const k=d.dkey||d.title;let nk=null;if(k===i.o)nk=i.n;else if(String(k).startsWith(ob+' — '))nk=nb+String(k).slice(ob.length);
+      if(nk)mig.push(['documents',d.id,{...recOf(d),dkey:nk,title:d.title===k?nk:d.title}]);});}delete i.o;})));
+  const list=[...mig];
+  if(how==='proj')list.push(['projects',pid,{...recOf(proj(pid)),drawLib:L}]);
+  else{list.push(['org','drawlib',{tabs:L}]);if(proj(pid)&&proj(pid).drawLib)list.push(['projects',pid,{...recOf(proj(pid)),drawLib:null}]);}
+  if(await write(()=>dbBatch(list),how==='proj'?`Drawings list saved for ${pname(pid)}`:'Drawings list saved for all projects')){DLE.L=null;closeLayer();render();}}
+
 const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream',mp4:'video/mp4',mov:'video/quicktime',glb:'model/gltf-binary',gltf:'model/gltf+json',obj:'model/obj',fbx:'application/octet-stream'};
 const fileType=n=>FILE_TYPES[(String(n).split('.').pop()||'').toLowerCase()]||'';
 const fileIco=f=>/pdf/.test(f.type||'')?'file-text':/^image\/(jpe?g|png|webp)/.test(f.type||'')?'image':'file';
 const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):driveView(f.id);
 /* the drawings of one project: checklist items + anything else filed under that discipline */
 function dlItems(pid,disc){
-  const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&d.cat===DL_CAT[disc]))&&relOK(d));
-  const fl=dlFloors(pid),per=DL_PERFLOOR[disc]||[];
-  const names=(dlStd()[disc]||[]).flatMap(k=>per.includes(k)?fl.map(f=>`${k.replace(/s$/,'')} — ${/roof|slab|beam/i.test(k)?dlRoof(f):f}`):[k]);
+  const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&DL_CAT[disc]&&d.cat===DL_CAT[disc]))&&relOK(d));
+  const fl=dlFloors(pid),t=dlTab(disc,pid);
+  const names=(t?t.groups.flatMap(G=>G.items):[]).flatMap(i=>i.pf?fl.map(f=>dlFloorKey(i.n,f)):[i.n]);
   docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
   return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=relHide()?all[0]:(all.find(d=>d.status!=='Superseded')||all[0]);
-    return {k,all,cur,grp:dlGrpOf(disc,k,cur),has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
+    return {k,all,cur,grp:dlGrpOf(disc,k,cur,pid),has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
 }
 function vDrawLib(){
   const pid=S.proj!=='all'?S.proj:'';
   if(!pid)return header('Drawings library')+`<div class="box hero-empty">${ico('library')}<h2>Choose a project</h2><p>Pick a project at the top to see its Architecture, Structure, MEP, 3D views and Interior drawings.</p></div>`;
-  const tabs=DL_DISC.map(d=>{const it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${d}">${d}${DL_GROUPS[d]?' ▾':''} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
-  const G=DL_GROUPS[DL.disc],grps=G?[...Object.keys(G),...(dlItems(pid,DL.disc).some(x=>x.grp==='Other')?['Other']:[])]:[];
+  const LIB=dlLib(pid);if(!LIB.some(t=>t.k===DL.disc)){DL.disc=LIB[0].k;DL.grp='';}
+  const tabs=LIB.map(T=>{const d=T.k,it=dlItems(pid,d);const n=it.filter(x=>x.has).length;return `<button type="button" class="btn ${DL.disc===d?'pri':''}" data-dldisc="${esc(d)}">${esc(T.l||d)}${dlHasDrop(T)?' ▾':''} <span class="pill ${n===it.length?'p-green':'p-grey'}">${n}/${it.length}</span></button>`;}).join('');
+  const TT=LIB.find(t=>t.k===DL.disc),G=dlHasDrop(TT),grps=G?[...TT.groups.map(x=>x.g||'General'),...(dlItems(pid,DL.disc).some(x=>x.grp==='Other')?['Other']:[])]:[];
   if(!grps.includes(DL.grp))DL.grp='';
   const allItems=dlItems(pid,DL.disc),items=DL.grp?allItems.filter(x=>x.grp===DL.grp):allItems,n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
-  const grpSel=G?`<div class="srow" style="padding-top:0"><label class="code" for="dlGrp">${DL.disc==='3D views'?'Show 3D views of':'Show interior drawings for'}</label><select id="dlGrp" data-dlgrp style="max-width:320px">${['',...grps].map(g=>{const it=g?allItems.filter(x=>x.grp===g):allItems;return `<option value="${esc(g)}" ${DL.grp===g?'selected':''}>${g?esc(g):'All'} (${it.filter(x=>x.has).length}/${it.length})</option>`;}).join('')}</select></div>`:'';
+  const grpSel=G?`<div class="srow" style="padding-top:0"><label class="code" for="dlGrp">${DL.disc==='3D views'?'Show 3D views of':DL.disc==='Interiors'?'Show interior drawings for':'Sub-folder'}</label><select id="dlGrp" data-dlgrp style="max-width:320px">${['',...grps].map(g=>{const it=g?allItems.filter(x=>x.grp===g):allItems;return `<option value="${esc(g)}" ${DL.grp===g?'selected':''}>${g?esc(g):'All'} (${it.filter(x=>x.has).length}/${it.length})</option>`;}).join('')}</select></div>`:'';
   const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':apStatus(c);
     return `${G&&!DL.grp&&(i===0||items[i-1].grp!==x.grp)?`<div class="dl-grp">${esc(x.grp)}</div>`:''}<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.has?' '+relBadge(c):''}${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
       ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
@@ -5300,11 +5382,11 @@ function vDrawLib(){
         ${x.has?relBtn(c):''}${x.has&&!relHide()?apButtons(c,x.k):''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
-   dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>${grpSel}
-    <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.grp||DL.disc)} ${DL.disc==='3D views'?'views':'drawings'} uploaded</span>
-      ${relCan()&&items.some(x=>x.has&&x.cur&&!x.cur.rel&&apStage(x.cur)>=3&&x.cur.status!=='Superseded')?`<button type="button" class="btn sm pri" data-dlrelall>${ico('send')}<span>Release all approved</span></button>`:''}${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||DL.disc)}</span></button>`:''}</div>
+   dlFloorBox(pid)+`<div class="box">${relCan()?`<div class="dl-edit-row"><button type="button" class="btn sm" data-dledit>${ico('pencil')}<span>Edit list</span></button></div>`:''}<div class="srow">${tabs}</div>${grpSel}
+    <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.grp||(TT&&TT.l)||DL.disc)} ${DL.disc==='3D views'?'views':'drawings'} uploaded</span>
+      ${relCan()&&items.some(x=>x.has&&x.cur&&!x.cur.rel&&apStage(x.cur)>=3&&x.cur.status!=='Superseded')?`<button type="button" class="btn sm pri" data-dlrelall>${ico('send')}<span>Release all approved</span></button>`:''}${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||(TT&&TT.l)||DL.disc)}</span></button>`:''}</div>
     <div class="dl-list">${rows}</div>
-    ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="${DL.disc==='3D views'?'Add another 3D view, e.g. Balcony 3D':DL.disc==='Interiors'?'Add another interior drawing, e.g. Bar unit details':`Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details`}" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
+    ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="${DL.disc==='3D views'?'Add another 3D view, e.g. Balcony 3D':DL.disc==='Interiors'?'Add another interior drawing, e.g. Bar unit details':`Add another ${esc((TT&&TT.l)||DL.disc)} drawing${DL.disc==='Architecture'||DL.disc==='Structure'?', e.g. Lift shaft details':''}`}" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
     <div class="code" style="padding:0 16px 14px">${DL.disc==='3D views'?'Renders (JPG, PNG, PDF), walkthrough videos (MP4) and 3D model files (SketchUp, Revit, GLB, OBJ, ZIP) — up to 10 MB each. For a bigger walkthrough video, put it on Drive or YouTube and add the link with ✎.':'DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each.'} A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.<br>
       Approval: ① Drafted (draftsman uploads) → ② Checked (architect / project manager) → ③ Approved (senior architect) → the admin taps <b>Release to site & client</b>; only then can clients and site engineers see it. Upload a PDF or image print with the DWG to use <b>Mark up</b> (pen, arrows, boxes, text).</div></div>`;
 }
@@ -5340,7 +5422,7 @@ async function dlUpload(key,files){
   if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
   else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
     const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-    list.push(['documents',id,{project:pid,disc:DL.disc,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:DL_CAT[DL.disc],rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
+    list.push(['documents',id,{project:pid,disc:DL.disc,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:dlCat(DL.disc),rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
   await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();
 }
 /* ---------- share a file ---------- */
@@ -5384,7 +5466,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.dlup){const fs=t.files;dlUpload(t.dataset.dlup,fs);t.value='';}},true);
 document.addEventListener('submit',e=>{if(e.target.id!=='dlAdd')return;e.preventDefault();const v=(e.target.elements.t.value||'').trim();if(!v)return;
   if(dlItems(S.proj,DL.disc).some(x=>x.k.toLowerCase()===v.toLowerCase())){toast('Already in the list');return;}
-  write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,...(DL.grp&&DL.grp!=='Other'?{grp:DL.grp}:{}),dkey:v,title:v,cat:DL_CAT[DL.disc],status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
+  write(()=>db.collection('documents').add({project:S.proj,disc:DL.disc,...(DL.grp&&DL.grp!=='Other'?{grp:DL.grp}:{}),dkey:v,title:v,cat:dlCat(DL.disc),status:'Draft',files:[],by:ME.id,at:Date.now()}),`${v} added`).then(()=>render());},true);
 
 /* ================= Sign-in link for each organisation ================= */
 Object.assign(ICONS,{'link':ICONS.link||'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'});
