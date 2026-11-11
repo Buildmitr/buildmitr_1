@@ -1053,7 +1053,7 @@ const isNum=f=>f.t==='number'&&f.k!=='progress'||f.t==='money';
 /* ================= Generic module list ================= */
 function vModule(k){
   const m=MOD[k];
-  let rows=D[k].filter(r=>m.noProject&&S.proj!=='all'?(k!=='labour'||r.project===S.proj):inProj(r));
+  let rows=D[k].filter(r=>m.noProject&&S.proj!=='all'?(k!=='labour'||r.project===S.proj):inProj(r));if(k==='documents')rows=rows.filter(relOK);
   if(k==='cameras')rows=rows.filter(camAllowed);
   const q=S.q.toLowerCase();
   if(q)rows=rows.filter(r=>m.fields.some(f=>String(cell(f,r)).toLowerCase().replace(/<[^>]+>/g,'').includes(q)));
@@ -2518,10 +2518,10 @@ function vCPay(){
     <h3 class="code" style="margin-top:12px">PAYMENTS RECEIVED</h3>${paid.length?paid.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>`<div class="srow"><span style="flex:1">${fd(x.date)} ${x.mode?'· '+esc(x.mode):''}</span><b>${inr(x.amount)}</b></div>`).join(''):'<div class="code">—</div>'}</div></div></div>`;}).join('');
 }
 function vCDocs(){
-  const ids=new Set(PJ().map(p=>p.id));const docs=D.documents.filter(d=>ids.has(d.project)&&d.status==='Approved');
+  const ids=new Set(PJ().map(p=>p.id));const docs=D.documents.filter(d=>ids.has(d.project)&&d.status==='Approved'&&relOK(d));
   const cats=[...new Set(docs.map(d=>d.cat||'Other'))];
   return clientHead('Drawings & documents')+(docs.length?cats.map(c=>`<div class="box"><div class="box-h">${ico('folder-open')}<h2>${esc(c)}</h2></div>${docs.filter(d=>(d.cat||'Other')===c).map(d=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(d.title)}</b> <span class="code">${esc(d.rev||'')}</span></div>${(d.files||[]).map(f=>`<a class="btn sm" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico('file-text')}Open</a>`).join('')}${d.link?`<a class="btn sm" href="${esc(d.link)}" target="_blank" rel="noopener noreferrer">${ico('external-link')}Open</a>`:''}</div>`).join('')}</div>`).join('')
-    :`<div class="box hero-empty">${ico('folder-open')}<h2>No approved drawings yet</h2><p>Drawings appear here once they are approved.</p></div>`);
+    :`<div class="box hero-empty">${ico('folder-open')}<h2>No drawings yet</h2><p>Drawings appear here once the office approves and releases them.</p></div>`);
 }
 
 Object.assign(HI,{sitehome:'साइट होम',desk:'डिज़ाइन डेस्क',cphotos:'प्रगति फोटो',cpay:'भुगतान',cdocs:'ड्रॉइंग'});
@@ -5248,6 +5248,25 @@ function dlFloors(pid){const p=proj(pid)||{};
 const dlRoof=f=>/ floor$/i.test(f)?f.replace(/ floor$/i,' floor roof'):f+' roof';
 function dlFloorList({n,cellar,stilt}){const out=[];if(cellar)out.push('Cellar');if(stilt)out.push('Stilt floor');for(let i=0;i<n;i++)out.push(FLOOR_NAMES[i]||`Floor ${i}`);return out;}
 const DL={disc:'Architecture',grp:''};
+/* drawings reach clients and site engineers only after the admin releases them (the server enforces the same rule) */
+const REL_ROLES=['Client','Site engineer','Supervisor'];
+const DRAW_CATS=['Architectural drawing','Structural drawing','Electrical / plumbing','3D view / render','Interior drawing'];
+const isDrawing=d=>!!(d&&(d.disc||DRAW_CATS.includes(d.cat)));
+const relHide=()=>REL_ROLES.includes(curRole());
+const relOK=d=>!relHide()||!isDrawing(d)||!!d.rel;
+const relCan=()=>CANW&&(apMyRole()==='Admin'||apMyRole()==='Project manager');
+function relBadge(d){if(!d||!isDrawing(d)||relHide()||!((d.files||[]).length||d.link)||d.status==='Superseded')return '';
+  return d.rel?`<span class="pill p-green" title="Released by ${esc(nm(d.rel.by))}, ${esc(fd(new Date(d.rel.at).toISOString().slice(0,10)))}">${ico('eye')} Visible to site & client</span>`
+    :`<span class="pill p-grey" title="Clients and site engineers can't see it until the admin releases it">${ico('eye-off')} Not released</span>`;}
+function relBtn(d){if(!d||!relCan()||!isDrawing(d)||!((d.files||[]).length||d.link)||d.status==='Superseded')return '';
+  if(d.rel)return `<button type="button" class="btn sm ghost" data-dlrel="${esc(d.id)}|0" title="Hide from clients and site engineers">${ico('eye-off')}<span>Withdraw</span></button>`;
+  return apStage(d)>=3?`<button type="button" class="btn sm pri" data-dlrel="${esc(d.id)}|1">${ico('send')}<span>Release to site & client</span></button>`:'';}
+async function relSet(ids,on){const list=ids.map(id=>D.documents.find(x=>x.id===id)).filter(Boolean).map(d=>{const o={...recOf(d)};if(on)o.rel={by:ME.id,at:Date.now()};else delete o.rel;return ['documents',d.id,o];});
+  if(!list.length)return;await write(()=>dbBatch(list),on?`${list.length>1?list.length+' drawings':'Drawing'} released to site engineers & clients`:'Withdrawn — clients and site engineers no longer see it');render();}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-dlrel]');if(!b)return;const [id,on]=b.dataset.dlrel.split('|');relSet([id],on==='1');});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-dlrelall]');if(!b)return;
+  const ids=dlItems(S.proj,DL.disc).filter(x=>(!DL.grp||x.grp===DL.grp)&&x.cur&&x.has&&!x.cur.rel&&apStage(x.cur)>=3&&x.cur.status!=='Superseded').map(x=>x.cur.id);
+  if(!ids.length){toast('No approved drawings waiting to be released');return;}relSet(ids,true);});
 document.addEventListener('change',e=>{if(!e.target.matches||!e.target.matches('[data-dlgrp]'))return;DL.grp=e.target.value;render();});
 const dlStd=()=>{const o=orgMain().drawStd;return o&&typeof o==='object'?{...DL_STD,...o}:DL_STD;};
 const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream',mp4:'video/mp4',mov:'video/quicktime',glb:'model/gltf-binary',gltf:'model/gltf+json',obj:'model/obj',fbx:'application/octet-stream'};
@@ -5256,11 +5275,11 @@ const fileIco=f=>/pdf/.test(f.type||'')?'file-text':/^image\/(jpe?g|png|webp)/.t
 const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):driveView(f.id);
 /* the drawings of one project: checklist items + anything else filed under that discipline */
 function dlItems(pid,disc){
-  const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&d.cat===DL_CAT[disc])));
+  const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&d.cat===DL_CAT[disc]))&&relOK(d));
   const fl=dlFloors(pid),per=DL_PERFLOOR[disc]||[];
   const names=(dlStd()[disc]||[]).flatMap(k=>per.includes(k)?fl.map(f=>`${k.replace(/s$/,'')} — ${/roof|slab|beam/i.test(k)?dlRoof(f):f}`):[k]);
   docs.forEach(d=>{const k=d.dkey||d.title;if(k&&!names.includes(k))names.push(k);});
-  return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=all.find(d=>d.status!=='Superseded')||all[0];
+  return names.map(k=>{const all=docs.filter(d=>(d.dkey||d.title)===k).sort((a,b)=>(b.at||0)-(a.at||0));const cur=relHide()?all[0]:(all.find(d=>d.status!=='Superseded')||all[0]);
     return {k,all,cur,grp:dlGrpOf(disc,k,cur),has:!!(cur&&((cur.files||[]).length||cur.link))};}).filter(x=>x.all.length||!x.k.includes(' — ')||names.indexOf(x.k)>=0);
 }
 function vDrawLib(){
@@ -5272,22 +5291,22 @@ function vDrawLib(){
   const allItems=dlItems(pid,DL.disc),items=DL.grp?allItems.filter(x=>x.grp===DL.grp):allItems,n=items.filter(x=>x.has).length,canUp=CANW&&canEditView('documents');
   const grpSel=G?`<div class="srow" style="padding-top:0"><label class="code" for="dlGrp">${DL.disc==='3D views'?'Show 3D views of':'Show interior drawings for'}</label><select id="dlGrp" data-dlgrp style="max-width:320px">${['',...grps].map(g=>{const it=g?allItems.filter(x=>x.grp===g):allItems;return `<option value="${esc(g)}" ${DL.grp===g?'selected':''}>${g?esc(g):'All'} (${it.filter(x=>x.has).length}/${it.length})</option>`;}).join('')}</select></div>`:'';
   const rows=items.map((x,i)=>{const c=x.cur,f=(c&&c.files)||[],st=!x.has?'Pending':apStatus(c);
-    return `${G&&!DL.grp&&(i===0||items[i-1].grp!==x.grp)?`<div class="dl-grp">${esc(x.grp)}</div>`:''}<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
+    return `${G&&!DL.grp&&(i===0||items[i-1].grp!==x.grp)?`<div class="dl-grp">${esc(x.grp)}</div>`:''}<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.has?' '+relBadge(c):''}${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
       ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
       ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}
       ${x.has?apChips(c):''}${x.has?apLog(c):''}</div>
       <div class="dl-acts">${canUp?`<label class="btn sm ${x.has?'':'pri'}">${ico('upload')}<span>${x.has?'New revision':'Upload'}</span><input type="file" hidden multiple accept="${DL.disc==='3D views'?'.jpg,.jpeg,.png,.webp,.pdf,.mp4,.mov,.skp,.rvt,.glb,.gltf,.obj,.fbx,.zip':'.dwg,.dxf,.dwf,.pdf,.jpg,.jpeg,.png,.webp,.skp,.xlsx,.xls,.docx,.zip,.rvt,.ifc'}" data-dlup="${esc(x.k)}"></label>`:''}
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
-        ${x.has?apButtons(c,x.k):''}${dlDelBtn(c)}
+        ${x.has?relBtn(c):''}${x.has&&!relHide()?apButtons(c,x.k):''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
    dlFloorBox(pid)+`<div class="box"><div class="srow">${tabs}</div>${grpSel}
     <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.grp||DL.disc)} ${DL.disc==='3D views'?'views':'drawings'} uploaded</span>
-      ${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||DL.disc)}</span></button>`:''}</div>
+      ${relCan()&&items.some(x=>x.has&&x.cur&&!x.cur.rel&&apStage(x.cur)>=3&&x.cur.status!=='Superseded')?`<button type="button" class="btn sm pri" data-dlrelall>${ico('send')}<span>Release all approved</span></button>`:''}${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||DL.disc)}</span></button>`:''}</div>
     <div class="dl-list">${rows}</div>
     ${canUp?`<form id="dlAdd" class="srow"><input name="t" placeholder="${DL.disc==='3D views'?'Add another 3D view, e.g. Balcony 3D':DL.disc==='Interiors'?'Add another interior drawing, e.g. Bar unit details':`Add another ${esc(DL.disc)} drawing, e.g. Lift shaft details`}" style="flex:1;min-width:200px"><button class="btn sm">${ico('plus')}<span>Add to list</span></button></form>`:''}
     <div class="code" style="padding:0 16px 14px">${DL.disc==='3D views'?'Renders (JPG, PNG, PDF), walkthrough videos (MP4) and 3D model files (SketchUp, Revit, GLB, OBJ, ZIP) — up to 10 MB each. For a bigger walkthrough video, put it on Drive or YouTube and add the link with ✎.':'DWG, DXF, PDF, images, Excel, Word or ZIP — up to 10 MB each.'} A new upload becomes the next revision (R0, R1…), the older one is kept as Superseded.<br>
-      Approval: ① Drafted (draftsman uploads) → ② Checked (architect / project manager) → ③ Approved (senior architect). Upload a PDF or image print with the DWG to use <b>Mark up</b> (pen, arrows, boxes, text).</div></div>`;
+      Approval: ① Drafted (draftsman uploads) → ② Checked (architect / project manager) → ③ Approved (senior architect) → the admin taps <b>Release to site & client</b>; only then can clients and site engineers see it. Upload a PDF or image print with the DWG to use <b>Mark up</b> (pen, arrows, boxes, text).</div></div>`;
 }
 function dlFloorBox(pid){
   const fl=dlFloors(pid),p=proj(pid)||{},ed=CANW&&canEditView('projects');const above=fl.filter(f=>!/cellar|stilt/i.test(f)).length;
@@ -5527,14 +5546,16 @@ function apDialog(id,kind,st){const d=D.documents.find(x=>x.id===id);if(!d)retur
    <form id="apForm" class="pane-b" data-id="${esc(id)}" data-kind="${kind}" data-st="${st||0}"><div class="code" style="margin-bottom:8px">${esc(t)} · ${esc(pname(d.project))}</div>
     ${apChips(d)}
     <label style="display:block;margin-top:12px">${kind==='back'?'What needs to change (required)':'Comment (optional)'}<textarea name="t" rows="3" ${kind==='back'?'required':''} placeholder="${kind==='back'?'e.g. Staircase width 1.2 m, update the door schedule':'e.g. Checked dimensions and grid lines'}"></textarea></label>
+    ${kind!=='back'&&st===3&&relCan()&&isDrawing(d)?`<label class="pl-chk" style="margin-top:8px"><input type="checkbox" name="rel" checked> Also release to site engineers & clients</label>`:''}
     <label class="pl-chk" style="margin-top:8px"><input type="checkbox" name="wa" checked> Tell the team on WhatsApp</label>
     <div class="srow" style="padding:12px 0 0;border:0"><button class="btn ${kind==='back'?'warn':'pri'}">${ico(kind==='back'?'corner-up-left':'check')}<span>${esc(head)}</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div></div>`;
   setTimeout(()=>{const ta=document.querySelector('#apForm textarea');if(ta)ta.focus();},50);}
-async function apSave(id,kind,st,txt,wa){const d=D.documents.find(x=>x.id===id);if(!d)return;const now=Date.now(),t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
+async function apSave(id,kind,st,txt,wa,rel){const d=D.documents.find(x=>x.id===id);if(!d)return;const now=Date.now(),t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
   const a={...(d.appr||{})},rv=[...(d.rv||[])];let status;
   if(kind==='back'){status='Sent back';rv.push({k:'back',by:ME.id,at:now,t:txt,st:apStage(d)});Object.keys(a).forEach(k=>delete a[k]);}
   else{a['s'+st]={by:ME.id,at:now};for(let i=1;i<st;i++)if(!a['s'+i])a['s'+i]={by:ME.id,at:now};status=AP_STATUS[st];rv.push({k:'go',by:ME.id,at:now,t:txt,st});}
-  const ok=await write(()=>db.doc('documents/'+id).update({appr:a,status,rv}),kind==='back'?`${t}: sent back`:`${t}: ${AP_STEPS[st-1].n.toLowerCase()}`);
+  const relX=kind==='back'?{rel:null}:(st===3&&rel&&relCan()?{rel:{by:ME.id,at:now}}:{});
+  const ok=await write(()=>db.doc('documents/'+id).update({appr:a,status,rv,...relX}),kind==='back'?`${t}: sent back`:`${t}: ${AP_STEPS[st-1].n.toLowerCase()}`);
   if(!ok)return;closeLayer();render();
   if(wa){const next=kind==='back'?'Please update and upload a new revision.':st===1?`Please check it (${apWho(2).filter(r=>r!=='Admin').join(' / ')}).`:st===2?'Ready for final approval by the senior architect.':'Approved — good for construction.';
     const msg=[`*${t}* — ${pname(d.project)}`,kind==='back'?`↩️ Sent back by ${ME.name||'me'}`:`✅ ${AP_STEPS[st-1].n} by ${ME.name||'me'} (stage ${st} of 3)`,txt?`“${txt}”`:'',next,'',...(d.files||[]).map(f=>`${f.name}: ${fileLink(f)}`),'',`— ${orgName()} (BuildMitr)`].filter((x,i,arr)=>x!==''||arr[i-1]!=='').join('\n');
@@ -5626,7 +5647,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
   if((b=e.target.closest('[data-mkpg]'))){mkPage(MK.page+ +b.dataset.mkpg);return;}
 },true);
 document.addEventListener('submit',e=>{const f=e.target;
-  if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked);return;}
+  if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked,!!(f.elements.rel&&f.elements.rel.checked));return;}
   if(f.id==='mkForm'){e.preventDefault();mkSave((e.submitter&&e.submitter.value)==='share',(f.elements.t.value||'').trim());}},true);
 
 /* ================= Staff work time (AutoCAD, SketchUp, Revit…) =================
@@ -6130,7 +6151,7 @@ async function exportCsv(k){
   else if(k==='wages'){headers=['Worker','Trade','Daily wage','Days','OT hours','Earned','Advances','To pay'];rows=wagesRows().map(r=>[r.name,r.trade,r.wage,r.days,r.ot,Math.round(r.gross),r.advance,Math.round(r.net)]);}
   else if(k==='balances'){const b=balanceRows();headers=['Type','Name','Billed','Paid / received','Balance'];rows=[...b.cli,...b.vend].map(r=>[r.kind,r.name,Math.round(r.billed),Math.round(r.paid),Math.round(r.bal)]);}
   else{const m=MOD[k];const fs=m.fields.filter(f=>f.t!=='photos');headers=[...fs.map(f=>f.l),'Added by'];
-    rows=D[k].filter(r=>m.noProject?true:inProj(r)).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?nm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
+    rows=D[k].filter(r=>(m.noProject?true:inProj(r))&&(k!=='documents'||relOK(r))).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?nm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
   const csv='﻿'+[headers,...rows].map(r=>r.map(v=>{const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
   const pn=S.proj==='all'?'all-projects':(proj(S.proj)?.prefix||proj(S.proj)?.name||'project').replace(/[^\w-]+/g,'-');
   await saveFile(`BuildMitr-${k}-${pn}-${today()}.csv`,new Blob([csv],{type:'text/csv'}));
