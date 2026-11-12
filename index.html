@@ -6287,6 +6287,23 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
     S.confirm=null;gasApi('devOutAll',{}).then(()=>{toast('All other devices are signed out');DV.list=null;dvLoad();}).catch(er=>toast(er.message));return;}
 },true);
 
+/* ================= live updates =================
+   Every phone, PC and installed app loads BuildMitr from the website, so a new version reaches everyone without
+   reinstalling. This checks for a new version when the app comes back to the screen (and every 30 min), then
+   refreshes by itself if nothing is being typed, or shows a "Refresh" button. */
+let BM_UPD=false;
+function bmSwReg(){try{if(!('serviceWorker' in navigator)||location.protocol!=='https:')return;
+  let had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then(reg=>{const chk=()=>{try{reg.update();}catch(_){}};setInterval(chk,30*60e3);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){chk();if(BM_UPD)bmUpdNow(true);}});}).catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return;}if(BM_UPD)return;BM_UPD=true;bmUpdNow(document.visibilityState!=='visible');});}catch(_){}}
+function bmBusy(){const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&a.value)||!!document.querySelector('#layer .drawer,#layer .modal,#layer [role=dialog]');}
+function bmUpdNow(quiet){if(quiet&&!bmBusy()){location.reload();return;}
+  if(document.getElementById('bmUpd'))return;const d=document.createElement('div');d.id='bmUpd';d.className='note';d.setAttribute('role','status');
+  d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;max-width:min(92vw,460px);box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--card,#fff)';
+  d.innerHTML=`${ico('sparkles')}<span style="flex:1">A new version of BuildMitr is ready.</span><button type="button" class="btn sm pri" id="bmUpdGo">Refresh</button><button type="button" class="btn sm ghost" id="bmUpdX" aria-label="Later">${ico('x')}</button>`;
+  document.body.appendChild(d);d.querySelector('#bmUpdGo').onclick=()=>location.reload();d.querySelector('#bmUpdX').onclick=()=>d.remove();}
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -6579,13 +6596,13 @@ document.addEventListener('submit',async e=>{
   render();
   if(!window.claude||!claude.use){
     {const cfg=cloudCfg();let forceDemo=false;try{localStorage.removeItem('bm-forcedemo');forceDemo=sessionStorage.getItem('bm-forcedemo')==='1'||/[?&]demo\b/.test(location.search);}catch(_){}
-     if(cfg&&!forceDemo){S.web=true;S.cloud=true;try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(_){}
+     if(cfg&&!forceDemo){S.web=true;S.cloud=true;bmSwReg();
        CLOUD.url=cfg.googleScriptUrl;try{CLOUD.token=localStorage.getItem('bm-token')||'';}catch(_){}
        try{const o=new URLSearchParams(location.search).get('org');if(o&&/^[\w-]{3,40}$/.test(o)){LG.fixedOrg=o;LG.org=o;LG.fixedName=String(new URLSearchParams(location.search).get('n')||'').slice(0,120);localStorage.setItem('bm-org',o);}}catch(_){}
        S.authStep='loading';render();
        if(CLOUD.token)await cloudEnter({id:'',email:''});else lgSet('email');
        return;}}
-    S.web=true;db=localDb();try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(_){}{const f=document.getElementById('aiFab');f.hidden=false;document.getElementById('aiFabIco').innerHTML=ico('sparkles');}ME={id:'dm1',name:'Bala Krishna',isOwner:true,canEdit:true,avatarUrl:''};CANW=CANW0=true;
+    S.web=true;db=localDb();bmSwReg();{const f=document.getElementById('aiFab');f.hidden=false;document.getElementById('aiFabIco').innerHTML=ico('sparkles');}ME={id:'dm1',name:'Bala Krishna',isOwner:true,canEdit:true,avatarUrl:''};CANW=CANW0=true;
     const loaded=new Set();
     COLS.forEach(c=>db.collection(c).onSnapshot(snap=>{REAL[c]=snap.docs.map(x=>({id:x.id,...x.data()}));D[c]=REAL[c];loaded.add(c);if(loaded.size===COLS.length)S.ready=true;refresh();}));
     return;}
