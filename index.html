@@ -363,7 +363,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .back-btn{flex:none}.back-btn span{font-weight:600}
 .dl-floors .srow{gap:10px}
 .dl-prog{display:flex;gap:10px;align-items:center;padding:0 16px 10px;flex-wrap:wrap}.dl-prog .prog{flex:1;min-width:140px}
-.dl-list{border-top:1px solid var(--line)}.dl-edit-row{display:flex;justify-content:flex-end;padding:10px 16px 0}.dle-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.dle-grp{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;background:var(--bg)}.dle-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dle-row input[type=text]{flex:1;min-width:160px}.dle-row .pl-chk{white-space:nowrap;font-size:13px;display:inline-flex;flex-direction:row;align-items:center;gap:4px;margin:0}.dle-row .pl-chk input{margin:0}@media(max-width:560px){.dle-row{gap:4px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.dle-row input[type=text]{flex-basis:100%}.dle-row .pl-chk{margin-right:auto}.dle-foot .btn{padding:8px 10px;font-size:14px}}.dle-ghead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dle-ghead input{flex:1;min-width:160px;font-weight:600}.dl-grp{padding:10px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
+.dl-list{border-top:1px solid var(--line)}img.bmf-load{background:var(--line);min-width:40px;min-height:40px;animation:bmfp 1.2s ease-in-out infinite}@keyframes bmfp{50%{opacity:.5}}img.bmf-err{background:var(--line);min-width:40px;min-height:40px}.fv-msg{display:flex;gap:10px;align-items:center;justify-content:center;padding:40px 16px;color:var(--muted);text-align:center}.fv-pdf{display:flex;flex-direction:column;gap:10px;align-items:center}.fv-page{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);max-width:100%;height:auto}.dl-edit-row{display:flex;justify-content:flex-end;padding:10px 16px 0}.dle-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.dle-grp{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;background:var(--bg)}.dle-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dle-row input[type=text]{flex:1;min-width:160px}.dle-row .pl-chk{white-space:nowrap;font-size:13px;display:inline-flex;flex-direction:row;align-items:center;gap:4px;margin:0}.dle-row .pl-chk input{margin:0}@media(max-width:560px){.dle-row{gap:4px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.dle-row input[type=text]{flex-basis:100%}.dle-row .pl-chk{margin-right:auto}.dle-foot .btn{padding:8px 10px;font-size:14px}}.dle-ghead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dle-ghead input{flex:1;min-width:160px;font-weight:600}.dl-grp{padding:10px 16px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}.dl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}.dl-main{flex:1;min-width:220px}
 .dl-t{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dl-chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:inline-grid;place-items:center;font-size:12px;color:#fff;flex:none}
 .dl-row:not(.dl-miss) .dl-chk{background:#2f8a57;border-color:#2f8a57}.dl-miss b{color:var(--muted)}
 .dl-files{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.dl-f{display:inline-flex;align-items:center;gap:2px}.dl-f a{display:inline-flex;gap:5px;align-items:center;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3266,28 +3266,43 @@ function gasDb(org,pre){
 function gasAssets(org){
   CLOUD.blob='drive';
   return {upload:async(file,{type}={})=>{
+    file=await bmShrink(file);
     if(file.size>10*1024*1024)throw new Error('The file is larger than 10 MB.');
     const b64=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>no(new Error('Could not read the file.'));fr.readAsDataURL(file);});
     const j=await gasApi('upload',{b64,name:file.name||'file',type:type||file.type||'application/octet-stream'});return {id:j.id};}};
 }
-/* photos/files: /_blob/<id> links point at the Drive file (picture link for images, viewer link for documents) */
-const driveImg=id=>'https://lh3.googleusercontent.com/d/'+encodeURIComponent(id)+'=w1600';
-const driveView=id=>'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view';
+/* photos & files are PRIVATE: each one comes through the server only for a signed-in member who may see it.
+   /_blob/<id> pictures load as private copies (small preview in lists, full size when opened); links open in the app viewer. */
+Object.assign(ICONS,{loader:ICONS.loader||'<path d="M21 12a9 9 0 1 1-6.219-8.56"/>'});
+const BMF={u:{},q:[],run:0,name:{}};
+const BMF_PH='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+function bmFileUrl(id,thumb){const k=id+(thumb?'~t':'');if(BMF.u[k])return BMF.u[k];
+  const pr=new Promise((ok,no)=>{BMF.q.push({id,thumb,ok,no});bmPump();}).then(r=>r.blob()).then(b=>URL.createObjectURL(b));
+  pr.catch(()=>{delete BMF.u[k];});return BMF.u[k]=pr;}
+function bmPump(){while(BMF.run<4&&BMF.q.length){const j=BMF.q.shift();BMF.run++;bmBlob(j.id,j.thumb).then(j.ok,j.no).finally(()=>{BMF.run--;bmPump();});}}
 function fixBlobs(root){if(!CLOUD.blob||!root||root.nodeType!==1)return;
-  const els=root.matches&&root.matches('[src^="/_blob/"],[href^="/_blob/"]')?[root]:[];els.push(...root.querySelectorAll('[src^="/_blob/"],[href^="/_blob/"]'));
-  els.forEach(el=>{const s=el.getAttribute('src');if(s&&s.startsWith('/_blob/'))el.setAttribute('src',driveImg(s.slice(7)));
-    const h=el.getAttribute('href');if(h&&h.startsWith('/_blob/'))el.setAttribute('href',driveView(h.slice(7)));});}
+  const els=root.matches&&root.matches('img[src^="/_blob/"]')?[root]:[];els.push(...root.querySelectorAll('img[src^="/_blob/"]'));
+  els.forEach(el=>{const id=el.getAttribute('src').slice(7);el.setAttribute('src',BMF_PH);el.dataset.bmf=id;el.classList.add('bmf-load');
+    const thumb=!!el.closest('.thumbs:not(.big),.bub-ph,.ph-chip,.citem');
+    bmFileUrl(id,thumb).then(u=>{if(el.dataset.bmf===id){el.src=u;el.classList.remove('bmf-load');}}).catch(()=>{el.classList.remove('bmf-load');el.classList.add('bmf-err');el.title='Could not load this photo';});});}
+/* phone photos are made smaller before upload (max 2000 px) — faster to send and to open on site */
+async function bmShrink(file){try{if(!/^image\/(jpeg|png|webp)$/.test(file.type||'')||file.size<1.2e6)return file;
+  const bmp=await createImageBitmap(file);const k=Math.min(1,2000/Math.max(bmp.width,bmp.height));if(k>=1&&file.size<3e6)return file;
+  const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  const b=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.85));if(!b||b.size>=file.size)return file;
+  return new File([b],String(file.name||'photo').replace(/\.(png|webp|jpe?g)$/i,'')+'.jpg',{type:'image/jpeg'});}catch(_){return file;}}
 try{new MutationObserver(ms=>{if(!CLOUD.blob)return;for(const m of ms)for(const n of m.addedNodes)fixBlobs(n);}).observe(document.body,{childList:true,subtree:true});}catch(_){}
 /* the PDF report reads photo bytes: ask the server for them (Drive pictures cannot be read directly by the page) */
 function saveChip(st){let c=document.getElementById('saveChip');if(!c){c=document.createElement('div');c.id='saveChip';c.setAttribute('role','status');document.body.appendChild(c);}
   c.className=st?'on '+st:'';c.textContent=st==='offline'?'Offline — changes will save when you are back online':st==='saving'?'Saving…':'';}
-async function bmBlob(id){
+async function bmBlob(id,thumb){
   if(!CLOUD.blob)return fetch('/_blob/'+id);
-  let cache=null;try{cache=await caches.open('bm-files');const hit=await cache.match('/f/'+id);if(hit)return hit;}catch(_){}
-  const r=await bmBlobNet(id);try{if(cache)await cache.put('/f/'+id,r.clone());}catch(_){}return r;
+  const key='/f/'+id+(thumb?'?t':'');
+  let cache=null;try{cache=await caches.open('bm-files');const hit=await cache.match(key)||(thumb?await cache.match('/f/'+id):null);if(hit)return hit;}catch(_){}
+  const r=await bmBlobNet(id,thumb);try{if(cache)await cache.put(key,r.clone());}catch(_){}return r;
 }
-async function bmBlobNet(id){
-  const j=await gasApi('file',{id});const bin=atob(j.b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+async function bmBlobNet(id,thumb){
+  const j=await gasApi('file',thumb?{id,thumb:1}:{id});if(j.name)BMF.name[id]=j.name;const bin=atob(j.b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return new Response(new Blob([u],{type:j.type||'application/octet-stream'}));
 }
 
@@ -5063,17 +5078,38 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
 
 /* ================= Open files inside the app ================= */
 function fileIdOf(href){const m=String(href||'').match(/drive\.google\.com\/file\/d\/([\w-]+)|lh3\.googleusercontent\.com\/d\/([\w-]+)|\/_blob\/([\w-]+)/);return m?(m[1]||m[2]||m[3]):null;}
-function openFile(id,isImg,name){
-  const big=isImg?`<img src="${esc(driveImg(id))}" alt="${esc(name||'Photo')}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px">`:`<iframe src="https://drive.google.com/file/d/${encodeURIComponent(id)}/preview" title="${esc(name||'File')}" style="width:100%;height:calc(100vh - 150px);border:0;border-radius:6px;background:#fff" allow="autoplay"></iframe>`;
-  document.getElementById('layer').innerHTML=`<div class="drawer fv"><div class="pane fv-pane"><div class="pane-h"><h2 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name||(isImg?'Photo':'File'))}</h2>
-    <button type="button" class="btn sm" data-fshare="${esc(id)}|${esc(name||'File')}|${isImg?'image/jpeg':''}|${esc(name||'File')}">${ico('share-2')}<span>Share</span></button>
-    <a class="btn sm" href="https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}" target="_blank" rel="noopener">${ico('file-down')}<span>Download</span></a>
-    <a class="btn sm ghost" href="${esc(isImg?driveImg(id):driveView(id))}" target="_blank" rel="noopener" aria-label="Open in a new tab">${ico('external-link')}</a>
-    <button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div><div class="pane-b" style="padding:8px">${big}</div></div></div>`;
+const appLink=id=>location.origin+location.pathname+'#f='+encodeURIComponent(id);
+async function openFile(id,isImg,name){
+  const L=document.getElementById('layer');const tok=Date.now()+Math.random();OPENF.t=tok;
+  const shell=(body,extra='')=>`<div class="drawer fv"><div class="pane fv-pane"><div class="pane-h"><h2 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name||(isImg?'Photo':'File'))}</h2>${extra}
+    <button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div><div class="pane-b" id="fvBody" style="padding:8px">${body}</div></div></div>`;
+  L.innerHTML=shell(`<div class="fv-msg">${ico('loader')}<span>Opening ${esc(name||'the file')}…</span></div>`);
+  let blob;try{blob=await (await bmBlob(id)).blob();}catch(e){if(OPENF.t===tok)L.innerHTML=shell(`<div class="fv-msg">${ico('lock')}<span>${esc(e.message||'Could not open this file.')}</span></div>`);return;}
+  if(OPENF.t!==tok)return;
+  const nm=name||BMF.name[id]||'File',type=blob.type||'',img=/^image\//.test(type),pdf=/pdf/.test(type)||/\.pdf$/i.test(nm);
+  const fname=/\.[a-z0-9]{2,5}$/i.test(nm)?nm:(BMF.name[id]&&/\.[a-z0-9]{2,5}$/i.test(BMF.name[id])?BMF.name[id]:nm+(img?'.jpg':pdf?'.pdf':''));
+  if(OPENF.u)URL.revokeObjectURL(OPENF.u);const u=OPENF.u=URL.createObjectURL(blob);OPENF.blob=blob;OPENF.fname=fname;
+  const acts=`<button type="button" class="btn sm" data-fshare="${esc(id)}|${esc(nm)}|${esc(type)}|${esc(nm)}">${ico('share-2')}<span>Share</span></button>
+    <button type="button" class="btn sm" data-fvdl>${ico('file-down')}<span>Download</span></button>${img||pdf?`<a class="btn sm ghost fv-tab" href="${u}" target="_blank" rel="noopener" aria-label="Open in a new tab">${ico('external-link')}</a>`:''}`;
+  const body=img?`<img src="${u}" alt="${esc(nm)}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px">`
+    :pdf?`<div id="fvPdf" class="fv-pdf"><div class="fv-msg">${ico('loader')}<span>Opening the PDF…</span></div></div>`
+    :`<div class="fv-msg" style="flex-direction:column">${ico(fileIco({name:fname,type}))}<b>${esc(fname)}</b><span class="code">${(blob.size/1048576).toFixed(1)} MB · this kind of file opens in its own program (AutoCAD, Excel…)</span><button type="button" class="btn pri" data-fvdl>${ico('file-down')}<span>Download to open</span></button></div>`;
+  L.innerHTML=shell(body,acts);
+  if(pdf){try{await loadPdfJs();const doc=await pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;const box=document.getElementById('fvPdf');if(!box||OPENF.t!==tok)return;box.innerHTML='';
+    const W=Math.min(box.clientWidth||800,1400),dpr=Math.min(2,devicePixelRatio||1);
+    for(let n=1;n<=Math.min(doc.numPages,60);n++){const pg=await doc.getPage(n);const v0=pg.getViewport({scale:1}),sc=W/v0.width,v=pg.getViewport({scale:sc*dpr});
+      const c=document.createElement('canvas');c.width=v.width;c.height=v.height;c.style.width=W+'px';c.className='fv-page';box.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;if(OPENF.t!==tok)return;}
+    if(doc.numPages>60)box.insertAdjacentHTML('beforeend',`<div class="fv-msg">Showing 60 of ${doc.numPages} pages — download for the rest.</div>`);}
+   catch(e){const box=document.getElementById('fvPdf');if(box)box.innerHTML=`<div class="fv-msg">Could not show the PDF here — use Download.</div>`;}}
 }
+const OPENF={};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-fvdl]');if(!b||!OPENF.blob)return;saveFile(OPENF.fname,OPENF.blob);});
+/* a member link (…#f=<id>) opens that file after sign-in */
+(function bmDeepFile(){const m=/#f=([\w-]{2,200})/.exec(location.hash||'');if(!m)return;let n=0;const t=setInterval(()=>{if(++n>240){clearInterval(t);return;}
+  if(S.ready&&CLOUD.blob&&ME&&ME.id){clearInterval(t);try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}openFile(m[1],false,'');}},500);})();
 document.addEventListener('click',e=>{if(!e.target.closest||!CLOUD.blob)return;const a=e.target.closest('a[href]');if(!a||a.closest('.fv')||e.ctrlKey||e.metaKey||e.shiftKey)return;
   const id=fileIdOf(a.getAttribute('href'));if(!id)return;e.preventDefault();e.stopPropagation();
-  const img=/lh3\.googleusercontent/.test(a.href)||!!a.querySelector('img');openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''));},true);
+  const img=!!a.querySelector('img');openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''));},true);
 
 /* ================= Live cameras inside BuildMitr =================
  * • EZVIZ (and Hikvision cameras on an EZVIZ account): the admin connects the company's EZVIZ account once; live video
@@ -5415,7 +5451,7 @@ async function dleSave(how){const pid=S.proj;
 const FILE_TYPES={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',dwg:'image/vnd.dwg',dxf:'image/vnd.dxf',dwf:'model/vnd.dwf',skp:'application/vnd.sketchup.skp',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',zip:'application/zip',rvt:'application/octet-stream',ifc:'application/octet-stream',mp4:'video/mp4',mov:'video/quicktime',glb:'model/gltf-binary',gltf:'model/gltf+json',obj:'model/obj',fbx:'application/octet-stream'};
 const fileType=n=>FILE_TYPES[(String(n).split('.').pop()||'').toLowerCase()]||'';
 const fileIco=f=>/pdf/.test(f.type||'')?'file-text':/^image\/(jpe?g|png|webp)/.test(f.type||'')?'image':'file';
-const fileLink=f=>/^image\/(jpe?g|png|webp)/.test(f.type||'')?driveImg(f.id):driveView(f.id);
+const fileLink=f=>f.pub||appLink(f.id);
 /* the drawings of one project: checklist items + anything else filed under that discipline */
 function dlItems(pid,disc){
   const docs=D.documents.filter(d=>d.project===pid&&(d.disc===disc||(!d.disc&&DL_CAT[disc]&&d.cat===DL_CAT[disc]))&&relOK(d));
@@ -5495,23 +5531,28 @@ function shareFiles(files,title){
   document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Share ${esc(title)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
    <div class="pane-b"><div class="code" style="margin-bottom:10px">${files.map(f=>esc(f.name)).join(', ')}</div>
     <div class="sh-grid">
+     <button type="button" class="btn pri" data-fsto="file">${ico('share-2')}<span>Send the file${files.length>1?'s':''}</span></button>
      <button type="button" class="btn" data-fsto="wa">${ico('message-circle')}<span>WhatsApp</span></button>
      <button type="button" class="btn" data-fsto="mail">${ico('mail')}<span>Email</span></button>
-     <button type="button" class="btn" data-fsto="file">${ico('share-2')}<span>Send the file${files.length>1?'s':''}</span></button>
-     <button type="button" class="btn" data-fsto="copy">${ico('copy')}<span>Copy link${files.length>1?'s':''}</span></button>
+     <button type="button" class="btn" data-fsto="copy">${ico('copy')}<span>Copy member link${files.length>1?'s':''}</span></button>
      <button type="button" class="btn" data-fsto="tg">${ico('send')}<span>Telegram</span></button>
-     <button type="button" class="btn" data-fsto="dl">${ico('file-down')}<span>Download</span></button></div>
-    <p class="code" style="margin-top:10px">WhatsApp, email and Telegram send a link that opens the file (anyone with the link can view it). "Send the file" attaches the actual file on a phone.</p></div></div></div>`;
+     <button type="button" class="btn" data-fsto="dl">${ico('file-down')}<span>Download</span></button>
+     ${relCan()&&CLOUD.blob?`<button type="button" class="btn ghost warn" data-fsto="pub">${ico('globe')}<span>Public link${files.length>1?'s':''}</span></button>`:''}</div>
+    <p class="code" style="margin-top:10px">Files are private. <b>Send the file</b> attaches the file itself (WhatsApp, email…) — use it for people outside BuildMitr. Links open only for BuildMitr members after they sign in.${relCan()&&CLOUD.blob?' <b>Public link</b> lets anyone with the link open that file.':''}</p></div></div></div>`;
   SHF={files,title,text};
 }
 let SHF=null;
 async function shareFilesTo(k){
   const {files,title,text}=SHF||{};if(!files)return;
+  if(k==='pub'){if(!SHF.sure){SHF.sure=1;const b=document.querySelector('[data-fsto="pub"] span');if(b)b.textContent='Tap again: anyone with the link can open it';return;}
+    try{toast('Making a public link…');const out=[];for(const f of files){const j=await gasApi('pubFile',{id:f.id});out.push({...f,pub:j.url});}
+      const t=fileShareText(out,title).replace(/\*/g,'');try{await navigator.clipboard.writeText(t);toast('Public link copied — paste it anywhere');}catch(_){prompt('Copy the public link',t);}SHF.files=out;SHF.text=fileShareText(out,title);}catch(e){toast(e.message||'Could not make a public link');}return;}
+  if(k==='wa'&&navigator.canShare&&/Android|iPhone|iPad/i.test(navigator.userAgent)&&!files.some(f=>f.pub)){return shareFilesTo('file');}
   if(k==='wa'){const w=window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');if(w)try{w.opener=null;}catch(_){}}
   else if(k==='tg'){const w=window.open('https://t.me/share/url?url='+encodeURIComponent(files[0].link)+'&text='+encodeURIComponent(text),'_blank');if(w)try{w.opener=null;}catch(_){}}
   else if(k==='mail')location.href='mailto:?subject='+encodeURIComponent(`${title}${S.proj!=='all'?' — '+pname(S.proj):''}`)+'&body='+encodeURIComponent(text.replace(/\*/g,''));
   else if(k==='copy'){try{await navigator.clipboard.writeText(text.replace(/\*/g,''));toast('Copied — paste it anywhere');}catch(_){toast('Could not copy');}}
-  else if(k==='dl'){files.forEach(f=>{const w=window.open('https://drive.google.com/uc?export=download&id='+encodeURIComponent(f.id),'_blank');if(w)try{w.opener=null;}catch(_){}});}
+  else if(k==='dl'){try{for(const f of files){const b=await (await bmBlob(f.id)).blob();await saveFile(f.name||BMF.name[f.id]||'file',b);}}catch(e){toast(e.message||'Could not download');}}
   else if(k==='file'){try{toast('Preparing the file…');const fs=[];for(const f of files){const r=await bmBlob(f.id);const b=await r.blob();fs.push(new File([b],f.name,{type:f.type||b.type||'application/octet-stream'}));}
       if(navigator.canShare&&navigator.canShare({files:fs})){await navigator.share({files:fs,title,text:text.replace(/\*/g,'')});}
       else{for(const f of fs)await saveFile(f.name,f);toast('Saved — attach it in WhatsApp or email');}}catch(e){if(e&&e.name!=='AbortError')toast(e.message||'Could not share the file');}}
