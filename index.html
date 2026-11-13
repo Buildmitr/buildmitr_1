@@ -1192,6 +1192,7 @@ function vSettings(){
   const admin=ME.isOwner||ME.canEdit;
   return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
   ${myProfileBox(admin)}
+  ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
     <label class="code">Company name<input id="o-name" value="${esc(org.name||'')}" ${admin?'':'disabled'} placeholder="e.g. BuildMitr"></label>
     <label class="code">GSTIN<input id="o-gst" value="${esc(org.gstin||'')}" ${admin?'':'disabled'}></label>
@@ -6499,6 +6500,46 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
   const ok=await write(async()=>{for(let k=0;k<list.length;k+=60)await dbBatch(list.slice(k,k+60));for(const t of del)await db.doc('dtasks/'+t.id).delete();
     if(p&&p.ptype!==DSG.type&&isAdmin())await db.doc('projects/'+pid).update({ptype:DSG.type});},`Design schedule saved: ${rows.length} activities`);
   if(ok){closeLayer();S.view='designsched';S.schedTable=false;render();}});
+
+/* ================= WhatsApp updates to the admin =================
+   The server sends the WhatsApp itself (nobody has to tap Send). Keys stay on the server; the app only sees the last 3 characters. */
+const WAC={cfg:null,last:null,busy:0,err:''};
+const WA_KINDS=[['documents','Drawings — uploads, approvals, release'],['tasks','Construction schedule — status, progress, comments'],['dtasks','Design schedule — status, progress, comments'],['issues','Issues & snags'],['dpr','Daily reports'],['changes','Change orders'],['requests','Material requests'],['received','Material received'],['po','Purchase orders'],['payments','Payments'],['invoices','Invoices'],['noticesign','Notices accepted / declined'],['workupd','Work updates'],['projects','New projects'],['leads','New leads'],['forms','Checklists']];
+async function waLoad(){if(WAC.busy)return;WAC.busy=1;try{const j=await gasApi('waGet',{});WAC.cfg=j.cfg;WAC.last=j.last;WAC.err='';}catch(e){WAC.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not load');}WAC.busy=0;if(S.view==='settings')render();}
+function waBox(){
+  if(!WAC.cfg&&!WAC.err){waLoad();return `<div class="box"><div class="box-h">${ico('message-circle')}<h2>WhatsApp updates</h2></div><div class="empty">Loading…</div></div>`;}
+  if(!WAC.cfg)return `<div class="box"><div class="box-h">${ico('message-circle')}<h2>WhatsApp updates</h2></div><div class="note warn">${ico('alert-triangle')}<span>${esc(WAC.err)}</span></div></div>`;
+  const c=WAC.cfg,bot=c.mode!=='api',to=c.to&&c.to.length?c.to:[{phone:'',key:''}],L=WAC.last;
+  return `<div class="box" id="waBox"><div class="box-h">${ico('message-circle')}<h2>WhatsApp updates</h2><span class="pill ${c.on?'p-green':'p-grey'}">${c.on?'On':'Off'}</span></div>
+  <div style="padding:0 16px 16px;display:grid;gap:12px;max-width:640px">
+    <p class="code" style="margin:0">Get a WhatsApp on your phone when anyone uploads a drawing, changes a task, raises an issue, sends a daily report… Your own changes are not sent to you.</p>
+    <label class="pl-chk"><input type="checkbox" id="wa-on" ${c.on?'checked':''}> <b>Send me WhatsApp updates</b></label>
+    <div class="seg"><button type="button" class="seg-b ${bot?'on v':''}" data-wamode="bot">Free bot (CallMeBot)</button><button type="button" class="seg-b ${!bot?'on v':''}" data-wamode="api">WhatsApp Business API</button></div>
+    ${bot?`<div class="note">${ico('info')}<span><b>Free bot — set up once per phone:</b> 1) Open <a href="https://www.callmebot.com/blog/free-api-whatsapp-messages/" target="_blank" rel="noopener">CallMeBot's WhatsApp page</a> and save the bot's number in your contacts. 2) Send it this WhatsApp: <i>I allow callmebot to send me messages</i>. 3) It replies with your API key — paste it below. Messages come from the bot's number. If the bot doesn't reply, it is full for now — use the WhatsApp Business API instead.</span></div>`
+     :`<div class="note">${ico('info')}<span><b>WhatsApp Business API (Meta):</b> in Meta Business Manager create a WhatsApp app, add your business number, and get a <b>Phone number ID</b> and a <b>permanent access token</b>. Create a <b>Utility</b> message template with one variable, e.g. <i>BuildMitr update: {{1}}</i>, and wait for approval. Meta charges a small fee per message.</span></div>
+       <div class="fhead"><label>Phone number ID<input id="wa-pid" value="${esc(c.api.pid||'')}" inputmode="numeric"></label><label>Template name<input id="wa-tpl" value="${esc(c.api.tpl||'')}" placeholder="e.g. buildmitr_update"></label><label>Template language<input id="wa-lang" value="${esc(c.api.lang||'en')}" placeholder="en"></label></div>
+       <label class="code">Access token<input id="wa-token" type="password" autocomplete="off" value="${esc(c.api.token||'')}" placeholder="Paste the permanent token"></label>`}
+    <div><div class="code" style="margin-bottom:6px">Send to (up to 5 numbers, with country code)</div>
+      ${to.map((x,i)=>`<div class="dle-row"><input type="tel" data-waph="${i}" value="${esc(x.phone||'')}" placeholder="+91 98xxxxxxxx" style="max-width:200px">${bot?`<input type="password" autocomplete="off" data-wakey="${i}" value="${esc(x.key||'')}" placeholder="CallMeBot API key" style="max-width:200px">`:''}${to.length>1?`<button type="button" class="btn sm ghost" data-wadel="${i}" aria-label="Remove number">${ico('trash-2')}</button>`:''}</div>`).join('')}
+      ${to.length<5?`<button type="button" class="btn sm" id="waAdd">${ico('plus')}<span>Add number</span></button>`:''}</div>
+    <details><summary class="code">Which updates (${WA_KINDS.filter(([k])=>(c.cols||{})[k]!==false).length} of ${WA_KINDS.length})</summary><div class="pl-scope" style="margin-top:8px"><div>${WA_KINDS.map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-wacol="${k}" ${(c.cols||{})[k]!==false?'checked':''}>${esc(l)}</label>`).join('')}</div></div></details>
+    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="waSave">${ico('check')}<span>Save</span></button><button type="button" class="btn" id="waTest">${ico('send')}<span>Send a test message</span></button></div>
+    ${L?`<div class="code">${L.err?`<span style="color:var(--red-ink)">Last send failed (${esc(fdt(L.at))}): ${esc(L.err)}</span>`:`Last update sent ${esc(fdt(L.at))}.`}</div>`:''}
+  </div></div>`;}
+const fdt=t=>{try{return new Date(t).toLocaleString(LOC(),{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(_){return '';}};
+function waRead(){const c=WAC.cfg,g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
+  c.on=!!(document.getElementById('wa-on')||{}).checked;
+  const ph=[...document.querySelectorAll('[data-waph]')].map(e=>e.value),ky=[...document.querySelectorAll('[data-wakey]')].map(e=>e.value);
+  c.to=ph.map((p,i)=>({phone:p.trim(),key:(c.mode!=='api'?(ky[i]||''):((c.to[i]||{}).key||''))}));
+  if(c.mode==='api')c.api={...c.api,pid:g('wa-pid')??c.api.pid,tpl:g('wa-tpl')??c.api.tpl,lang:g('wa-lang')??c.api.lang,token:g('wa-token')??c.api.token};
+  c.cols={...(c.cols||{})};document.querySelectorAll('[data-wacol]').forEach(e=>{if(e.checked)delete c.cols[e.dataset.wacol];else c.cols[e.dataset.wacol]=false;});}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-wamode],#waAdd,[data-wadel],#waSave,#waTest');if(!b||!WAC.cfg)return;waRead();
+  if(b.dataset.wamode){WAC.cfg.mode=b.dataset.wamode;render();return;}
+  if(b.id==='waAdd'){WAC.cfg.to.push({phone:'',key:''});render();return;}
+  if(b.dataset.wadel){WAC.cfg.to.splice(+b.dataset.wadel,1);render();return;}
+  if(b.id==='waSave'||b.id==='waTest'){b.disabled=true;try{const j=await gasApi('waSet',{cfg:WAC.cfg});WAC.cfg=j.cfg;WAC.last=j.last;
+      if(b.id==='waTest'){toast('Sending a test…');await gasApi('waTest',{});toast('Test sent — check WhatsApp');const k=await gasApi('waGet',{});WAC.last=k.last;}else toast(WAC.cfg.on?'WhatsApp updates are on':'Saved — WhatsApp updates are off');}
+    catch(err){toast(err.message||'Could not save');try{const k=await gasApi('waGet',{});WAC.last=k.last;}catch(_){}}b.disabled=false;render();}});
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
