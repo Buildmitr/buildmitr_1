@@ -6766,7 +6766,7 @@ function vMyDay(){
   const leave=`<div class="box"><div class="box-h">${ico('calendar')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
-  return header('My day')+ntBox()+qtBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
+  return header('My day')+ntBox()+qtBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
 }
 async function mdTick(item,on){const d0=today(),id=`${ME.id}_${d0}`,t=myTick(),done=new Set((t&&t.done)||[]);on?done.add(item):done.delete(item);
   await write(()=>db.doc('rtick/'+id).set({user:ME.id,name:ME.name||'',date:d0,role:meRole(),done:[...done],of:routineFor(meRole()).length,mgr:(myTeamRec()||{}).mgr||''}),null);render();}
