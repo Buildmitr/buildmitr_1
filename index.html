@@ -201,6 +201,8 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .qt-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px}.qt-f>input[name=title]{flex:1 1 260px;min-width:0}.qt-f>select{flex:0 1 190px;min-width:0}.qt-f>input,.qt-f>select{width:auto}.qt-f>input[type=date]{flex:0 0 auto;width:auto}
 .qt-chk{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0;font-size:13px}.qt-chk label{display:flex;gap:4px;align-items:center}.qt-i{display:flex;color:var(--muted)}.qt-more{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding-top:6px}.qt-more[hidden]{display:none}.qt-w{grid-column:1/-1}
 @media (max-width:700px){.qt-f>select,.qt-f>input[type=date]{flex:1 1 45%}.qt-i{display:none}}
+.qa-sec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 16px 0}
+.qa-cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 12px;padding:8px 16px}.qa-ck{display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:10px}.qa-ck input{width:18px;height:18px}
 .fold-b{padding:4px}.fold-b[aria-expanded=false] svg{transform:rotate(-90deg)}
 .wf-t td{vertical-align:middle}.wf-star{all:unset;cursor:pointer;font-size:18px;line-height:1;filter:grayscale(1);opacity:.35}.wf-star.on{filter:none;opacity:1}.wf-star:focus-visible{outline:2px solid var(--accent)}
 .wf-t select{max-width:150px}.late-t{color:var(--red-ink);font-weight:600}
@@ -1947,12 +1949,6 @@ function previewBar(){return `<div class="note" style="background:var(--blue);co
 
 /* ================= Quick add (phone-friendly site entries) ================= */
 const QUICK=[['dprauto','notebook-pen','Today\'s daily report'],['attbulk','calendar-check','Mark attendance'],['received','package-plus','Material received'],['issue','package-minus','Material issue'],['requests','arrow-left-right','Request material'],['issues','alert-triangle','Issue / snag'],['tasks','list-checks','Task'],['workupd','hammer','Work update'],['payments','indian-rupee','Payment'],['equiplog','gauge','Equipment usage']];
-function openQuick(){
-  const items=QUICK.filter(([k])=>k==='dprauto'?canView('dpr')&&canEditView('dpr'):k==='attbulk'?canEditView('attendance'):canView(k)&&canEditView(k));
-  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto">
-    <div class="pane-h"><h2>Quick add</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
-    <div class="qa-grid">${items.map(([k,i,l])=>`<button class="qa-btn" data-quick="${k}">${ico(i)}<span>${esc(l)}</span></button>`).join('')}</div></div></div>`;
-}
 function runQuick(k){
   closeLayer();
   if(k==='dprauto'){const pid=S.proj!=='all'?S.proj:(PJ()[0]||{}).id;if(!pid){toast('Create a project first.');return;}autoDpr(pid,today());return;}
@@ -2468,14 +2464,14 @@ const UI_ONLY={sitehome:'site',desk:'design',client:'client',cphotos:'client',cp
 const TABS={
   site:[['myday','sun','My day'],['sitehome','home','Site'],['+','plus','Add'],['messages','message-circle','Chat'],['tasks','list-checks','Tasks']],
   client:[['client','home','Home'],['cphotos','images','Photos'],['cpay','indian-rupee','Payments'],['messages','message-circle','Chat'],['cctv','cctv','Cameras']],
-  design:[['myday','sun','My day'],['desk','pencil-ruler','Desk'],['drawlib','library','Drawings'],['messages','message-circle','Chat'],['designsched','pen-tool','Schedule']],
+  design:[['myday','sun','My day'],['desk','pencil-ruler','Desk'],['+','plus','Add'],['drawlib','library','Drawings'],['designsched','pen-tool','Schedule']],
 };
 function tabBar(){
   let t=TABS[uiOf()];if(!S.ready)return '';
   if(!t){const ic={dashboard:'layout-dashboard',messages:'message-circle',projects:'building-2',mktdash:'target',pipeline:'kanban',followups:'calendar-clock',alerts:'bell',payments:'indian-rupee',invoices:'receipt',leads:'user-plus'};
     const nm={dashboard:'Home',messages:'Chat',projects:'Projects',mktdash:'Marketing',pipeline:'Pipeline',followups:'Follow-ups',alerts:'Alerts',payments:'Payments',invoices:'Bills',leads:'Leads'};
     const c=Object.keys(ic).filter(k=>canView(k)).slice(0,4).map(k=>[k,ic[k],nm[k]]);c.splice(Math.min(2,c.length),0,['+','plus','Add']);t=c;}
-  const items=t.filter(([k])=>k==='+'?CANW&&canView('dpr'):canView(k));
+  const items=t.filter(([k])=>k==='+'?true:canView(k));
   return `<nav class="tabbar" aria-label="Main">${items.map(([k,i,l])=>k==='+'?`<button class="tab tab-add" id="tabAdd" aria-label="Quick add">${ico(i)}<span>${l}</span></button>`
     :`<button class="tab ${S.view===k?'on':''}" data-go="${k}">${ico(i)}<span>${esc(l)}</span>${k==='messages'?(()=>{const c=chatUnread();return c?`<em class="tbadge">${c}</em>`:'';})():''}</button>`).join('')}<button class="tab" id="tabMore" aria-label="More">${ico('menu')}<span>More</span></button></nav>`;
 }
@@ -7330,6 +7326,63 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='qtForm'
   const ok=await write(()=>db.doc(col+'/'+id).set(rec),`Task created${rec.who?' — given to '+(rec.who===ME.id?'you':pnm(rec.who)):''}`);
   btn.disabled=false;if(ok){f.reset();if(f.elements.due)f.elements.due.value=today();render();}});
 
+/* ================= "+" quick menu — on every screen, set to each person's needs =================
+   Create (task, upload drawing, project, daily report, …), Go to (calendar, tasks, library, …) and pinned projects.
+   Only what the person's role is allowed shows. "Customise" lets each person choose and order their shortcuts
+   (remembered for their login on this device). */
+const QA_ALL=[
+  // [key, icon, label, group, allowed, run]
+  ['newtask','list-checks','New task','c',()=>calCanEdit(null)||qtCols().length,()=>calForm(null,today(),true)],
+  ['upload','upload','Upload drawing','c',()=>canView('drawlib')&&canEditView('documents'),()=>{S.view='drawlib';render();scrollTo(0,0);toast('Pick the folder and press Upload on the drawing');}],
+  ['addproj','building-2','New project','c',()=>canView('projects')&&canEditView('projects'),()=>openForm('projects')],
+  ['dprauto','notebook-pen','Today\'s daily report','c',()=>canView('dpr')&&canEditView('dpr'),()=>runQuick('dprauto')],
+  ['attbulk','calendar-check','Mark attendance','c',()=>canEditView('attendance'),()=>runQuick('attbulk')],
+  ['issues','alert-triangle','Issue / snag','c',()=>canView('issues')&&canEditView('issues'),()=>runQuick('issues')],
+  ['requests','arrow-left-right','Request material','c',()=>canView('requests')&&canEditView('requests'),()=>runQuick('requests')],
+  ['received','package-plus','Material received','c',()=>canView('received')&&canEditView('received'),()=>runQuick('received')],
+  ['issue','package-minus','Material issue','c',()=>canView('issue')&&canEditView('issue'),()=>runQuick('issue')],
+  ['workupd','hammer','Work update','c',()=>canView('workupd')&&canEditView('workupd'),()=>runQuick('workupd')],
+  ['payments','indian-rupee','Payment','c',()=>canView('payments')&&canEditView('payments'),()=>runQuick('payments')],
+  ['equiplog','gauge','Equipment usage','c',()=>canView('equiplog')&&canEditView('equiplog'),()=>runQuick('equiplog')],
+  ['leads','user-plus','New lead','c',()=>canView('leads')&&canEditView('leads'),()=>openForm('leads')],
+  ['g:myday','sun','My day','g',()=>canView('myday'),null],['g:calendar','calendar','Calendar','g',()=>canView('calendar'),null],
+  ['g:tasks','list-checks','Tasks','g',()=>canView('tasks'),null],['g:designsched','pencil-ruler','Design schedule','g',()=>canView('designsched'),null],
+  ['g:schedule','gantt-chart','Construction schedule','g',()=>canView('schedule'),null],['g:drawlib','library','Drawings library','g',()=>canView('drawlib'),null],
+  ['g:messages','message-circle','Messages','g',()=>canView('messages'),null],['g:alerts','bell','Alerts & updates','g',()=>canView('alerts'),null],
+  ['g:dashboard','layout-dashboard','Dashboard','g',()=>canView('dashboard')&&!['site','design'].includes(uiOf()),null],['g:attend','calendar-check','Attendance & leave','g',()=>canView('attend'),null],
+  ['g:projects','building-2','All projects','g',()=>canView('projects'),null],['g:pipeline','kanban','Sales pipeline','g',()=>canView('pipeline'),null],
+];
+const QA_DEF={owner:['newtask','addproj','upload','dprauto','payments','g:calendar','g:tasks','g:alerts'],site:['dprauto','newtask','issues','requests','received','attbulk','g:calendar','g:tasks'],
+  design:['newtask','upload','g:calendar','g:designsched','g:drawlib','g:messages'],client:['g:messages'],marketing:['leads','newtask','g:pipeline','g:calendar']};
+const qaK=()=>'bm-qa-'+(ME&&ME.id||'');
+function qaPrefs(){try{const j=JSON.parse(localStorage.getItem(qaK())||'null');if(j&&Array.isArray(j.keys))return j;}catch(_){}return null;}
+const qaOK=k=>{const x=QA_ALL.find(r=>r[0]===k);try{return !!(x&&x[4]());}catch(_){return false;}};
+function qaMine(){const p=qaPrefs();const ui=uiOf();const def=QA_DEF[ui]||QA_DEF[curRole()==='Marketing'?'marketing':'owner'];
+  const keys=(p?p.keys:def).filter(qaOK);const projs=(p?p.projs:(S.proj!=='all'?[S.proj]:[])).filter(id=>projOK(id));return {keys,projs,custom:!!p};}
+let QA_EDIT=false;
+function openQuick(){const m=qaMine();
+  const tile=(k,i,l,extra)=>`<button class="qa-btn" ${extra}>${ico(i)}<span>${esc(l)}</span></button>`;
+  const body=QA_EDIT?qaEditHtml(m):`
+    <div class="qa-sec">Quick</div><div class="qa-grid">${m.keys.map(k=>{const x=QA_ALL.find(r=>r[0]===k);return tile(k,x[1],x[2],`data-qak="${k}"`);}).join('')||'<div class="code" style="padding:8px">No shortcuts yet — tap Customise.</div>'}</div>
+    ${m.projs.length?`<div class="qa-sec">My projects</div><div class="qa-grid">${m.projs.map(id=>tile(id,'building-2',pname(id),`data-qaproj="${esc(id)}"`)).join('')}</div>`:''}`;
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto">
+    <div class="pane-h"><h2>${QA_EDIT?'Customise your + menu':'Quick'}</h2>${QA_EDIT?'':`<button type="button" class="btn sm" id="qaEdit">${ico('pencil')}<span>Customise</span></button>`}<button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b" style="padding:0">${body}</div>${QA_EDIT?`<div class="pane-f"><button type="button" class="btn pri" id="qaSave">${ico('check')}<span>Save</span></button><button type="button" class="btn" id="qaReset">Back to default</button><button type="button" class="btn ghost" id="qaCancel">Cancel</button></div>`:''}</div></div>`;}
+function qaEditHtml(m){const av=QA_ALL.filter(r=>qaOK(r[0]));const on=new Set(m.keys);
+  const row=r=>`<label class="qa-ck"><input type="checkbox" name="qak" value="${r[0]}" ${on.has(r[0])?'checked':''}> ${ico(r[1])}<span>${esc(r[2])}</span></label>`;
+  return `<p class="code" style="padding:12px 16px 0">Tick what you want on your + button. Only things your role can use are listed.</p>
+    <div class="qa-sec">Create</div><div class="qa-cks">${av.filter(r=>r[3]==='c').map(row).join('')}</div>
+    <div class="qa-sec">Go to</div><div class="qa-cks">${av.filter(r=>r[3]==='g').map(row).join('')}</div>
+    ${PJ().length?`<div class="qa-sec">Projects to open in one tap</div><div class="qa-cks">${PJ().map(p=>`<label class="qa-ck"><input type="checkbox" name="qap" value="${esc(p.id)}" ${m.projs.includes(p.id)?'checked':''}> ${ico('building-2')}<span>${esc(pname(p.id))}</span></label>`).join('')}</div>`:''}`;}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-qak],[data-qaproj],#qaEdit,#qaSave,#qaReset,#qaCancel');if(!b)return;
+  if(b.dataset.qak){const k=b.dataset.qak,x=QA_ALL.find(r=>r[0]===k);closeLayer();if(!x)return;if(k.startsWith('g:')){S.view=k.slice(2);render();scrollTo(0,0);}else x[5]();return;}
+  if(b.dataset.qaproj){closeLayer();S.proj=b.dataset.qaproj;try{localStorage.setItem('bm-proj',S.proj);}catch(_){}S.view=canView('project')?'project':homeView();render();scrollTo(0,0);return;}
+  if(b.id==='qaEdit'){QA_EDIT=true;openQuick();return;}
+  if(b.id==='qaCancel'){QA_EDIT=false;openQuick();return;}
+  if(b.id==='qaReset'){try{localStorage.removeItem(qaK());}catch(_){}QA_EDIT=false;toast('Back to the standard shortcuts for your role');openQuick();return;}
+  if(b.id==='qaSave'){const L=document.querySelector('.qa-drawer');const keys=[...L.querySelectorAll('input[name=qak]:checked')].map(i=>i.value),projs=[...L.querySelectorAll('input[name=qap]:checked')].map(i=>i.value);
+    try{localStorage.setItem(qaK(),JSON.stringify({keys,projs}));}catch(_){}QA_EDIT=false;toast('Your + menu is saved');openQuick();return;}});
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -7358,7 +7411,7 @@ function render(){
   navTrack();
   if(S.ready&&curRole()==='none')S.view='noaccess';
   side();
-  {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
+  {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&curRole()!=='none');}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
     v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
