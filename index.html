@@ -6956,7 +6956,7 @@ function calBox(where){
   else if(CAL.mode==='list')body=calList();
   else body=calMonth(y,m)+calDay(CAL.sel);
   const fk='cal-'+where,fo=where!=='page'&&folded(fk);
-  const head=`<div class="box-h">${where!=='page'?foldBtn(fk):''}${ico('calendar')}<h2>Calendar</h2>${fo?`<span class="code">${calMine(d0).filter(x=>!x.done).length} for you today</span>`:''}${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}" data-caltask="1">${ico('list-checks')}<span>New task</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
+  const head=`<div class="box-h">${where!=='page'?foldBtn(fk):''}${ico('calendar')}<h2>Calendar</h2>${fo?`<span class="code">${calMine(d0).filter(x=>!x.done).length} for you today</span>`:''}${canAdd&&where==='page'?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}" data-caltask="1">${ico('list-checks')}<span>New task</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
   if(fo)return `<div class="box cal">${head}</div>`;
   return `<div class="box cal ${where==='page'?'cal-page':''}">${head}${tools}${body}</div>`;}
 function calChip(x){const done=x.src==='cal'&&x.who.includes(ME.id)&&calDone(x.id,x.date);const col=calColor(x.project);
