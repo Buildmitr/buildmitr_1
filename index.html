@@ -355,7 +355,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
 .cam-note{position:absolute;left:8px;right:8px;bottom:6px;font-size:11.5px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px}.cam-note a{color:#fff}
 .inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.inst-b{padding:12px 16px}.inst-b p{margin:0 0 10px}.inst-b ol{margin:0 0 10px;padding-left:20px}.inst-me{outline:2px solid var(--accent)}.inst-qr{width:150px;height:150px;background:#fff;border-radius:8px;padding:4px}.inst-qr svg{width:100%;height:100%}
 .bar{position:sticky;top:0;z-index:19;background:var(--bg);margin:-8px 0 0;padding:8px 0;transition:padding .15s}
-body.scrolled .bar{padding:6px 0;box-shadow:0 6px 10px -10px rgba(0,0,0,.35);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+body{overflow-anchor:none}body.scrolled .bar{padding:6px 0;box-shadow:0 6px 10px -10px rgba(0,0,0,.35);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
 body.scrolled .bar::-webkit-scrollbar{display:none}
 body.scrolled .bar h1{font-size:15px;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
 body.scrolled .bar .btn{padding:5px 9px;font-size:12.5px;flex:none}body.scrolled .bar .btn svg{width:15px;height:15px}
@@ -5351,8 +5351,11 @@ document.addEventListener('click',async e=>{const id=(e.target.closest&&(e.targe
 /* ================= Slim sticky top bar + Back ================= */
 Object.assign(ICONS,{'arrow-left':ICONS['arrow-left']||'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'});
 /* the page's top bar stays on screen while scrolling, and gets slimmer once you scroll down */
-(function(){let on=false;const f=()=>{const y=window.scrollY||document.documentElement.scrollTop;const s=on?y>8:y>64;   // two limits, so the bar never flickers between sizes
-  if(s!==on){on=s;document.body.classList.toggle('scrolled',s);}};
+(function(){let on=false,lock=0;const f=()=>{if(Date.now()<lock)return;const de=document.documentElement,y=window.scrollY||de.scrollTop,room=de.scrollHeight-window.innerHeight;
+  const s=on?y>8:(y>64&&room>260);   // two limits + only on long pages, so the bar never flickers between sizes
+  if(s!==on){const b=document.querySelector('.bar'),h0=b?b.offsetHeight:0;on=s;document.body.classList.toggle('scrolled',s);
+    // the bar changes height: move the page by the same amount so nothing jumps (and the browser's scroll anchoring cannot bounce it back)
+    const d=b?h0-b.offsetHeight:0;if(d&&s){lock=Date.now()+250;window.scrollTo(0,Math.max(y-d,0)>8?y-d:y);}}};
   window.addEventListener('scroll',f,{passive:true});})();
 /* Back: every page you open is remembered; Back (button, phone back key, browser back) returns to the page before */
 const HIST=[];let LASTV=null,NAVBACK=false;
