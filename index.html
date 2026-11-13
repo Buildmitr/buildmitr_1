@@ -180,6 +180,7 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .checks input{width:auto}
 .req::after{content:" *";color:var(--red-ink)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:500;z-index:40;max-width:calc(100% - 32px)}
+.toast{pointer-events:none}body:has(#layer .drawer) .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top,0px))}
 .note{font-size:13px;color:var(--muted);background:var(--accent-soft);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start}
 .note svg.i{color:var(--accent);margin-top:2px}
 
