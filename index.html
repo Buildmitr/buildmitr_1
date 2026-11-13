@@ -1055,7 +1055,7 @@ function side(){
 }
 function header(title,actions=''){
   const opts=PJ().sort((a,b)=>(b.created||0)-(a.created||0)).map(p=>`<option value="${p.id}" ${S.proj===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('');
-  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().length+bellUnread();return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
+  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj).length+bellUnread();return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
     <label class="psw">${ico('building-2')}<select id="projSel" aria-label="Project"><option value="all">All projects</option>${opts}</select></label>${actions}</div>`;
 }
 const isAdmin=()=>ME.isOwner||ME.canEdit;
@@ -2045,7 +2045,9 @@ function raiseInvoice(mid){
 /* ================= Alerts ================= */
 function computeAlerts(){
   const t=today(),A_=[];const add=(sev,txt,view,pid)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid});};
-  D.tasks.filter(x=>x.status!=='Completed'&&x.due&&x.due<t).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})`,'tasks',x.project));
+  const bossA=isAdmin()||curRole()==='Project manager';
+  D.tasks.filter(x=>x.status!=='Completed'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,'tasks',x.project));
+  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project));
   D.tasks.filter(x=>x.status!=='Completed'&&n(x.progress)>=100&&gateMissing(x).length).forEach(x=>add('med',`${x.title}: waiting for approved ${gateMissing(x).join(', ')}`,'forms',x.project));
   D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project));
   D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads'));
@@ -5648,20 +5650,21 @@ document.addEventListener('submit',e=>{if(e.target.id!=='dlFlForm')return;e.prev
   const list=[...new Set(String(f.elements.names.value).split(',').map(x=>x.trim()).filter(Boolean))].slice(0,40);if(!list.length){toast('Enter at least one floor');return;}
   const above=list.filter(x=>!/cellar|stilt/i.test(x)).length,base=[list.some(x=>/cellar/i.test(x))?'Cellar':'',list.some(x=>/stilt/i.test(x))?'Stilt floor':''].filter(Boolean).join(' + ')||'None';
   write(()=>db.doc('projects/'+S.proj).update({floors:list,nfloors:above,base,floorsKey:`${above}|${base}`}),`Floors saved: ${list.length}`).then(ok=>{if(ok){DL.flEdit=false;render();}});},true);
-async function dlUpload(key,files){
-  const pid=S.proj;if(!A){toast('File upload needs Contributor access.');return;}
-  const prev=dlItems(pid,DL.disc).find(x=>x.k===key);const up=[];
+async function dlUpload(key,files){return dlUploadTo(S.proj,DL.disc,key,files);}
+async function dlUploadTo(pid,disc,key,files,extra){
+  if(!A){toast('File upload needs Contributor access.');return false;}
+  const prev=dlItems(pid,disc).find(x=>x.k===key);const up=[];
   for(const file of [...files]){const type=fileType(file.name)||file.type||'application/octet-stream';
     if(file.size>10*1048576){toast(`${file.name} is over 10 MB — save it as PDF, zip it, or put it on Drive and add the link.`);continue;}
     toast(`Uploading ${file.name}…`);try{const r=await A.upload(file,{type});up.push({id:r.id,name:file.name,type});}catch(e){toast(`${file.name}: ${e.message||'upload failed'}`);}}
-  if(!up.length)return;
+  if(!up.length)return false;extra=extra||{};
   const cur=prev&&prev.cur;const revN=prev?prev.all.filter(d=>(d.files||[]).length||d.link).length:0;
   const list=[];
-  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
+  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),...extra,files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
   else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
     const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-    list.push(['documents',id,{project:pid,disc:DL.disc,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:dlCat(DL.disc),rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
-  await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();
+    list.push(['documents',id,{project:pid,disc,...extra,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:dlCat(disc),rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
+  const ok=await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();return !!ok;
 }
 /* ---------- share a file ---------- */
 function fileShareText(files,title){const p=S.proj!=='all'?pname(S.proj):'';
@@ -6725,7 +6728,7 @@ function vMyDay(){
   const late=ci&&isLate(ci.start),endMin=toMin(c.end),nowMin=minOfDay(Date.now());
   const top=`<div class="box md-hero"><div class="code">${esc(new Date().toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long'}).toUpperCase())}</div>
     <h2>${hello}, ${esc((ME.name||t.name||'').split(' ')[0]||'there')}</h2>
-    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap">${lvToday?`<span class="pill p-blue">${ico('plane')} On leave today</span>`:ci?`<span class="pill ${late?'p-amber':'p-green'}">Started ${tmOfDay(ci.start)} · ${late?'Late':'On time'}</span>`:`<span class="pill p-grey">Not checked in yet</span>`}
+    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap">${lvToday?`<span class="pill p-blue">${ico('calendar')} On leave today</span>`:ci?`<span class="pill ${late?'p-amber':'p-green'}">Started ${tmOfDay(ci.start)} · ${late?'Late':'On time'}</span>`:`<span class="pill p-grey">Not checked in yet</span>`}
       <span class="code">Office ${esc(c.start)} – ${esc(c.end)}</span></div>
     <p class="code" style="margin:8px 0 0">Finish your routine and tasks one by one.${c.eodReq?` Before you leave at ${esc(c.end)}, submit your end-of-day report.`:''}</p>
     ${eod?`<div class="note">${ico('check')}<span>End-of-day report sent${eod.at||eod.srv?' at '+tmOfDay(eod.at||eod.srv):''}.</span><button type="button" class="btn sm" data-mdeod="1">Edit</button></div>`:`<button type="button" class="btn ${nowMin>=endMin-60?'pri':''}" data-mdeod="1">${ico('notebook-pen')}<span>End my day & submit report</span></button>`}</div>`;
@@ -6742,6 +6745,7 @@ function vMyDay(){
   const dueOf=x=>x.due||x.start||'';const ov=mine.filter(x=>dueOf(x)&&dueOf(x)<d0),td=mine.filter(x=>!dueOf(x)||(x.start||d0)<=d0&&dueOf(x)>=d0),up=mine.filter(x=>!ov.includes(x)&&!td.includes(x));
   const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0)),...calMine(d0).filter(x=>x.done)];
   const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b><div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
+    ${x.src!=='ptask'&&(x.project||x.src!=='cal')?`<button type="button" class="btn sm" data-fin="${x.src==='cal'?'cal|'+esc(x.cid)+'|'+esc(x.date):x.src+'|'+esc(x.id)+'|'}" title="Upload the finished file into the Drawings library and mark this done">${ico('upload')}<span>Upload & finish</span></button>`:''}
     ${x.src==='cal'?`<button type="button" class="btn sm" data-go="calendar" data-calday="${esc(x.date)}">${x.time?esc(x.time):'Calendar'}</button>`:x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
   const srt=xs=>[...xs].sort((a,b)=>(b.first?1:0)-(a.first?1:0)||String(dueOf(a)||'9999').localeCompare(String(dueOf(b)||'9999')));
   const grp=(n,xs)=>xs.length?`<div class="md-g">${n} · ${xs.length}</div>${srt(xs).map(trow).join('')}`:'';
@@ -6756,7 +6760,7 @@ function vMyDay(){
   const [ma,mb]=monthRange(),ms=attStats(ME.id,ma,mb),q=hrCfg().quota,yr=d0.slice(0,4);
   const used=k=>leavesOf(ME.id).filter(l=>l.status==='Approved'&&l.type===k&&String(l.from).startsWith(yr)).reduce((s,l)=>s+(+l.days||1),0);
   const myL=leavesOf(ME.id).sort((a,b)=>String(b.from).localeCompare(String(a.from))).slice(0,5);
-  const leave=`<div class="box"><div class="box-h">${ico('plane')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
+  const leave=`<div class="box"><div class="box-h">${ico('calendar')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
   return header('My day')+ntBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
@@ -6911,12 +6915,13 @@ function calOn(c,d){
   if(r==='monthly'){const dd=Math.min(a.getDate(),dimOf(b.getFullYear(),b.getMonth()+1));return b.getDate()===dd;}
   if(r==='yearly')return c.start.slice(5)===d.slice(5)||(c.start.slice(5)==='02-29'&&d.slice(5)==='02-28'&&dimOf(b.getFullYear(),2)===28);
   return false;}
-const calWhoOK=xs=>CAL.who==='all'||(xs||[]).includes(CAL.who==='me'?ME.id:CAL.who);
+const calAll=()=>actBoss();
+const calWhoOK=xs=>{const w=calAll()?CAL.who:'me';return w==='all'||(xs||[]).includes(w==='me'?ME.id:w);};
 /* everything on the calendar between two dates, one entry per day */
 function calItems(from,to){
   const out=[],days=[];for(let d=dOf(from);isoD(d)<=to;d.setDate(d.getDate()+1))days.push(isoD(d));
   const inP=r=>inProj(r)||(r.who||[]).includes(ME.id);
-  (D.cal||[]).filter(c=>inP(c)&&calWhoOK(c.who)).forEach(c=>days.forEach(d=>{if(calOn(c,d))out.push({src:'cal',id:c.id,c,date:d,title:c.title,project:c.project,who:c.who||[],kind:c.kind,time:c.time});}));
+  (D.cal||[]).filter(c=>inP(c)&&(calWhoOK(c.who)||(!calAll()&&c.by===ME.id))).forEach(c=>days.forEach(d=>{if(calOn(c,d))out.push({src:'cal',id:c.id,c,date:d,title:c.title,project:c.project,who:c.who||[],kind:c.kind,time:c.time});}));
   if(CAL.sched)[['tasks','Site'],['dtasks','Design']].forEach(([col,lab])=>{if(!canView(col==='tasks'?'schedule':'designsched')&&!canView(col))return;
     (D[col]||[]).filter(t=>!t.calId&&inProj(t)&&t.status!=='Completed'&&(t.start||t.due)&&calWhoOK(t.who?[t.who]:[])).forEach(t=>{const a=t.start||t.due,b=t.due&&t.due>=a?t.due:a;
       days.forEach(d=>{if(d>=a&&d<=b)out.push({src:col,id:t.id,date:d,title:t.title,project:t.project,who:t.who?[t.who]:[],kind:lab+' schedule',first:d===a||d===from,last:d===b});});});});
@@ -6936,14 +6941,14 @@ function calBox(where){
   const title=CAL.mode==='year'?String(y):CAL.mode==='list'?(()=>{const a=CAL.sel||d0,e=dOf(a);e.setDate(e.getDate()+59);const f=x=>new Date(x+'T00:00').toLocaleDateString(LOC(),{day:'numeric',month:'short'});return f(a)+' – '+f(isoD(e));})():new Date(y,m-1,1).toLocaleDateString(LOC(),{month:'long',year:'numeric'});
   const tools=`<div class="cal-bar"><div class="cal-nav"><button type="button" class="btn sm ghost" data-calm="-1" aria-label="Previous">‹</button><b class="cal-t">${esc(title)}</b><button type="button" class="btn sm ghost" data-calm="1" aria-label="Next">›</button><button type="button" class="btn sm" data-caltoday>Today</button></div>
     <div class="cal-nav">${[['month','Month'],['year','Year'],['list','List']].map(([k,l])=>`<button type="button" class="btn sm ${CAL.mode===k?'pri':''}" data-calmode="${k}">${l}</button>`).join('')}
-    <select data-calwho aria-label="Whose work"><option value="all" ${CAL.who==='all'?'selected':''}>Everyone</option><option value="me" ${CAL.who==='me'?'selected':''}>My work</option>${people.filter(p=>p.account!==ME.id).map(p=>`<option value="${esc(p.account)}" ${CAL.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+    ${calAll()?`<select data-calwho aria-label="Whose work"><option value="all" ${CAL.who==='all'?'selected':''}>Everyone</option><option value="me" ${CAL.who==='me'?'selected':''}>My work</option>${people.filter(p=>p.account!==ME.id).map(p=>`<option value="${esc(p.account)}" ${CAL.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`:'<span class="pill p-grey">My work</span>'}
     <label class="cal-chk"><input type="checkbox" data-calsched ${CAL.sched?'checked':''}> Project schedules</label></div></div>`;
   let body='';
   if(CAL.mode==='year')body=calYear(y);
   else if(CAL.mode==='list')body=calList();
   else body=calMonth(y,m)+calDay(CAL.sel);
   const fk='cal-'+where,fo=where!=='page'&&folded(fk);
-  const head=`<div class="box-h">${where!=='page'?foldBtn(fk):''}${ico('calendar')}<h2>Calendar</h2>${fo?`<span class="code">${calMine(d0).filter(x=>!x.done).length} for you today</span>`:''}${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}">${ico('plus')}<span>Schedule work</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
+  const head=`<div class="box-h">${where!=='page'?foldBtn(fk):''}${ico('calendar')}<h2>Calendar</h2>${fo?`<span class="code">${calMine(d0).filter(x=>!x.done).length} for you today</span>`:''}${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}" data-caltask="1">${ico('list-checks')}<span>New task</span></button><button type="button" class="btn sm" data-caladd="${esc(CAL.sel)}">${ico('plus')}<span>Schedule work</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
   if(fo)return `<div class="box cal">${head}</div>`;
   return `<div class="box cal ${where==='page'?'cal-page':''}">${head}${tools}${body}</div>`;}
 function calChip(x){const done=x.src==='cal'&&x.who.includes(ME.id)&&calDone(x.id,x.date);const col=calColor(x.project);
@@ -6962,7 +6967,7 @@ function calMonth(y,m){
       <span class="cal-n"><b class="cal-dn">${dt.getDate()}</b>${hol[d]?`<em>${esc(hol[d])}</em>`:''}</span>
       <span class="cal-xs">${xs.slice(0,3).map(calChip).join('')}${xs.length>3?`<span class="cal-more">+${xs.length-3} more</span>`:''}</span>
       <span class="cal-dots">${xs.slice(0,5).map(x=>`<i style="background:${calColor(x.project)}"></i>`).join('')}</span>
-      ${lv?`<span class="cal-lv">${lv} on leave</span>`:''}</button>`;}).join('')}</div>`;}
+      ${lv&&calAll()?`<span class="cal-lv">${lv} on leave</span>`:''}</button>`;}).join('')}</div>`;}
 function calDay(d){
   const xs=calItems(d,d),lv=calLeaves(d),load=calLoad(d),hol=plHolidays()[d];
   const busy=Object.entries(load).filter(([,k])=>k>=4);
@@ -6971,12 +6976,12 @@ function calDay(d){
     return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${d}" ${dn?'checked':''} aria-label="Done">`:`<span class="cal-bar-c"></span>`}
       <div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b>
       <div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${c&&c.repeat?' · '+esc((CAL_REP.find(r=>r[0]===c.repeat)||[])[1]||''):''}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')+(onLeave(u,d)?' (on leave)':'')).join(', '):''}${x.src==='cal'&&x.who.length>1?` · ${doneN}/${x.who.length} done`:''}</div>
-      ${c&&c.notes?`<div class="code" style="white-space:pre-wrap">${esc(c.notes)}</div>`:''}</div>
-      ${x.src==='cal'&&calCanEdit(c)?`<div class="cal-act"><button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}" title="Not on this day">Skip day</button>`:''}</div>`:x.src!=='cal'?`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`:''}</div>`;};
+      ${c&&c.notes?`<div class="code" style="white-space:pre-wrap">${esc(c.notes)}</div>`:''}${c&&(c.files||[]).length?`<div class="dl-files">${c.files.map(f=>`<span class="dl-f"><a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></span>`).join('')}</div>`:''}</div>
+      ${x.src==='cal'&&(calCanEdit(c)||mine)?`<div class="cal-act">${mine&&!dn&&x.project?`<button type="button" class="btn sm" data-fin="cal|${esc(x.id)}|${d}">${ico('upload')}<span>Upload & finish</span></button>`:''}${calCanEdit(c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}" title="Not on this day">Skip day</button>`:''}`:''}</div>`:x.src!=='cal'?`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`:''}</div>`;};
   return `<div class="cal-day"><div class="srow"><b style="flex:1">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}${hol?` · ${esc(hol)}`:''}</b>${calCanEdit(null)?`<button type="button" class="btn sm" data-caladd="${d}">${ico('plus')}<span>Add work this day</span></button>`:''}</div>
-    ${busy.length?`<div class="note">${ico('alert-triangle')}<span>Busy day: ${busy.map(([u,k])=>`${esc(pnm(u))} has ${k} works`).join(', ')}.</span></div>`:''}
+    ${busy.length&&calAll()?`<div class="note">${ico('alert-triangle')}<span>Busy day: ${busy.map(([u,k])=>`${esc(pnm(u))} has ${k} works`).join(', ')}.</span></div>`:''}
     ${xs.length?xs.map(row).join(''):`<div class="empty">Nothing scheduled.${calCanEdit(null)?' Tap “Add work this day” to plan something.':''}</div>`}
-    ${lv.length?`<div class="srow"><span class="code">${ico('plane')} On leave: ${lv.map(l=>esc(pnm(l.user))+' ('+esc(l.type)+')').join(', ')}</span></div>`:''}</div>`;}
+    ${lv.length?`<div class="srow"><span class="code">${ico('calendar')} On leave: ${lv.map(l=>esc(pnm(l.user))+' ('+esc(l.type)+')').join(', ')}</span></div>`:''}</div>`;}
 function calYear(y){
   const items=calItems(`${y}-01-01`,`${y}-12-31`),cnt={};items.forEach(x=>cnt[x.date]=(cnt[x.date]||0)+1);
   const d0=today();
@@ -6989,7 +6994,7 @@ function calList(){
   const xs=calItems(a,b).filter(x=>x.src==='cal'||x.first),by={};xs.forEach(x=>(by[x.date]=by[x.date]||[]).push(x));
   const ds=Object.keys(by).sort();
   return `<div class="cal-list">${ds.length?ds.map(d=>`<div class="md-g">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}))}</div>${by[d].map(x=>{const mine=x.src==='cal'&&x.who.includes(ME.id),c=x.c;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${d}" ${calDone(x.id,d)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}<div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}${x.src!=='cal'?' <span class="pill p-grey">starts</span>':''}</b><div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')).join(', '):''}</div></div>
-      <div class="cal-act">${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}">Skip day</button>`:''}`:''}<button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div></div>`;}).join('')}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
+      <div class="cal-act">${mine&&!calDone(x.id,d)&&x.project?`<button type="button" class="btn sm" data-fin="cal|${esc(x.id)}|${d}">${ico('upload')}<span>Upload & finish</span></button>`:''}${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}">Skip day</button>`:''}`:''}<button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div></div>`;}).join('')}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
 function calIntoTasks(h){try{calBackfill();}catch(_){}if(!canView('calendar'))return h;const xs=calOpen(30,30).sort((a,b)=>(b.first?1:0)-(a.first?1:0)||a.due0.localeCompare(b.due0)),d0=today();
   const box=`<div class="box"><div class="box-h">${foldBtn('caltasks')}${ico('calendar')}<h2>Calendar work</h2><span class="code">${xs.length} open · next 30 days</span>${calCanEdit(null)?`<button type="button" class="btn sm pri" data-caladd="${d0}">${ico('plus')}<span>Schedule work</span></button>`:''}${canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Calendar</button>`:''}</div>
   ${folded('caltasks')?'':xs.length?xs.map(x=>{const mine=x.who.includes(ME.id),ov=x.due0<d0;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${x.due0}" ${calDone(x.id,x.due0)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}
@@ -7003,12 +7008,12 @@ function vCalendar(){try{setTimeout(calBackfill,1500);}catch(_){}
     +calBox('page');}
 
 /* ---------------- add / change scheduled work ---------------- */
-function calForm(c,date){c=c||{};const ppl=calPeople(),who=new Set(c.who||(c.id||isAdmin()?[]:[ME.id])),pid=c.project||(S.proj!=='all'?S.proj:'');
-  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="calForm" data-id="${esc(c.id||'')}"><div class="pane-h"><h2>${c.id?'Change scheduled work':'Schedule work'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+function calForm(c,date,task){c=c||{};const ppl=calPeople(),who=new Set(c.who||(c.id||isAdmin()?[]:[ME.id])),pid=c.project||(S.proj!=='all'?S.proj:'');
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="calForm" data-id="${esc(c.id||'')}"><div class="pane-h"><h2>${c.id?'Change scheduled work':task?'New task':'Schedule work'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
   <div class="pane-b fhead" style="display:grid;gap:12px">
     <label class="wide">What work<input name="title" required maxlength="120" value="${esc(c.title||'')}" placeholder="e.g. First floor slab concreting, Elevation drawings to client"></label>
     <label>Project<select name="project"><option value="">Office / no project</option>${PJ().map(p=>`<option value="${esc(p.id)}" ${pid===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
-    <label>Type<select name="kind">${CAL_KINDS.map(k=>`<option ${c.kind===k?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
+    <label>Type<select name="kind">${CAL_KINDS.map(k=>`<option ${(c.kind||(task&&['design','owner'].includes(uiOf())?'Design work':''))===k?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
     <label>Date<input type="date" name="start" required value="${esc(c.start||date||today())}"></label>
     <label>Till (for work over many days)<input type="date" name="end" value="${esc(c.end||'')}"></label>
     <label>Time (optional)<input type="time" name="time" value="${esc(c.time||'')}"></label>
@@ -7017,6 +7022,8 @@ function calForm(c,date){c=c||{};const ppl=calPeople(),who=new Set(c.who||(c.id|
     <div class="wide"><div class="code" style="margin-bottom:6px">Assign to — it shows in their My day on each date</div>
       <div class="cal-ppl">${ppl.map(p=>`<label class="pl-chk"><input type="checkbox" name="who" value="${esc(p.account)}" ${who.has(p.account)?'checked':''}> ${esc(p.name)} <span class="code">${esc(p.role||'')}</span></label>`).join('')||'<span class="code">Add your team first (Team).</span>'}</div></div>
     <label class="wide">Notes<textarea name="notes" rows="3" maxlength="1000">${esc(c.notes||'')}</textarea></label>
+    <div class="wide"><label>Attach files (reference drawings, photos, PDFs)<input type="file" name="att" multiple></label>
+      ${(c.files||[]).length?`<div class="dl-files" style="margin-top:6px">${c.files.map(f=>`<label class="dl-f"><input type="checkbox" name="keepf" value="${esc(f.id)}" checked> <a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></label>`).join('')}</div><div class="code">Untick a file to remove it.</div>`:''}</div>
     <div class="wide code" id="calWarn"></div>
   </div><div class="pane-f"><button class="btn pri">${ico('check')}<span>${c.id?'Save':'Schedule'}</span></button>${c.id?`<button type="button" class="btn danger" data-caldel="${esc(c.id)}">${ico('trash-2')}<span>Delete</span></button>`:''}<button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;
   calWarn();}
@@ -7052,7 +7059,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
   if(ds.calmode){CAL.mode=ds.calmode;render();return;}
   if(ds.calym){CAL.m=ds.calym;CAL.mode='month';CAL.sel=ds.calym+'-01';render();return;}
   if(ds.calday){CAL.sel=ds.calday;if(ds.calmode2){CAL.mode='month';CAL.m=ymOf(CAL.sel);}render();return;}
-  if(ds.caladd!==undefined){calForm(null,ds.caladd||CAL.sel);return;}
+  if(ds.caladd!==undefined){calForm(null,ds.caladd||CAL.sel,!!ds.caltask);return;}
   if(ds.caledit){const c=(D.cal||[]).find(x=>x.id===ds.caledit);if(c)calForm(c);return;}
   if(ds.caldel){const c=(D.cal||[]).find(x=>x.id===ds.caldel);if(!c)return;if(b.dataset.sure!=='1'){b.dataset.sure='1';b.querySelector('span').textContent='Tap again to delete';return;}
     const ok=await write(()=>db.doc('cal/'+c.id).delete(),'Deleted');if(ok){await calDropTasks(c.id);closeLayer();render();}return;}
@@ -7062,7 +7069,10 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='calForm
   const g=k=>f.elements[k].value.trim(),start=g('start'),end=g('end'),rep=g('repeat');
   const who=[...f.querySelectorAll('input[name=who]:checked')].map(x=>x.value);
   const id=f.dataset.id||`c${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`,old=(D.cal||[]).find(x=>x.id===id)||{};
-  const rec={title:g('title'),project:g('project'),pn:g('project')?pname(g('project')):'',kind:g('kind'),start,end:!rep&&end&&end>start?end:'',time:g('time'),repeat:rep,until:rep?g('until'):'',who,notes:g('notes'),skip:old.skip||[]};
+  let files=(old.files||[]).filter(x=>[...f.querySelectorAll('input[name=keepf]:checked')].some(i=>i.value===x.id));
+  const att=f.elements.att&&f.elements.att.files;if(att&&att.length){if(!A){toast('File upload needs Contributor access.');return;}
+    for(const file of [...att]){if(file.size>10*1048576){toast(file.name+' is over 10 MB');continue;}toast('Uploading '+file.name+'…');try{const r=await A.upload(file,{type:fileType(file.name)||file.type||'application/octet-stream'});files.push({id:r.id,name:file.name,type:fileType(file.name)||file.type});}catch(e){toast(file.name+': '+(e.message||'upload failed'));}}}
+  const rec={files,title:g('title'),project:g('project'),pn:g('project')?pname(g('project')):'',kind:g('kind'),start,end:!rep&&end&&end>start?end:'',time:g('time'),repeat:rep,until:rep?g('until'):'',who,notes:g('notes'),skip:old.skip||[]};
   if(!rec.title)return;
   const ok=await write(()=>db.doc('cal/'+id).set(rec),f.dataset.id?'Saved':`Scheduled${who.length?' — sent to '+who.map(u=>pnm(u)).join(', '):''}`);
   if(ok){CAL.sel=start;CAL.m=ymOf(start);closeLayer();render();const n=await calSyncTasks({...old,...rec,id,by:old.by||ME.id});if(n)toast(`Scheduled — ${n} task${n>1?'s':''} created / updated for ${who.map(u=>pnm(u)).join(', ')}`);}});
@@ -7089,7 +7099,7 @@ function wfItems(){const d0=today(),out=[];
 const wfEdit=x=>x.col==='cal'?calCanEdit(x.c):CANW0&&canEditView(x.col==='tasks'?'tasks':'dtasks');
 /* calendar work that is still open: late one-time work (last `back` days) and the next date of each work (next `fwd` days) */
 function calOpen(back,fwd){const d0=today(),out=[];const add=(d,k)=>{const x=dOf(d0);x.setDate(x.getDate()+k);return isoD(x);};
-  (D.cal||[]).filter(c=>(inProj(c)||(c.who||[]).includes(ME.id))).forEach(c=>{const ppl=c.who||[];const allDone=d=>ppl.length?ppl.every(u=>calDone(c.id,d,u)):false;
+  (D.cal||[]).filter(c=>(inProj(c)||(c.who||[]).includes(ME.id))&&(actBoss()||(c.who||[]).includes(ME.id)||c.by===ME.id)).forEach(c=>{const ppl=c.who||[];const allDone=d=>ppl.length?ppl.every(u=>calDone(c.id,d,u)):false;
     let due='';
     if(!c.repeat){const last=c.end&&c.end>c.start?c.end:c.start;if(last>=add(d0,-back)&&last<=add(d0,fwd)&&!allDone(last))due=last<d0?last:(c.start>d0?c.start:d0);}
     else for(let k=0;k<=fwd;k++){const d=add(d0,k);if(calOn(c,d)&&!allDone(d)){due=d;break;}}
@@ -7182,10 +7192,11 @@ function actLog(c,id,prev,next){
   try{
     const add=(action,summary,to,project,col)=>db.collection('audit').add({at:Date.now(),by:ME.id,action,col:col||c,ref:id,summary:String(summary).slice(0,300),to:to||[],project:project||''});
     if(c==='documents'){
-      if(!prev)return add('uploaded',`Drawing added: ${next.title||id}${next.rev?' '+next.rev:''}`,[],next.project);
+      const tk=next.task?((D[next.taskCol]||[]).find(x=>x.id===next.task)||{}).title:next.cal?((D.cal||[]).find(x=>x.id===next.cal)||{}).title:'';
+      if(!prev)return add('uploaded',`Drawing added: ${next.title||id}${next.rev?' '+next.rev:''}${tk?' — task done: '+tk:''}`,[],next.project);
       const ch=DOC_FLDS.filter(k=>JSON.stringify(prev[k])!==JSON.stringify(next[k]));if(!ch.length)return;
       const what=(prev.rev!==next.rev||JSON.stringify(prev.revs)!==JSON.stringify(next.revs)||prev.file!==next.file||prev.url!==next.url)?`new revision${next.rev?' '+next.rev:''}`:prev.status!==next.status?(next.status||'status changed'):prev.rel!==next.rel?(next.rel?'released to client / site':'withdrawn'):'details changed';
-      return add('updated',`Drawing updated: ${next.title||id} — ${what}`,[],next.project);}
+      return add('updated',`Drawing updated: ${next.title||id} — ${what}${tk&&prev.task!==next.task?' (task done: '+tk+')':''}`,[],next.project);}
     if(c==='tasks'||c==='dtasks'){const w=next.who||'',pw=prev?prev.who||'':'';if(!w||w===pw||next.calId)return;
       return add('assigned',`${c==='dtasks'?'Design task':'Task'} given to ${pnm(w)}: ${next.title||''}${next.due?' (due '+fd(next.due)+')':''}`,[w],next.project);}
     if(c==='cal'){const nw=(next.who||[]).filter(u=>!(prev&&prev.who||[]).includes(u));if(!nw.length)return;
@@ -7214,11 +7225,11 @@ const calTid=(cid,u)=>`cal_${cid}_${u}`.replace(/[^\w-]/g,'_').slice(0,120);
 const calLinked=cid=>[...(D.tasks||[]).map(t=>['tasks',t]),...(D.dtasks||[]).map(t=>['dtasks',t])].filter(([,t])=>t.calId===cid);
 function calTaskRec(c,u,old){const rep=c.repeat?((CAL_REP.find(r=>r[0]===c.repeat)||[])[1]||''):'';
   return {...(old||{}),project:c.project||'',title:c.title+(rep?' ('+rep.toLowerCase()+')':''),start:c.start,due:c.repeat?(c.until||''):(c.end&&c.end>c.start?c.end:c.start),
-    who:u,status:(old&&old.status)||'Not started',progress:(old&&old.progress)||0,calId:c.id,kind:c.kind||'',notes:c.notes||'',by:(old&&old.by)||c.by||ME.id,...(old?{}:{disc:'Calendar work'})};}
+    who:u,status:(old&&old.status)||'Not started',progress:(old&&old.progress)||0,calId:c.id,kind:c.kind||'',notes:c.notes||'',files:c.files||[],by:(old&&old.by)||c.by||ME.id,...(old?{}:{disc:'Calendar work'})};}
 async function calSyncTasks(c){if(!c||!c.id)return 0;const col=calTaskCol(c.kind);const have=calLinked(c.id),out=[],del=[];
   (c.who||[]).forEach(u=>{const ex=have.find(([,t])=>t.who===u);if(ex&&ex[0]!==col&&col){del.push(ex);}
     const k=col||(ex&&ex[0]);if(!k||!(CANW0&&canEditView(k)))return;const old=ex&&ex[0]===k?ex[1]:null;
-    const rec=calTaskRec(c,u,old);if(old&&['project','title','start','due','who','notes','kind'].every(f=>String(old[f]||'')===String(rec[f]||'')))return;out.push([k,old?old.id:calTid(c.id,u),rec]);});
+    const rec=calTaskRec(c,u,old);if(old&&['project','title','start','due','who','notes','kind'].every(f=>String(old[f]||'')===String(rec[f]||''))&&JSON.stringify(old.files||[])===JSON.stringify(rec.files||[]))return;out.push([k,old?old.id:calTid(c.id,u),rec]);});
   have.forEach(ex=>{if(!(c.who||[]).includes(ex[1].who))del.push(ex);});
   try{if(out.length)await dbBatch(out);for(const [k,t] of del)if(CANW0&&canEditView(k))await db.doc(k+'/'+t.id).delete();}catch(_){}
   return out.length;}
@@ -7231,6 +7242,39 @@ let CT_BACK=false;
 function calBackfill(){if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=true;const d0=today(),old=(()=>{const d=dOf(d0);d.setDate(d.getDate()-30);return isoD(d);})();
   (D.cal||[]).filter(c=>(c.who||[]).length&&(actBoss()||c.by===ME.id)&&(c.repeat?(!c.until||c.until>=d0):(c.end||c.start)>=old)&&(c.who||[]).some(u=>!calLinked(c.id).some(([,t])=>t.who===u)))
     .forEach(c=>calSyncTasks(c));}
+
+/* ================= Finish a task by uploading the work into the Drawings library =================
+   From My day / the Calendar the person picks the library folder and drawing (or types a new name), uploads the file(s);
+   the drawing is filed in the library (linked to the task), the task is marked done, and the admin's bell shows it. */
+function finForm(src,id,date){
+  const t=src==='cal'?(D.cal||[]).find(x=>x.id===id):(D[src]||[]).find(x=>x.id===id);if(!t)return;
+  const pid=t.project||(S.proj!=='all'?S.proj:'');const tabs=pid?dlLib(pid):[];const disc0=t.disc&&tabs.some(x=>x.k===t.disc)?t.disc:(src==='tasks'?'Structure':'Architecture');
+  const items=d=>pid?dlItems(pid,d).map(x=>x.k):[];
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="finForm" data-src="${src}" data-id="${esc(id)}" data-date="${esc(date||'')}" data-pid="${esc(pid)}"><div class="pane-h"><h2>Finish: ${esc(t.title)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" style="display:grid;gap:12px">
+    ${pid?`<p class="code">The file goes into the Drawings library of ${esc(pname(pid))} and the admin is told. The task is marked done.</p>
+    <label>Library folder<select name="disc" id="finDisc">${tabs.map(x=>`<option value="${esc(x.k)}" ${x.k===disc0?'selected':''}>${esc(x.l||x.k)}</option>`).join('')}</select></label>
+    <label>Drawing<select name="key" id="finKey"><option value="__new">+ New drawing (name below)</option>${items(disc0).map(k=>`<option ${k.toLowerCase()===String(t.title).toLowerCase()?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
+    <label id="finNewL">New drawing name<input name="newk" maxlength="120" value="${esc(String(t.title).replace(/\s*\((every|daily).*\)$/i,''))}"></label>`:`<p class="note">This work has no project, so it cannot go into a project library. Pick a project on the work first, or just tick it done.</p>`}
+    <label>Files (drawing, PDF, image, model…)<input type="file" name="files" multiple ${pid?'required':''}></label>
+    <label>Note (optional)<textarea name="note" rows="2" maxlength="500"></textarea></label>
+  </div><div class="pane-f"><button class="btn pri" ${pid?'':'disabled'}>${ico('upload')}<span>Upload & mark done</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;
+  finNew();}
+function finNew(){const k=document.getElementById('finKey'),l=document.getElementById('finNewL');if(k&&l)l.hidden=k.value!=='__new';}
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='finKey')finNew();
+  if(t.id==='finDisc'){const f=t.form,pid=f.dataset.pid;const k=document.getElementById('finKey');k.innerHTML=`<option value="__new">+ New drawing (name below)</option>`+dlItems(pid,t.value).map(x=>`<option>${esc(x.k)}</option>`).join('');finNew();}});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-fin]');if(!b)return;const [src,id,date]=b.dataset.fin.split('|');finForm(src,id,date);});
+document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='finForm')return;e.preventDefault();
+  const src=f.dataset.src,id=f.dataset.id,pid=f.dataset.pid,date=f.dataset.date||today();if(!pid)return;
+  const disc=f.elements.disc.value,key=f.elements.key.value==='__new'?f.elements.newk.value.trim():f.elements.key.value;if(!key){toast('Give the drawing a name');return;}
+  const fs=f.elements.files.files;if(!fs.length){toast('Choose the file(s) to upload');return;}
+  const btn=f.querySelector('.btn.pri');btn.disabled=true;btn.querySelector('span').textContent='Uploading…';
+  const task=src==='cal'?calLinked(id).find(([,t])=>t.who===ME.id):[src,(D[src]||[]).find(x=>x.id===id)];
+  const ok=await dlUploadTo(pid,disc,key,fs,{task:task&&task[1]?task[1].id:'',taskCol:task?task[0]:'',cal:src==='cal'?id:'',note:f.elements.note.value.trim()});
+  if(!ok){btn.disabled=false;btn.querySelector('span').textContent='Upload & mark done';return;}
+  if(src==='cal')await calTick(id,date,true);
+  else if(CANW0&&canEditView(src)){try{await db.doc(src+'/'+id).update({status:'Completed',progress:100,doneFile:key});}catch(_){}}
+  closeLayer();toast(`${key} filed in the library — task done ✓`);render();});
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
