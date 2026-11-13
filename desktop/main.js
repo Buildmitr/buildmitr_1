@@ -70,9 +70,32 @@ ipcMain.handle('bm-device', () => devKind || new Promise(ok => {
 }));
 function send() { if (win && tracker && tracker.on) { const b = tracker.take(); if (b.length) win.webContents.send('bm-work', b); } }
 
+// newer rules for reading file names from window titles come from the BuildMitr website (no reinstall needed)
+function rulesLoad(setRules) {
+  const fs = require('fs'), f = path.join(app.getPath('userData'), 'track-rules.json');
+  try { setRules(JSON.parse(fs.readFileSync(f, 'utf8'))); } catch (_) {}
+  try {
+    require('electron').net.fetch(APP_URL + 'track-rules.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && setRules(j)) fs.writeFileSync(f, JSON.stringify(j)); }).catch(() => {});
+  } catch (_) {}
+}
+// the app updates itself from the "windows-latest" release: downloads quietly, installs when BuildMitr is closed
+function autoUpdate() {
+  if (!app.isPackaged) return;
+  try {
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.autoDownload = true; autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.on('error', () => {});
+    const go = () => autoUpdater.checkForUpdates().catch(() => {});
+    setTimeout(go, 60 * 1000); setInterval(go, 6 * 3600 * 1000);
+  } catch (_) {}
+}
+
 app.whenReady().then(() => {
-  const { Tracker } = require('./tracker');
+  const { Tracker, setRules } = require('./tracker');
   tracker = new Tracker(app, powerMonitor);
+  rulesLoad(setRules); setInterval(() => rulesLoad(setRules), 6 * 3600 * 1000);
+  autoUpdate();
   setInterval(send, 2 * 60 * 1000);
   // camera (site photos, QR scanning), notifications, clipboard and file saving are allowed for BuildMitr only
   const ok = ['media', 'notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'geolocation'];

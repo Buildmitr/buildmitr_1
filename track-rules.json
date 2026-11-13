@@ -1,0 +1,180 @@
+{
+ "v": 2,
+ "apps": [
+  {
+   "p": "^acad(lt)?$",
+   "a": "AutoCAD",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])"
+   ]
+  },
+  {
+   "p": "^(sketchup|sketchupviewer|layout)",
+   "a": "SketchUp",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)\\s+-\\s+(?:SketchUp|LayOut)"
+   ]
+  },
+  {
+   "p": "^revit$",
+   "a": "Revit",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "\\[([^\\]]+?)\\s+-\\s+[^\\]]*\\]",
+    "\\[([^\\]]+)\\]",
+    "^Autodesk Revit[^-]*(?:-\\s*[A-Z ]*VERSION\\s*)?-\\s*(.+?)(?:\\s+-\\s+.*)?$"
+   ]
+  },
+  {
+   "p": "^etabs",
+   "a": "ETABS",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "\\[([^\\]]+)\\]",
+    "^ETABS[^-]*-\\s*(.+?)\\s*$"
+   ]
+  },
+  {
+   "p": "^safe",
+   "a": "SAFE",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^SAFE[^-]*-\\s*(.+?)\\s*$"
+   ]
+  },
+  {
+   "p": "^sap2000",
+   "a": "SAP2000",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^SAP2000[^-]*-\\s*(.+?)\\s*$"
+   ]
+  },
+  {
+   "p": "staad",
+   "a": "STAAD",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "\\[([^\\]]+)\\]",
+    "^STAAD[^-]*-\\s*(.+?)\\s*$"
+   ]
+  },
+  {
+   "p": "^tekla",
+   "a": "Tekla",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^Tekla Structures[^-]*-\\s*(.+?)(?:\\s+-\\s+.*)?$"
+   ]
+  },
+  {
+   "p": "^3dsmax",
+   "a": "3ds Max",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)\\s+-\\s+Autodesk 3ds Max"
+   ]
+  },
+  {
+   "p": "^archicad",
+   "a": "ArchiCAD",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)\\s+-\\s+.*Archicad"
+   ]
+  },
+  {
+   "p": "^rhino",
+   "a": "Rhino",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)\\s+-\\s+Rhino"
+   ]
+  },
+  {
+   "p": "^roamer$",
+   "a": "Navisworks",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])"
+   ]
+  },
+  {
+   "p": "^photoshop$",
+   "a": "Photoshop",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])"
+   ]
+  },
+  {
+   "p": "^(lumion|enscape|vray|twinmotion|d5)",
+   "a": "Rendering",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(?:Lumion|Twinmotion|D5 Render|Enscape)[^-]*-\\s*(.+?)\\s*$",
+    "^(.+?)\\s+-\\s+(?:Lumion|Twinmotion|D5 Render|Enscape)"
+   ]
+  },
+  {
+   "p": "^excel$",
+   "a": "Excel",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)(?:\\s+-\\s+(?:Compatibility Mode|Read-Only|Protected View|AutoRecovered|Saved|Saving|Shared|Repaired)[^-]*)*\\s+-\\s+(?:Microsoft\\s+)?Excel"
+   ]
+  },
+  {
+   "p": "^winword$",
+   "a": "Word",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)(?:\\s+-\\s+(?:Compatibility Mode|Read-Only|Protected View|AutoRecovered|Saved|Saving|Shared|Repaired)[^-]*)*\\s+-\\s+(?:Microsoft\\s+)?Word"
+   ]
+  },
+  {
+   "p": "^powerpnt$",
+   "a": "PowerPoint",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)(?:\\s+-\\s+(?:Compatibility Mode|Read-Only|Protected View|AutoRecovered|Saved|Saving|Shared|Repaired)[^-]*)*\\s+-\\s+(?:Microsoft\\s+)?PowerPoint"
+   ]
+  },
+  {
+   "p": "^winproj$",
+   "a": "MS Project",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])",
+    "^(.+?)\\s+-\\s+(?:Microsoft\\s+)?Project"
+   ]
+  },
+  {
+   "p": "^(acrobat|acrord32|foxitpdfreader|foxitphantom|foxitpdfeditor|revu|sumatrapdf|pdfxedit)$",
+   "a": "PDF reader",
+   "f": [
+    "([^\\\\/\\[\\]:*?\"<>|]+?\\.(?:dwg|dxf|dwt|skp|rvt|rfa|rte|edb|e2k|fdb|sdb|std|max|psd|pln|3dm|nwd|nwf|nwc|ifc|xlsx|xlsm|xls|csv|docx|doc|pptx|ppt|pdf|mpp|ls\\d+|lsc|vrscene|blend|tekla|db1))(?![a-z0-9])"
+   ]
+  },
+  {
+   "p": "^(chrome|msedge|firefox|brave|opera|iexplore)$",
+   "a": "Browser",
+   "f": [],
+   "web": 1
+  },
+  {
+   "p": "^whatsapp",
+   "a": "WhatsApp",
+   "f": []
+  },
+  {
+   "p": "^buildmitr$",
+   "a": "BuildMitr",
+   "f": []
+  },
+  {
+   "p": "^explorer$",
+   "a": "Windows",
+   "f": []
+  }
+ ],
+ "skip": "^(book|document|presentation|project|drawing|untitled|sheet|new project)\\s*\\d*(\\.\\w+)?$"
+}

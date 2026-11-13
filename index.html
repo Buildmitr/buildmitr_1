@@ -5893,7 +5893,7 @@ Object.assign(ICONS,{'timer':'<line x1="10" x2="14" y1="2" y2="2"/><line x1="12"
 {const g=NAV[0].items;const i=g.findIndex(x=>x[0]==='team');if(!g.some(x=>x[0]==='worktime'))g.splice(i+1,0,['worktime','timer','Staff work time','పని సమయం']);}
 const DESK=window.bmDesk||null;
 const WT={range:'week',from:'',to:'',person:'',last:'',seen:null};
-const WT_CAD=['AutoCAD','SketchUp','Revit','ETABS','Rendering'],WT_OFFICE=['Excel','Word','PDF reader','BuildMitr'],WT_PERSONAL=['YouTube','WhatsApp'];
+const WT_CAD=['AutoCAD','SketchUp','Revit','ETABS','SAFE','SAP2000','STAAD','Tekla','3ds Max','ArchiCAD','Rhino','Navisworks','Photoshop','Rendering'],WT_OFFICE=['Excel','Word','PowerPoint','MS Project','PDF reader','Google Sheets','Google Docs','Google Slides','BuildMitr'],WT_PERSONAL=['YouTube','WhatsApp'];
 const wtGroup=a=>WT_CAD.includes(a)?'cad':WT_OFFICE.includes(a)?'office':WT_PERSONAL.includes(a)?'personal':a==='Browser'?'browser':'other';
 const WT_GL={cad:'Drawing (CAD)',office:'Office & BuildMitr',browser:'Browser',personal:'YouTube / WhatsApp',other:'Other programs',idle:'Idle'};
 const WT_GC={cad:'#16a34a',office:'#2563eb',browser:'#8b5cf6',personal:'#e11d48',other:'#94a3b8',idle:'#f59e0b'};
@@ -5941,12 +5941,36 @@ function wtBar(o){const segs=['cad','office','browser','personal','other'].map(k
   return `<div class="wt-bar" role="img" aria-label="${segs.map(([k,v])=>`${WT_GL[k]} ${hm(v)}`).join(', ')}">${segs.map(([k,v])=>`<i style="flex:${v};background:${WT_GC[k]}" title="${esc(WT_GL[k])}: ${hm(v)}"></i>`).join('')}</div>`;}
 const wtLegend=()=>`<div class="wt-leg">${Object.keys(WT_GL).map(k=>`<span><i style="background:${WT_GC[k]}"></i>${esc(WT_GL[k])}</span>`).join('')}</div>`;
 const wtPctPill=p=>`<span class="pill ${p>=60?'p-green':p>=35?'p-amber':'p-red'}">${p}%</span>`;
-function wtProj(file){const f=String(file||'').toLowerCase();if(!f)return '';
-  const p=PJ().find(p=>{const c=String(p.code||'').toLowerCase(),w=String(p.name||'').toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>=4&&!['residence','house','villa','project','building','apartment'].includes(x));return (c&&f.includes(c))||w.some(x=>f.includes(x));});
-  return p?p.name:'';}
+// which project a file belongs to: the admin's own choice first, then the project code, then words of the project / client name
+const wtKey=f=>String(f||'').toLowerCase().replace(/\.[a-z0-9]{2,5}$/,'').replace(/[^a-z0-9]+/g,' ').trim();
+const wtMap=()=>{const o=(D.org.find(x=>x.id==='main')||{}).wtmap;return o&&typeof o==='object'?o:{};};
+const WT_STOP=new Set(['residence','residential','house','home','villa','project','projects','building','apartment','apartments','plan','plans','floor','layout','details','detail','elevation','section','sections','drawing','drawings','final','new','old','rev','copy','site','work','working','the','and','for','mr','mrs','sri','smt','dr','ltd','pvt','private','limited','interior','interiors','exterior','structure','structural','boq','estimate','ground','first','second','third','plot','commercial','office']);
+const WT_WEAK=new Set(['nagar','road','colony','layout','city','town','street','enclave','hills','park','gardens','phase','block','sector']);
+function wtWords(t){return String(t||'').toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>=3&&!WT_STOP.has(x)&&!/^\d+$/.test(x));}
+const WT_PC={};
+function wtProjId(file){const k=wtKey(file);if(!k)return '';const m=wtMap();if(m[k]!==undefined)return m[k];
+  if(WT_PC[k]!==undefined)return WT_PC[k];
+  const fw=new Set(wtWords(k)),fk=' '+k+' ';let best='',bs=0;
+  PJ().forEach(p=>{let sc=0;const pre=String(p.prefix||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    if(pre&&fk.includes(' '+pre+' '))sc+=10;
+    const nw=wtWords(p.name);sc+=nw.filter(w=>fw.has(w)).reduce((t,w)=>t+(WT_WEAK.has(w)?1:3),0)+nw.filter(w=>w.length>=5&&!fw.has(w)&&!WT_WEAK.has(w)&&k.includes(w)).length*2;
+    const pw=String(p.name||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);for(let i=0;i+1<pw.length;i++)if(fk.includes(' '+pw[i]+' '+pw[i+1]+' ')&&!WT_STOP.has(pw[i+1])||fk.includes(' '+pw[i]+' '+pw[i+1]+' ')&&pw[i].length<3)sc+=3;
+    const cw=wtWords(typeof cname==='function'?cname(p.client):'');sc+=cw.filter(w=>fw.has(w)).length*2;
+    if(sc>bs){bs=sc;best=p.id;}});
+  return WT_PC[k]=bs>=2?best:'';}
+function wtProj(file){const id=wtProjId(file);const p=id&&proj(id);return p?p.name:'';}
 
+function wtProjBox(rs,who){const by={};let none=0;
+  rs.forEach(r=>{const a=n(r.act);if(!a||wtGroup(r.app)==='personal')return;const id=r.file?wtProjId(r.file):'';if(!id){none+=a;return;}
+    const x=by[id]||(by[id]={act:0,ppl:new Set(),apps:{}});x.act+=a;x.ppl.add(r.user);x.apps[r.app]=(x.apps[r.app]||0)+a;});
+  const L=Object.entries(by).sort((a,b)=>b[1].act-a[1].act);if(!L.length)return '';const mx=L[0][1].act;
+  return `<div class="box"><div class="box-h">${ico('folder')}<h2>Time by project</h2><span class="code">${L.length}</span></div>
+    <div class="tbl-wrap"><table class="wt-t"><thead><tr><th>Project</th><th style="min-width:160px">Time</th><th>Programs</th>${who?'<th class="num">Staff</th>':''}</tr></thead><tbody>
+    ${L.map(([id,x])=>`<tr><td><b>${esc(pname(id))}</b></td><td><div class="wt-bar"><i style="flex:${x.act};background:${WT_GC.cad}"></i><i style="flex:${Math.max(mx-x.act,0)};background:transparent"></i></div><span class="code">${hm(x.act)}</span></td>
+      <td class="code">${Object.entries(x.apps).sort((a,b)=>b[1]-a[1]).map(([a,v])=>esc(a)+' '+hm(v)).join(' · ')}</td>${who?`<td class="num">${x.ppl.size}</td>`:''}</tr>`).join('')}</tbody></table></div>
+    ${none?`<div class="srow"><span class="code">${hm(none)} of work could not be linked to a project (no file name, or a name that matches no project). ${isAdmin()||S.demo?'Pick the project next to a file under the person\'s files worked on — it is remembered for that file.':''}</span></div>`:''}</div>`;}
 /* ---- the page ---- */
-function vWorkTime(){
+function vWorkTime(){Object.keys(WT_PC).forEach(k=>delete WT_PC[k]);
   const adm=isAdmin()||S.demo,[a,b]=wtRange(),rs=wtRecs();
   const ranges=[['today','Today'],['yday','Yesterday'],['week','This week'],['7d','Last 7 days'],['month','This month'],['custom','Pick dates']];
   const top=`<div class="box"><div class="srow">${ranges.map(([k,l])=>`<button type="button" class="btn sm ${WT.range===k?'pri':''}" data-wtr="${k}">${l}</button>`).join('')}
@@ -5961,25 +5985,25 @@ function vWorkTime(){
   const table=ppl.length?`<div class="box"><div class="box-h">${ico('users')}<h2>Staff</h2><span class="code">${ppl.length} ${ppl.length>1?'people':'person'}</span></div>${wtLegend()}
     <div class="tbl-wrap"><table class="wt-t"><thead><tr><th>Staff</th><th>Drawing time</th><th style="min-width:200px">Where the time went</th><th class="num">AutoCAD</th><th class="num">SketchUp</th><th class="num">Revit</th><th class="num">Other work</th><th class="num">YouTube / WhatsApp</th><th class="num">Idle</th><th class="num">Days</th><th>Last seen</th></tr></thead>
     <tbody>${ppl.map(({u,name,o})=>`<tr class="wt-row" data-wtp="${esc(u)}" tabindex="0"><td><b>${esc(name)}</b></td><td>${wtPctPill(o.pct)} <span class="code">${hm(o.cad)}</span></td><td>${wtBar(o)}</td>
-      <td class="num">${hm(o.apps.AutoCAD)}</td><td class="num">${hm(o.apps.SketchUp)}</td><td class="num">${hm(o.apps.Revit)}</td><td class="num">${hm(o.office+(o.apps.ETABS||0)+(o.apps.Rendering||0)+o.browser+o.other)}</td>
+      <td class="num">${hm(o.apps.AutoCAD)}</td><td class="num">${hm(o.apps.SketchUp)}</td><td class="num">${hm(o.apps.Revit)}</td><td class="num">${hm(o.act-(o.apps.AutoCAD||0)-(o.apps.SketchUp||0)-(o.apps.Revit||0)-o.personal)}</td>
       <td class="num">${hm(o.personal)}</td><td class="num">${hm(o.idle)}</td><td class="num">${o.days.size}</td><td class="code">${o.last?esc(new Date(o.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})):'—'}</td></tr>`).join('')}</tbody></table></div>
-    <div class="srow"><span class="code"><b>Drawing time</b> = time in AutoCAD, SketchUp, Revit, ETABS and rendering programs ÷ all recorded time (including idle). Tap a name for each day and each drawing file.</span></div></div>`
+    <div class="srow"><span class="code"><b>Drawing time</b> = time in AutoCAD, SketchUp, Revit, ETABS, STAAD, 3ds Max, rendering and other design programs ÷ all recorded time (including idle). Tap a name for each day and each drawing file.</span></div></div>`
    :`<div class="box hero-empty">${ico('timer')}<h2>No work time recorded ${WT.range==='today'?'today':'in these dates'}</h2><p>${wtOn()?'Install the BuildMitr Windows app on each office PC and let staff sign in once. Time appears here a few minutes later.':'Switch on work time recording above, then install the BuildMitr Windows app on the office PCs.'}</p></div>`;
   const kpi=ppl.length?`<div class="box"><div class="tiles">${[['Drawing time',hm(all.cad),`${all.pct}% of recorded time`],['AutoCAD',hm(all.apps.AutoCAD),''],['SketchUp',hm(all.apps.SketchUp),''],['Revit',hm(all.apps.Revit),''],['Idle',hm(all.idle),all.tot?Math.round(all.idle/all.tot*100)+'% of recorded time':'']].map(([l,v,x])=>`<div class="tile"><b>${v}</b><span>${l}${x?' · '+x:''}</span></div>`).join('')}</div></div>`:'';
-  return header('Staff work time')+setup+top+kpi+table;
+  return header('Staff work time')+setup+top+kpi+table+wtProjBox(rs,1);
 }
-function wtPerson(u,rs){
+function wtPerson(u,rs){const adm=isAdmin()||S.demo;
   const o=wtSum(rs);const days=[...new Set(rs.map(r=>r.date))].sort().reverse();
   const daysBox=`<div class="box"><div class="box-h">${ico('calendar-range')}<h2>Each day</h2>${wtPctPill(o.pct)}<span class="code">drawing time ${hm(o.cad)} of ${hm(o.tot)}</span></div>${wtLegend()}
     <div class="tbl-wrap"><table class="wt-t"><thead><tr><th>Day</th><th style="min-width:220px">Where the time went</th><th class="num">Drawing</th><th class="num">Idle</th><th class="num">Total</th><th>First – last</th></tr></thead><tbody>
     ${days.map(d=>{const x=wtSum(rs.filter(r=>r.date===d));return `<tr><td>${esc(fd(d))}</td><td>${wtBar(x)}</td><td class="num">${hm(x.cad)} ${wtPctPill(x.pct)}</td><td class="num">${hm(x.idle)}</td><td class="num">${hm(x.tot)}</td><td class="code">${x.first?new Date(x.first).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''} – ${x.last?new Date(x.last).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):''}</td></tr>`;}).join('')}</tbody></table></div></div>`;
   const files={};rs.filter(r=>r.file).forEach(r=>{const k=r.app+'|'+r.file;const f=files[k]||(files[k]={app:r.app,file:r.file,act:0,idle:0,days:new Set()});f.act+=n(r.act);f.idle+=n(r.idle);f.days.add(r.date);});
   const fl=Object.values(files).sort((a,b)=>b.act-a.act);
-  const filesBox=`<div class="box"><div class="box-h">${ico('file-text')}<h2>Drawing files worked on</h2><span class="code">${fl.length}</span></div>${fl.length?`<div class="tbl-wrap"><table class="wt-t"><thead><tr><th>File</th><th>Program</th><th>Project</th><th class="num">Active</th><th class="num">Idle</th><th class="num">Days</th></tr></thead><tbody>
-    ${fl.slice(0,60).map(f=>`<tr><td><b>${esc(f.file)}</b></td><td>${esc(f.app)}</td><td>${esc(wtProj(f.file))||'<span class="code">—</span>'}</td><td class="num">${hm(f.act)}</td><td class="num">${hm(f.idle)}</td><td class="num">${f.days.size}</td></tr>`).join('')}</tbody></table></div>`:`<div class="srow"><span class="code">No drawing files in these dates.</span></div>`}</div>`;
+  const filesBox=`<div class="box"><div class="box-h">${ico('file-text')}<h2>Files worked on</h2><span class="code">${fl.length}</span></div>${fl.length?`<div class="tbl-wrap"><table class="wt-t"><thead><tr><th>File</th><th>Program</th><th>Project</th><th class="num">Active</th><th class="num">Idle</th><th class="num">Days</th></tr></thead><tbody>
+    ${fl.slice(0,60).map(f=>`<tr><td><b>${esc(f.file)}</b></td><td>${esc(f.app)}</td><td>${adm?`<select class="wt-pj" style="min-width:140px;max-width:220px" data-wtmap="${esc(wtKey(f.file))}" aria-label="Project for ${esc(f.file)}"><option value="">—</option>${PJ().map(p=>`<option value="${esc(p.id)}" ${wtProjId(f.file)===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`:(esc(wtProj(f.file))||'<span class="code">—</span>')}</td><td class="num">${hm(f.act)}</td><td class="num">${hm(f.idle)}</td><td class="num">${f.days.size}</td></tr>`).join('')}</tbody></table></div>`:`<div class="srow"><span class="code">No files in these dates. File names show for AutoCAD, Revit, SketchUp, ETABS, Excel, Word and most design programs.</span></div>`}</div>`;
   const apps=Object.entries(o.apps).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
   const appsBox=`<div class="box"><div class="box-h">${ico('monitor')}<h2>Programs</h2></div><div class="wt-apps">${apps.map(([k,v])=>`<div><span>${esc(k)}</span><div class="prog"><i style="width:${o.act?Math.max(2,Math.round(v/o.act*100)):0}%;background:${WT_GC[wtGroup(k)]}"></i></div><b>${hm(v)}</b></div>`).join('')}</div></div>`;
-  return daysBox+filesBox+appsBox;
+  return daysBox+wtProjBox(rs,0)+filesBox+appsBox;
 }
 function wtSetupBox(){const on=wtOn();if(S.cloud&&WT.srv===null)wtSrv();
   if(WT.srv===false)return `<div class="box"><div class="box-h">${ico('timer')}<h2>Work time recording</h2><span class="pill p-amber">Server update needed</span></div><div class="inst-b"><p>Work time recording is ready in the app, but your BuildMitr server needs a small update first (Apps Script → new version). After that you can switch it on here.</p></div></div>`;
@@ -6003,11 +6027,13 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
   if(id==='wtShare'){shareSheet('BuildMitr work time',`Hello team,\n\n${orgName()} uses BuildMitr to record work time on office PCs (programs like AutoCAD / SketchUp, the drawing file name, and idle time — no screenshots).\n\n1. Download and install: ${typeof WIN_URL!=='undefined'?WIN_URL:APP_URL}\n2. Open BuildMitr and sign in with your login code.\n3. Keep it running — it stays in the taskbar tray.\n\nYou can see your own time in BuildMitr → Staff work time.\n\n— ${ME.name||orgName()}`);return;}
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('wt-row')){WT.person=e.target.dataset.wtp;render();}},true);
-document.addEventListener('change',e=>{if(e.target.id==='wtFrom'){WT.from=e.target.value;render();}if(e.target.id==='wtTo'){WT.to=e.target.value;render();}},true);
+document.addEventListener('change',e=>{const m=e.target.dataset&&e.target.dataset.wtmap;if(m!==undefined&&m!==''){const o=Object.assign({},wtMap());o[m]=e.target.value;Object.keys(WT_PC).forEach(k=>delete WT_PC[k]);
+    write(()=>db.doc('org/main').update({wtmap:o}),e.target.value?'Saved — this file now counts for '+(proj(e.target.value)||{}).name:'Project removed for this file').then(()=>render());return;}
+  if(e.target.id==='wtFrom'){WT.from=e.target.value;render();}if(e.target.id==='wtTo'){WT.to=e.target.value;render();}},true);
 
 /* demo: a week of sample work time for the demo team */
 {const _dd=demoData;demoData=function(){const X=_dd();const t=new Date();const L=[];
-  const P=[['dm4','AutoCAD',['GF Roof Shuttering Layout.dwg','Column Layout.dwg','JP Nagar Floor Plans.dwg'],.72],['dm4','SketchUp',['JP Nagar Elevation.skp'],.5],['dm2','AutoCAD',['Site Plan.dwg'],.3],['dm2','SketchUp',['Interior Living.skp'],.25],['dm3','AutoCAD',['Plinth Beam Layout.dwg'],.45]];
+  const P=[['dm4','AutoCAD',['GF Roof Shuttering Layout.dwg','Column Layout.dwg','JP Nagar Floor Plans.dwg'],.72],['dm4','SketchUp',['JP Nagar Elevation.skp'],.5],['dm2','AutoCAD',['Site Plan.dwg'],.3],['dm2','SketchUp',['Interior Living.skp'],.25],['dm3','AutoCAD',['Plinth Beam Layout.dwg'],.45],['dm2','Revit',['Prasad WD'],.3],['dm3','ETABS',['Lakshmi G+1 frame.EDB'],.3],['dm2','Excel',['BM-26-21 BOQ'],.12]];
   for(let k=0;k<7;k++){const d=new Date(t);d.setDate(t.getDate()-k);if(d.getDay()===0)continue;const ds=isoDate(d),base=new Date(ds+'T09:30:00').getTime();
     P.forEach(([u,app,files,w],i)=>files.forEach((f,j)=>{const act=Math.round((3600*7*w/files.length)*(0.8+((k*7+i*3+j)%5)/10)/15)*15;L.push({id:`${u}_${ds}_${i}${j}`,user:u,date:ds,app,file:f,act,idle:Math.round(act*.12/15)*15,first:base+j*1800e3,last:base+8*3600e3,pc:'OFFICE-PC'+(i%3+1)});}));
     ['dm2','dm3','dm4'].forEach((u,i)=>{L.push({id:`${u}_${ds}_x`,user:u,date:ds,app:['YouTube','WhatsApp','Excel'][(i+k)%3],file:'',act:900*(1+(i+k)%3),idle:600,first:base,last:base+7*3600e3});L.push({id:`${u}_${ds}_b`,user:u,date:ds,app:'BuildMitr',file:'',act:1200,idle:0,first:base,last:base+7*3600e3});});}

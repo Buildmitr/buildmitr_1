@@ -1,5 +1,5 @@
 # Builds the BuildMitr Windows app (installer BuildMitr-Setup.exe for Windows 10 / 11) whenever the desktop/ folder
-# changes, and publishes it as the "windows-latest" release. The app opens the live BuildMitr site, so it never needs updating.
+# changes, and publishes it as the "windows-latest" release. The app opens the live BuildMitr site; from 1.3.0 it also updates itself from this release (latest.yml).
 name: Windows app
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         working-directory: desktop
         run: |
           set -o pipefail
-          { npm install --no-audit --no-fund && npm run dist; ls -la dist; } 2>&1 | tee -a ../build.log
+          { npm install --no-audit --no-fund && npm run dist; ls -la dist; npx -y @electron/asar list dist/win-unpacked/resources/app.asar | grep -c electron-updater; } 2>&1 | tee -a ../build.log
       - name: Publish
         run: |
           set -o pipefail
@@ -38,7 +38,7 @@ jobs:
             gh release delete windows-latest -y --cleanup-tag || true
             gh release create windows-latest --title "BuildMitr for Windows" \
               --notes "Download BuildMitr-Setup.exe and open it to install BuildMitr on Windows 10 / 11. If Windows shows 'Windows protected your PC', click More info → Run anyway. Built from commit ${GITHUB_SHA::7}." \
-              desktop/dist/BuildMitr-Setup.exe
+              desktop/dist/BuildMitr-Setup.exe desktop/dist/latest.yml desktop/dist/BuildMitr-Setup.exe.blockmap
           } 2>&1 | tee -a build.log
       - name: Save the log if the build failed
         if: failure()

@@ -1,7 +1,7 @@
 {
   "name": "buildmitr",
   "productName": "BuildMitr",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "BuildMitr - construction project management",
   "author": "BuildMitr",
   "main": "main.js",
@@ -41,7 +41,15 @@
       "runAfterFinish": true,
       "artifactName": "BuildMitr-Setup.${ext}"
     },
-    "publish": null
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/Buildmitr/buildmitr_1/releases/download/windows-latest"
+      }
+    ]
   },
-  "repository": "https://github.com/Buildmitr/buildmitr_1"
+  "repository": "https://github.com/Buildmitr/buildmitr_1",
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  }
 }
