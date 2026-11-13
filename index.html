@@ -599,6 +599,11 @@ const MOD={
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'wbs',l:'WBS / activity ID',t:'text',list:1},{k:'title',l:'Task',t:'text',req:1,list:1},{k:'who',l:'Assigned to',t:'member',list:1},
     {k:'resource',l:'Resource / gang (from schedule)',t:'text'},{k:'start',l:'Start date',t:'date'},{k:'due',l:'Due date',t:'date',list:1},{k:'progress',l:'Progress %',t:'number',list:1,max:100},
     {k:'status',l:'Status',t:'select',o:['Not started','In progress','Completed','On hold'],list:1},{k:'pred',l:'Predecessors',t:'text'},{k:'gates',l:'Checklists that must be approved before this can be marked Completed',t:'tplmulti',list:1},{k:'source',l:'Imported from',t:'text'},{k:'notes',l:'Notes',t:'textarea'}]},
+  dtasks:{label:'Design activities',te:'డిజైన్ పనులు',icon:'pen-tool',fields:[
+    {k:'project',l:'Project',t:'project',req:1,list:1},{k:'wbs',l:'No.',t:'text',list:1},{k:'title',l:'Activity',t:'text',req:1,list:1},
+    {k:'disc',l:'Section',t:'select',o:['Project management','Architecture','3D & elevation','Structure','MEP','Interiors'],list:1},{k:'who',l:'Assigned to',t:'member',list:1},
+    {k:'start',l:'Start date',t:'date'},{k:'due',l:'Due date',t:'date',list:1},{k:'progress',l:'Progress %',t:'number',list:1,max:100},
+    {k:'status',l:'Status',t:'select',o:['Not started','In progress','Completed','On hold'],list:1},{k:'pred',l:'Predecessors',t:'text'},{k:'resource',l:'Team / person',t:'text'},{k:'source',l:'Made from',t:'text'},{k:'notes',l:'Notes',t:'textarea'}]},
   issues:{label:'Issues & snags',te:'సమస్యలు & లోపాలు',icon:'alert-triangle',actions:['whatsapp'],fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'title',l:'Issue',t:'text',req:1,list:1},
     {k:'kind',l:'Type',t:'select',o:['Site issue','Snag (quality defect)','Safety','Client complaint'],list:1},{k:'location',l:'Location (e.g. FF bedroom 2)',t:'text',list:1},
@@ -758,7 +763,7 @@ const NAV=[
   {g:'Content & reviews',items:[['content','images','Content library','ఫోటో లైబ్రరీ'],['reviews'],['referrals'],['portfolio']]},
   {g:'Sales',items:[['docmaker','file-text','Quotations & invoices','కోటేషన్లు & ఇన్వాయిస్‌లు'],['invoices']]},
   {g:'Library',items:[['clients'],['vendors'],['documents']]},
-  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Activity schedule','షెడ్యూల్'],['drawlib','library','Drawings library','డ్రాయింగ్ లైబ్రరీ'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
+  {g:'Planning',items:[['survey'],['boq'],['changes'],['schedule','gantt-chart','Construction schedule','నిర్మాణ షెడ్యూల్'],['designsched','pen-tool','Design schedule','డిజైన్ షెడ్యూల్'],['drawlib','library','Drawings library','డ్రాయింగ్ లైబ్రరీ'],['planner','calendar-range','Schedule planner','షెడ్యూల్ ప్లానర్']]},
   {g:'Progress & quality',items:[['tasks'],['issues'],['dpr']]},
   {g:'Site cameras',items:[['cctv','cctv','Live cameras','లైవ్ కెమెరాలు'],['cameras']]},
   {g:'Material',items:[['inventory','warehouse','Inventory','స్టాక్'],['po'],['received'],['requests'],['issue'],['returned'],['consumed']]},
@@ -1260,7 +1265,7 @@ function fieldInput(f,v){
 function openForm(k,id,preset){
   const isP=k==='projects';
   const m=isP?{label:'Project',fields:[
-    {k:'prefix',l:'Project code / prefix',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'description',l:'Description',t:'textarea'},
+    {k:'prefix',l:'Project code / prefix',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'ptype',l:'Type of project',t:'select',o:['Residential house','Villa','Apartment','Commercial / office','Industrial / factory','Warehouse','Restaurant / café','Hotel','Hospital / clinic','School / college','Retail / showroom']},{k:'description',l:'Description',t:'textarea'},
     {k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'value',l:'Contract value (₹, before GST)',t:'money'},{k:'area',l:'Built-up area (sq.ft)',t:'number'},{k:'nfloors',l:'Number of floors above ground (incl. ground floor)',t:'number',max:40},{k:'base',l:'Below / stilt',t:'select',o:['None','Cellar','Stilt floor','Cellar + Stilt floor']},{k:'loc',l:'Site location (pin on map)',t:'location'},{k:'address',l:'Site address (fills in from the pin, you can edit)',t:'textarea'},...(id||!isAdmin()?[]:[{k:'tpl',l:'Start from a template (adds schedule with checklists, payment stages and budget)',t:'select',o:['None',...Object.keys(PTPL)]}])]}:MOD[k];
   const r=id?D[k].find(x=>x.id===id):null;
   DRAFT.k=k;DRAFT.id=id||null;DRAFT.fields=m.fields;DRAFT.photos={};DRAFT.files={};DRAFT.fresh=new Set();DRAFT.removed=[];
@@ -1340,12 +1345,19 @@ function inviteLink(r){
 }
 const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;return d;};
 
-/* ================= Activity schedule (timeline) ================= */
-function vSchedule(){
+/* ================= Activity schedules (timeline) =================
+   Two schedules per project: the CONSTRUCTION schedule (collection "tasks", for the site team) and the DESIGN schedule
+   (collection "dtasks": project management, architecture, 3D & elevation, structure, MEP, interiors — for the design team).
+   Who sees which one is set in Role access; by default architects see design, site engineers construction, and the
+   admin, project manager and senior (project) architect see both. */
+const TC=()=>S.view==='designsched'?'dtasks':'tasks';
+const TS=()=>D[TC()]||[];
+function vSchedule(){const DS=S.view==='designsched',VK=DS?'designsched':'schedule';
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
-  const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
-  const ed=CANW&&canEditView('tasks');const btn=CANW?`${isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&D.tasks.some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}${D.tasks.some(t=>inProj(t))?`<button class="btn" id="schedXls">${ico('file-down')}Download Excel</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Upload Excel</button><button class="btn pri" data-add="tasks">${ico('plus')}Add activity</button>`:'';
-  if(!ts.length)return header(label('schedule'),btn)+`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`;
+  const ts=TS().filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
+  const ed=CANW&&canEditView(S.view==='designsched'?'designsched':'tasks');const other=DS?(canView('schedule')?`<button class="btn" data-go="schedule">${ico('gantt-chart')}Construction schedule</button>`:''):(canView('designsched')?`<button class="btn" data-go="designsched">${ico('pen-tool')}Design schedule</button>`:'');
+  const btn=`${other}`+(CANW?`${DS?(ed?`<button class="btn" id="dsGen">${ico('sparkles')}Generate design schedule</button>`:''):isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&TS().some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}${TS().some(t=>inProj(t))?`<button class="btn" id="schedXls">${ico('file-down')}Download Excel</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Upload Excel</button><button class="btn pri" data-add="${TC()}">${ico('plus')}Add activity</button>`:'');
+  if(!ts.length)return header(label(VK),btn)+(DS?`<div class="box hero-empty">${ico('pen-tool')}<h2>No design schedule yet</h2><p>Tap <b>Generate design schedule</b>: choose the type of project (house, villa, apartment, office, factory, restaurant, hotel, hospital…) and BuildMitr lays out project management, architecture, 3D & elevation, structure, MEP and interior activities with dates. Everything can be edited afterwards.</p>${btn}</div>`:`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`);
   const day=s=>new Date(s+'T00:00').getTime()/864e5;
   let min=Math.min(...ts.map(t=>day(t.s)),day(today()))-2,max=Math.max(...ts.map(t=>day(t.e)),day(today()))+3;
   const span=max-min,pos=d=>((d-min)/span*100).toFixed(2)+'%';
@@ -1355,8 +1367,8 @@ function vSchedule(){
   {const vw=innerWidth||1000,trackW=Math.max(vw<=720?vw*0.44+420:760,Math.min(vw,1400)-300)-(vw<=720?vw*0.44:240),need=58,step=Math.max(1,Math.ceil(need/(trackW/Math.max(1,ticks.length))));   // keep month labels apart on narrow screens
     const keep=ticks.filter((t,i)=>i%step===0);ticks.length=0;ticks.push(...keep);}
   const tdy=day(today());
-  if(S.schedTable&&ed)return header(label('schedule'),btn)+schedTable(ts);
-  const SE=schedSeason(ts,min,max,pos);
+  if(S.schedTable&&ed)return header(label(VK),btn)+schedTable(ts);
+  const SE=DS?{ds:1,rain:{},bands:'',hl:'',wet:()=>false,warn:[],hs:Object.entries(plHolidays()).filter(([d])=>d>=ts[0].s&&d<=ts[ts.length-1].e),city:''}:schedSeason(ts,min,max,pos);
   const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
     return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${(()=>{const w=S.proj==='all'?pname(t.project):(t.who?nm(t.who):'');return w&&w!=='—'?esc(w)+' · ':'';})()}<span class="g-dt">${fd(t.s)} → ${fd(t.e)}</span> <span class="g-acts"><button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></span></div>
@@ -1364,9 +1376,9 @@ function vSchedule(){
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
   const s0=ts.reduce((m,t)=>t.s<m?t.s:m,ts[0].s),e0=ts.reduce((m,t)=>t.e>m?t.e:m,ts[0].e);
-  return header(label('schedule'),btn)+`<div class="grid2"><div class="box"><div class="box-h"><h2>Timeline</h2><span class="code">${fd(s0)} → ${fd(e0)}${SE.city?' · '+esc(SE.city):''}</span></div><div class="tiles"><div class="tile"><b>${((day(e0)-day(s0)+1)/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div><div class="tile"><b>${SE.hs.length}</b><span>Holidays inside</span></div></div></div>
-  <div class="box"><div class="box-h"><h2>Season & time check</h2></div>${SE.warn.length?`<div class="pl-warn">${SE.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${esc(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>No season or time problems found.</span></div>`}</div></div>
-  <div class="box"><div class="box-h"><h2>Calendar view</h2><span class="code"><span class="pl-key rain"></span> monsoon <span class="pl-key hv"></span> heavy monsoon <span class="pl-key hol"></span> holiday <span class="pl-key wet"></span> outdoor work in monsoon</span></div><div class="tbl-wrap"><div class="gantt">
+  return header(label(VK),btn)+`<div class="grid2"><div class="box"><div class="box-h"><h2>Timeline</h2><span class="code">${fd(s0)} → ${fd(e0)}${SE.city?' · '+esc(SE.city):''}</span></div><div class="tiles"><div class="tile"><b>${((day(e0)-day(s0)+1)/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div><div class="tile"><b>${SE.hs.length}</b><span>Holidays inside</span></div></div></div>
+  <div class="box"><div class="box-h"><h2>${DS?'Time check':'Season & time check'}</h2></div>${SE.warn.length?`<div class="pl-warn">${SE.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${esc(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>${DS?'Nothing behind schedule.':'No season or time problems found.'}</span></div>`}</div></div>
+  <div class="box"><div class="box-h"><h2>Calendar view</h2>${DS?'':`<span class="code"><span class="pl-key rain"></span> monsoon <span class="pl-key hv"></span> heavy monsoon <span class="pl-key hol"></span> holiday <span class="pl-key wet"></span> outdoor work in monsoon</span>`}</div><div class="tbl-wrap"><div class="gantt">
     <div class="g-row g-head"><div class="g-lab"></div><div class="g-track">${SE.bands}${ticks.map(([v,l])=>`<span class="g-tick" style="left:${pos(v)}">${l}</span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"><em>Today</em></span></div></div>
     ${rows}<div class="g-row g-foot"><div class="g-lab"></div><div class="g-track">${ticks.map(([v])=>`<span class="g-line" style="left:${pos(v)}"></span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"></span></div></div>
   </div></div><div class="code" style="padding:10px 16px">Bar = planned start to due date · dark fill = progress · red = past due and not complete · blue = outdoor work in monsoon · 💬 comments.</div></div>${schedMonths(ts,SE)}`;
@@ -1397,7 +1409,7 @@ function schedSeason(ts,min,max,pos){const city=schedCity(ts),rain=PL_RAIN[city]
 function schedMonths(ts,SE){if(!ts.length)return '';const s0=ts.reduce((m,t)=>t.s<m?t.s:m,ts[0].s),e0=ts.reduce((m,t)=>t.e>m?t.e:m,ts[0].e),out=[];const d=new Date(s0+'T00:00');d.setDate(1);let n=0;
   while(isoDate(d)<=e0&&n++<48){const a=isoDate(d),e=new Date(d);e.setMonth(e.getMonth()+1);e.setDate(0);const b=isoDate(e);
     const acts=ts.filter(t=>t.s<=b&&t.e>=a),hs=SE.hs.filter(([x])=>x>=a&&x<=b),f=SE.rain[d.getMonth()]||1;
-    out.push(`<div class="pl-mon ${a.slice(0,7)===today().slice(0,7)?'now':''}"><div class="pl-mh"><b>${d.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</b>${a.slice(0,7)===today().slice(0,7)?'<span class="pill p-green">this month</span>':''}${f>1?`<span class="pill ${f>=1.3?'p-red':'p-amber'}">☂ ${f>=1.3?'heavy':'moderate'} monsoon</span>`:''}${PL_HOT.includes(d.getMonth())?'<span class="pill p-amber">hot</span>':''}</div>
+    out.push(`<div class="pl-mon ${a.slice(0,7)===today().slice(0,7)?'now':''}"><div class="pl-mh"><b>${d.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</b>${a.slice(0,7)===today().slice(0,7)?'<span class="pill p-green">this month</span>':''}${f>1?`<span class="pill ${f>=1.3?'p-red':'p-amber'}">☂ ${f>=1.3?'heavy':'moderate'} monsoon</span>`:''}${!SE.ds&&PL_HOT.includes(d.getMonth())?'<span class="pill p-amber">hot</span>':''}</div>
       ${hs.length?`<div class="code">Holidays: ${hs.map(([x,n_])=>esc(`${new Date(x+'T00:00').getDate()} ${n_}`)).join(', ')}</div>`:''}
       <ul>${acts.map(t=>{const p=t.status==='Completed'?100:+t.progress||0,late=t.status!=='Completed'&&t.e<today();const cm=(t.comments||[]).slice(-1)[0];
         return `<li>${esc(t.title)} <span class="code">${fd(t.s)} → ${fd(t.e)}</span> <span class="pill ${p>=100?'p-green':late?'p-red':p?'p-blue':'p-grey'}">${p>=100?'Done':late?'Late · '+p+'%':p+'%'}</span>${cm&&cm.t?`<div class="code">💬 ${esc(cm.t)}</div>`:''}</li>`;}).join('')||'<li class="code">—</li>'}</ul></div>`);
@@ -1809,8 +1821,8 @@ const ROLE_VIEWS={
   'Supervisor':V_SITE,
   'Storekeeper':['sitehome','dashboard','projects','project','inventory','po','received','requests','issue','returned','consumed','equipment','equiplog','forms','form','alerts'],
   'Accountant':['dashboard','projects','project','invoices','clients','vendors','payments','balances','budget','budgetva','milestones','wages','advances','labour','attendance','received','po','reports','forms','form','alerts'],
-  'Architect':['desk','dashboard','projects','project','documents','survey','boq','changes','schedule','tasks','issues','dpr','cctv','forms','form','alerts'],
-  'Structural engineer':['desk','dashboard','projects','project','documents','survey','boq','changes','schedule','tasks','issues','dpr','cctv','forms','form','alerts'],
+  'Architect':['desk','dashboard','projects','project','documents','survey','boq','changes','designsched','dtasks','issues','dpr','cctv','forms','form','alerts'],
+  'Structural engineer':['desk','dashboard','projects','project','documents','survey','boq','changes','designsched','dtasks','issues','dpr','cctv','forms','form','alerts'],
   'Sub-contractor':['sitehome','project','schedule','tasks','issues','dpr','attendance','attbulk','workupd','forms','form','alerts'],
   'Marketing':['mktdash','pipeline','leads','visits','leadimp','followups','wtpl','estimator','packages','campaigns','content','reviews','referrals','portfolio','cflags'],
   'Client':['client','cphotos','cpay','cdocs','cctv','forms','form'],
@@ -1827,7 +1839,7 @@ function curRole(){
   return ROLE_VIEWS[t.role]?t.role:'Supervisor';
 }
 const fullAccess=()=>ROLE_VIEWS[curRole()]===V_ALL;
-const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='worktime'||v==='notices')return !['Client','none'].includes(curRole());if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
+const canView=v=>{if(v==='settings'||v==='install')return true;if(v==='notices')return !['Client','none'].includes(curRole());if(v==='docmaker')v='invoices';if(v==='drawlib')v='documents';if(v==='orgs')return isSuperAdmin();const r=curRole();const a=ROLE_VIEWS[r];{const t=curPerson();if(t&&t.role!=='Admin'){const po=personOv(t.id);if(po&&po[v]&&v!=='roleaccess')return po[v]!=='h';}}if(a===V_ALL)return true;if(v==='roleaccess')return false;const o=raOverride(r);if(o&&o[v])return o[v]!=='h';return (a||[]).includes(v);};
 const homeView=()=>{const r=curRole();if(r==='Client')return 'client';{const u=UI_OF[r];if(u==='site'&&canView('sitehome'))return 'sitehome';if(u==='design'&&canView('desk'))return 'desk';}if(r==='none')return 'noaccess';const a=ROLE_VIEWS[r];if(a===V_ALL)return 'dashboard';const pref=[UI_OF[r]==='site'?'sitehome':UI_OF[r]==='design'?'desk':r==='Marketing'?'mktdash':'dashboard','dashboard',...a,...NAV.flatMap(g=>g.items.map(i=>i[0]))].find(v=>canView(v)&&!(UI_ONLY[v]&&UI_ONLY[v]!==UI_OF[r]));return pref||'noaccess';};
 function myProjSet(){
   if(S.viewAsPerson){const t=D.team.find(x=>x.id===S.viewAsPerson);if(t)return (t.projects||[]).includes('all')?'all':new Set(t.projects||[]);}
@@ -2399,7 +2411,7 @@ const UI_ONLY={sitehome:'site',desk:'design',client:'client',cphotos:'client',cp
 const TABS={
   site:[['sitehome','home','Home'],['tasks','list-checks','Tasks'],['+','plus','Add'],['messages','message-circle','Chat'],['issues','alert-triangle','Issues']],
   client:[['client','home','Home'],['cphotos','images','Photos'],['cpay','indian-rupee','Payments'],['messages','message-circle','Chat'],['cctv','cctv','Cameras']],
-  design:[['desk','pencil-ruler','Desk'],['documents','folder-open','Drawings'],['messages','message-circle','Chat'],['issues','alert-triangle','Issues'],['schedule','gantt-chart','Schedule']],
+  design:[['desk','pencil-ruler','Desk'],['documents','folder-open','Drawings'],['messages','message-circle','Chat'],['issues','alert-triangle','Issues'],['designsched','pen-tool','Schedule']],
 };
 function tabBar(){
   let t=TABS[uiOf()];if(!S.ready)return '';
@@ -2458,7 +2470,7 @@ function vDesk(){
   const iss=D.issues.filter(inP).filter(x=>x.status!=='Resolved');
   const cos=D.changes.filter(inP).filter(c=>c.status==='Requested');
   const wk=addDays(t,-7),soon=addDays(t,21);
-  const upcoming=D.tasks.filter(inP).filter(x=>x.status==='Not started'&&x.start&&x.start>=t&&x.start<=soon).sort((a,b)=>a.start.localeCompare(b.start));
+  const upcoming=(canView('designsched')?D.dtasks.filter(inP).filter(x=>x.status!=='Completed'&&x.due&&x.due<=soon):D.tasks.filter(inP).filter(x=>x.status==='Not started'&&x.start&&x.start>=t&&x.start<=soon)).sort((a,b)=>a.start.localeCompare(b.start));
   const photos=[...D.dpr,...D.workupd].filter(inP).filter(d=>(d.date||'')>=wk).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).flatMap(d=>(d.photos||[]).map(id=>({id,d}))).slice(0,12);
   const sw=s=>({'For approval':'p-amber','Draft':'p-grey','Approved':'p-green','Superseded':'p-grey'}[s]||'p-grey');
   const docRow=d=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(d.title)}</b> <span class="code">${esc(d.rev||'')}</span><div class="code">${esc(pname(d.project))} · ${esc(d.cat||'')}</div></div><span class="pill ${sw(d.status)}">${esc(d.status||'—')}</span>
@@ -2470,8 +2482,8 @@ function vDesk(){
     <div class="box"><div class="box-h">${ico('folder-open')}<h2>Drawings in progress</h2><button class="btn sm" data-go="documents">Register</button></div>${[...forA,...draft].length?[...forA,...draft].map(docRow).join(''):'<div class="empty">No drawings pending.</div>'}</div>
     <div class="box"><div class="box-h">${ico('alert-triangle')}<h2>Questions from site</h2><button class="btn sm" data-go="issues">All</button></div>
       ${iss.length?iss.slice(0,8).map(x=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="code">${esc(pname(x.project))}${x.due?' · by '+fd(x.due):''}</div></div>${cell(MOD.issues.fields.find(f=>f.k==='severity'),x)}${CANW&&canEditView('issues')?`<button class="btn sm ghost" data-edit="issues:${x.id}" aria-label="Reply">${ico('pencil')}</button>`:''}</div>`).join(''):'<div class="empty">No open questions.</div>'}</div>
-    <div class="box"><div class="box-h">${ico('calendar')}<h2>Drawings needed soon</h2><button class="btn sm" data-go="schedule">Schedule</button></div>
-      ${upcoming.length?upcoming.slice(0,8).map(x=>`<div class="srow"><b style="flex:1">${esc(x.title)}</b><span class="code">${esc((proj(x.project)||{}).prefix||'')} · starts ${fd(x.start)}</span></div>`).join(''):'<div class="empty">No work starting in the next 3 weeks.</div>'}</div>
+    <div class="box"><div class="box-h">${ico('calendar')}<h2>${canView('designsched')?'Design work due soon':'Drawings needed soon'}</h2>${canView('designsched')||canView('schedule')?`<button class="btn sm" data-go="${canView('designsched')?'designsched':'schedule'}">Schedule</button>`:''}</div>
+      ${upcoming.length?upcoming.slice(0,8).map(x=>`<div class="srow"><b style="flex:1">${esc(x.title)}</b><span class="code">${esc((proj(x.project)||{}).prefix||'')} · ${x.disc?'due '+fd(x.due):'starts '+fd(x.start)}</span></div>`).join(''):'<div class="empty">No work starting in the next 3 weeks.</div>'}</div>
     <div class="box"><div class="box-h">${ico('file-diff')}<h2>Change orders</h2><button class="btn sm" data-go="changes">All</button></div>
       ${cos.length?cos.map(c=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(c.no||'')}</b> ${esc(c.desc||'')}<div class="code">${esc(pname(c.project))}</div></div><span class="pill p-amber">Requested</span></div>`).join(''):'<div class="empty">No open change orders.</div>'}</div>
   </div>
@@ -2531,7 +2543,7 @@ Object.assign(HI,{sitehome:'साइट होम',desk:'डिज़ाइन 
 const RA_MAIN=['Site engineer','Architect','Client','Marketing'];
 const RA_MORE=['Supervisor','Storekeeper','Structural engineer','Sub-contractor','Accountant'];
 const ROLE_KEY=r=>String(r).toLowerCase().replace(/[^a-z0-9]+/g,'-');
-const EDIT_TIE={pipeline:'leads',followups:'leads',leadimp:'leads',estimator:'leads',content:'cflags',attbulk:'attendance',schedule:'tasks',forms:'forms'};
+const EDIT_TIE={pipeline:'leads',followups:'leads',leadimp:'leads',estimator:'leads',content:'cflags',attbulk:'attendance',schedule:'tasks',designsched:'dtasks',forms:'forms'};
 const raEditable=k=>!!MOD[k]||k in EDIT_TIE||k==='projects';
 const RA_SKIP=new Set(['settings','audit','roleaccess','adminpanel','team','dashboard','cflags']);
 const PKEY=id=>'person-'+id;
@@ -2542,7 +2554,7 @@ function raOverride(role){const o=D.roleaccess.find(x=>x.id===ROLE_KEY(role));re
 function raDefaultEdit(role,k){
   if(k==='projects')return ['Architect','Senior architect','Accountant'].includes(role);   // who may add projects (the admin and project manager always can)
   if(role==='Client')return k==='changes';
-  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms'].includes(k)||(k==='projects'&&['Architect','Senior architect'].includes(role));
+  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms','dtasks','designsched'].includes(k)||(k==='projects'&&['Architect','Senior architect'].includes(role));
   return true;
 }
 function raVal(role,k){
@@ -3492,7 +3504,7 @@ function impRender(){
   const body=document.getElementById('impBody');if(!body)return;
   if(!IMP.rows.length){body.innerHTML='';return;}
   const rows=impBuild();const pid=(document.getElementById('imp-proj')||{}).value;
-  const exist=D.tasks.filter(t=>t.project===pid);const upd=rows.filter(r=>impMatch(r,exist)).length;const gone=exist.filter(t=>!rows.some(r=>impMatch(r,[t]))).length;
+  const exist=TS().filter(t=>t.project===pid);const upd=rows.filter(r=>impMatch(r,exist)).length;const gone=exist.filter(t=>!rows.some(r=>impMatch(r,[t]))).length;
   const noDate=rows.filter(r=>!r.start&&!r.due).length;
   body.innerHTML=`<div class="code"><b>${IMP.rows.length}</b> rows read from ${esc(IMP.source)}. Check which column is which:</div>
   <div class="imp-map">${IMP_FIELDS.map(([k,l])=>`<label>${esc(l)}<select data-impmap="${k}"><option value="">— not in file —</option>${IMP.cols.map(c=>`<option ${IMP.map[k]===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label>`).join('')}</div>
@@ -3524,19 +3536,19 @@ async function runImport(){
   if(S.demo){toast('Exit the demo to import into your real projects.');return;}
   const rows=impBuild();const pid=(document.getElementById('imp-proj')||{}).value;if(!rows.length||!pid)return;
   const btn=document.getElementById('impGo');btn.disabled=true;btn.textContent='Importing…';
-  const exist=D.tasks.filter(t=>t.project===pid),used=new Set(),now=Date.now(),list=[];let added=0,updated=0;
+  const exist=TS().filter(t=>t.project===pid),used=new Set(),now=Date.now(),list=[];let added=0,updated=0;
   const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
   for(const r0 of rows){const {bmid,...r}=r0;const ex=impMatch(r0,exist.filter(t=>!used.has(t.id)));
-    if(ex){used.add(ex.id);list.push(['tasks',ex.id,{...recOf(ex),wbs:r.wbs||ex.wbs||'',title:r.title,start:r.start||ex.start||'',due:r.due||ex.due||'',progress:r.progress,status:r.status,pred:r.pred,resource:r.resource||ex.resource||'',...(r.notes!==undefined?{notes:r.notes}:{}),source:ex.source||r.source,upd:now}]);updated++;}
-    else{list.push(['tasks',nid(),{...r,by:ME.id,at:now}]);added++;}}
+    if(ex){used.add(ex.id);list.push([TC(),ex.id,{...recOf(ex),wbs:r.wbs||ex.wbs||'',title:r.title,start:r.start||ex.start||'',due:r.due||ex.due||'',progress:r.progress,status:r.status,pred:r.pred,resource:r.resource||ex.resource||'',...(r.notes!==undefined?{notes:r.notes}:{}),source:ex.source||r.source,upd:now}]);updated++;}
+    else{list.push([TC(),nid(),{...r,by:ME.id,at:now}]);added++;}}
   const del=IMP.del&&document.getElementById('imp-del')&&document.getElementById('imp-del').checked?exist.filter(t=>!used.has(t.id)):[];
-  const ok=await write(async()=>{for(let k=0;k<list.length;k+=60)await dbBatch(list.slice(k,k+60));for(const t of del)await db.doc('tasks/'+t.id).delete();});
-  IMP.del=false;closeLayer();S.proj=pid;S.view='schedule';render();if(ok)toast(`Uploaded: ${added} new, ${updated} updated${del.length?`, ${del.length} deleted`:''}`);
+  const ok=await write(async()=>{for(let k=0;k<list.length;k+=60)await dbBatch(list.slice(k,k+60));for(const t of del)await db.doc(TC()+'/'+t.id).delete();});
+  IMP.del=false;closeLayer();S.proj=pid;S.view=S.view==='designsched'?'designsched':'schedule';render();if(ok)toast(`Uploaded: ${added} new, ${updated} updated${del.length?`, ${del.length} deleted`:''}`);
 }
 /* download the schedule as Excel — edit it and upload it back (rows are matched by the BuildMitr ID column) */
 async function schedExport(){
   try{await loadSheetJS();}catch(_){toast('Could not load the Excel tool — check the internet.');return;}
-  const ts=D.tasks.filter(t=>inProj(t)).sort((a,b)=>schWbsKey(a.wbs).localeCompare(schWbsKey(b.wbs))||String(a.start||'').localeCompare(String(b.start||'')));
+  const ts=TS().filter(t=>inProj(t)).sort((a,b)=>schWbsKey(a.wbs).localeCompare(schWbsKey(b.wbs))||String(a.start||'').localeCompare(String(b.start||'')));
   const dt=v=>v?new Date(v+'T00:00'):'';const all=S.proj==='all';
   const head=['WBS / No.','Activity',...(all?['Project']:[]),'Start','Finish','Days','Progress %','Status','Predecessors','Resource','Notes','BuildMitr ID'];
   const aoa=[head,...ts.map(t=>[t.wbs||'',t.title||'',...(all?[pname(t.project)]:[]),dt(t.start),dt(t.due),t.start&&t.due?dDiff(t.due,t.start)+1:'',t.status==='Completed'?100:(+t.progress||0),t.status||'Not started',t.pred||'',t.resource||'',t.notes||'',t.id])];
@@ -4340,6 +4352,25 @@ document.addEventListener('submit',e=>{if(e.target.id==='schedForm'){e.preventDe
  * (Sundays and holidays skipped); weather-sensitive works get extra time in the rainy months of the chosen city.
  * Every activity can be switched off, renamed, given other days, a fixed start date and a comment. */
 Object.assign(ICONS,{'calendar-range':'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M17 14h-6"/><path d="M13 18H7"/><path d="M7 14h.01"/><path d="M17 18h.01"/>'});
+/* ---- project types: each adds its own construction works (planner) and design activities (design schedule) ----
+   construction extra = [key, title, anchor, working days, resource]; anchor: struct = after the structure, mep = with the
+   rough-in (after block-work), finish = after flooring, paint = after first paint coat, end = just before handover */
+const PTYPES=['Residential house','Villa','Apartment','Commercial / office','Industrial / factory','Warehouse','Restaurant / café','Hotel','Hospital / clinic','School / college','Retail / showroom'];
+const PT_C={
+ 'Villa':[['vpool','Swimming pool & deck','struct',25,'Pool contractor'],['vauto','Home automation & CCTV','finish',6,'Automation vendor']],
+ 'Apartment':[['aff','Fire fighting, hydrant & fire alarm','mep',20,'Fire contractor'],['astp','STP, WTP & rainwater harvesting','struct',20,'MEP contractor'],['adg','DG set, transformer & common-area electricals','finish',10,'Electrical contractor'],['apark','Basement parking, ramps & signage','finish',12,'Civil contractor'],['acom','Common areas, lobby & clubhouse finishes','paint',20,'Interior contractor']],
+ 'Commercial / office':[['cglz','Glazing / ACP facade','finish',25,'Facade contractor'],['chv','HVAC (VRF) ducting & units','mep',25,'HVAC contractor'],['cff','Fire alarm & sprinklers','mep',18,'Fire contractor'],['cit','Data, IT & security cabling','finish',10,'IT vendor'],['cdg','DG set, transformer & panels','finish',10,'Electrical contractor'],['cnoc','Fire NOC & occupancy certificate','end',15,'Liaison']],
+ 'Industrial / factory':[['ipeb','PEB steel structure erection','struct',30,'PEB vendor'],['ishe','Roof & wall sheeting, skylights','struct',15,'PEB vendor'],['iflr','Industrial (VDF) flooring','finish',15,'Flooring contractor'],['icrn','Crane rails & gantry','struct',10,'Fabricator'],['ihyd','Fire hydrant & sprinklers','mep',18,'Fire contractor'],['isub','Electrical substation & panels','finish',15,'Electrical contractor'],['iutl','Compressed air & process utilities','finish',15,'MEP contractor'],['iroad','Internal roads & storm drains','end',15,'Civil contractor'],['ilic','Factory licence & pollution board inspection','end',10,'Liaison']],
+ 'Warehouse':[['wpeb','PEB steel structure erection','struct',25,'PEB vendor'],['wshe','Roof & wall sheeting','struct',12,'PEB vendor'],['wflr','Industrial (VDF) flooring & dock levellers','finish',15,'Flooring contractor'],['whyd','Fire hydrant & sprinklers','mep',15,'Fire contractor'],['wroad','Truck yard, roads & drains','end',15,'Civil contractor']],
+ 'Restaurant / café':[['rkex','Kitchen exhaust & fresh air ducting','mep',8,'HVAC contractor'],['rgas','LPG bank & gas pipeline','mep',5,'Gas vendor'],['rhv','Air-conditioning','mep',8,'HVAC contractor'],['rkit','Commercial kitchen equipment','finish',8,'Kitchen vendor'],['rsup','Hood fire suppression & fire alarm','finish',4,'Fire contractor'],['rgt','Grease trap & drainage','mep',3,'Plumber'],['rsig','Signage & branding','paint',5,'Signage vendor'],['rlic','FSSAI, trade licence & fire NOC','end',10,'Liaison']],
+ 'Hotel':[['hhv','Central HVAC (chillers & AHUs)','mep',35,'HVAC contractor'],['hff','Fire fighting, sprinklers & fire alarm','mep',25,'Fire contractor'],['hmock','Mock-up guest room','finish',15,'Interior contractor'],['hkl','Kitchen & laundry equipment','finish',15,'Kitchen vendor'],['hffe','Guest room FF&E fit-out','paint',30,'Interior contractor'],['hbms','BMS, IT, IPTV & CCTV','finish',15,'IT vendor'],['hstp','STP & WTP','struct',25,'MEP contractor'],['hpool','Swimming pool','struct',25,'Pool contractor'],['hdg','DG set, transformer & panels','finish',12,'Electrical contractor'],['hnoc','Fire NOC, trade licence & brand audit','end',15,'Liaison']],
+ 'Hospital / clinic':[['qmg','Medical gas pipeline (O₂, vacuum, air)','mep',18,'Medical gas vendor'],['qhv','HVAC with HEPA filters (OT & ICU)','mep',30,'HVAC contractor'],['qff','Fire fighting, sprinklers & fire alarm','mep',22,'Fire contractor'],['qrs','Radiation shielding (X-ray / CT rooms)','mep',8,'Shielding vendor'],['qot','Modular OT panels & ICU fit-out','finish',25,'OT vendor'],['qnc','Nurse call, BMS & CCTV','finish',12,'IT vendor'],['qstp','STP / ETP & bio-medical waste room','struct',25,'MEP contractor'],['qdg','DG set, UPS & transformer','finish',12,'Electrical contractor'],['qnoc','Fire NOC, NABH & AERB inspections','end',15,'Liaison']],
+ 'School / college':[['sff','Fire alarm & fire extinguishers','mep',10,'Fire contractor'],['slab','Labs & library fit-out','paint',15,'Interior contractor'],['splay','Playground, sports courts & landscaping','end',20,'Landscape contractor'],['snoc','Fire NOC & building fitness certificate','end',10,'Liaison']],
+ 'Retail / showroom':[['tfront','Shopfront glazing','finish',8,'Glazing vendor'],['thv','Air-conditioning','mep',8,'HVAC contractor'],['tfix','Display fixtures & visual merchandising','paint',12,'Interior contractor'],['tsig','Signage & branding','paint',5,'Signage vendor'],['tsec','CCTV, security & billing points','finish',4,'IT vendor']]};
+/* scope ticks per type (on / off) */
+const PT_SCOPE={'Villa':{elev:1,cwall:1,land:1,solar:1},'Apartment':{elev:1,cwall:1,land:1},'Commercial / office':{fc:1,elev:1,mk:0,ward:0,tv:0},'Industrial / factory':{fc:0,mk:0,ward:0,tv:0,wallp:0,furn:0,granite:0,twp:0},'Warehouse':{fc:0,mk:0,ward:0,tv:0,wallp:0,furn:0,granite:0,twp:0,elev:0},
+ 'Restaurant / café':{fc:1,light:1,furn:1,wallp:1,mk:0,ward:0,tv:0},'Hotel':{fc:1,light:1,furn:1,wallp:1,ward:1,tv:1,elev:1,land:1},'Hospital / clinic':{fc:1,light:1,mk:0,tv:0,wallp:0},'School / college':{fc:0,mk:0,ward:0,tv:0,wallp:0,cwall:1,land:1},'Retail / showroom':{fc:1,light:1,furn:1,wallp:1,mk:0,ward:0,tv:0}};
+function plSetType(t){PL.ptype=t;Object.entries(PT_SCOPE[t]||{}).forEach(([k,v])=>PL.scope[k]=!!v);(PT_C[t]||[]).forEach(x=>{if(PL.scope[x[0]]===undefined)PL.scope[x[0]]=true;});}
 /* scope checklist: key, label, group, on by default */
 const PL_SCOPE=[
  ['pre','Site clearance, setting out & mobilisation','Civil',1],['soil','Soil test, approvals & drawings sign-off','Civil',0],['exc','Excavation','Civil',1],['ftg','PCC & footings','Civil',1],
@@ -4383,7 +4414,7 @@ const PL_HOL_DEFAULT=`2026-01-14 Bhogi
 2027-10-09 Dussehra
 2027-10-29 Deepavali
 2027-12-25 Christmas`;
-const PL={pid:'',start:'',months:'6',city:0,sun:true,floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],rooms:'4',toilets:'3',kitchens:'1',lifts:'0',scope:{},hol:'',ed:{},showHol:false};
+const PL={ptype:'Residential house',pid:'',start:'',months:'6',city:0,sun:true,floors:[{n:'Ground floor',a:''},{n:'First floor',a:''}],rooms:'4',toilets:'3',kitchens:'1',lifts:'0',scope:{},hol:'',ed:{},showHol:false};
 PL_SCOPE.forEach(([k,,,on])=>PL.scope[k]=!!on);
 const plStd=()=>{const o=(D.org.find(x=>x.id==='main')||{}).plStd;return o&&typeof o==='object'?o:{};};
 const plCus=()=>PL.custom||plStd().custom||[];
@@ -4435,8 +4466,10 @@ function plNetwork(){
   const wp=add('wallp','Wallpaper / texture finishes','wallp',4,[p2],{res:'Interior contractor'});
   const land=add('land','Landscaping & paving','land',8,[epl,cw],{wet:1,res:'Landscape contractor'});
   const furn=add('furn','Loose furniture & soft furnishing','furn',5,[p2,wp,lt],{res:'Interior contractor'});
+  const anc={struct:head||prev,mep:lastB||head,finish:lastF||lastP,paint:p1||lastF,end:p2||lastF};const tx=[];
+  (PT_C[PL.ptype]||[]).forEach(([k,t,a,d,res])=>{if(PL.scope[k]===false)return;tx.push(add(k,t,k,d*(a==='paint'||a==='end'?1:Math.max(1,AT/4000)),[anc[a]],{res,wet:a==='struct'||a==='end'?1:0}));});
   const cu=plCus().filter(x=>PL.scope[x.key]!==false).map(x=>{const k=add(x.key,x.title,x.key,n(x.wd)||1,[x.after&&x.after!=='start'?x.after:(x.after==='start'?null:pre)],{wet:x.wet,res:x.res||(x.grp==='Interiors'?'Interior contractor':'Civil contractor')});return k;});
-  add('clean','Deep cleaning, snag list & handover','clean',4,[p2,lift,terwp,land,furn,wp,lt,solar,sump,elev,...cu],{res:'Site engineer'});
+  add('clean','Deep cleaning, snag list & handover','clean',4,[p2,lift,terwp,land,furn,wp,lt,solar,sump,elev,...tx,...cu],{res:'Site engineer'});
   const keys=new Set(acts.map(a=>a.key));acts.forEach(a=>a.after=a.after.filter(k=>keys.has(k)));   // drop links to unticked works
   return {acts,F,AT,fl};
 }
@@ -4479,6 +4512,7 @@ function vPlanner(){
   const c=plCalc(),L=esc,cities=plCities();
   const inp=(k,v,ph,w)=>`<input data-pl="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" ${w?`style="width:${w}"`:''} inputmode="decimal">`;
   const left=`<div class="box"><div class="box-h"><h2>Project & time</h2></div><div class="fhead">
+    <label>Type of project<select id="pl-type">${PTYPES.map(t=>`<option ${PL.ptype===t?'selected':''}>${esc(t)}</option>`).join('')}</select></label>
     <label>Project<select id="pl-pid"><option value="">— choose to save later —</option>${PJ().map(p=>`<option value="${p.id}" ${PL.pid===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
     <label>Start date<input id="pl-start" type="date" value="${esc(PL.start||today())}"></label>
     <label>Complete in (months)<input data-pl="months" value="${esc(PL.months)}" placeholder="blank = normal pace" inputmode="decimal"></label>
@@ -4491,6 +4525,7 @@ function vPlanner(){
     <div class="srow"><button type="button" class="btn sm" id="plAdd">${ico('plus')}<span>Add floor</span></button></div>
     <div class="fhead"><label>Rooms${inp('rooms',PL.rooms,'nos')}</label><label>Toilets${inp('toilets',PL.toilets,'nos')}</label><label>Kitchens${inp('kitchens',PL.kitchens,'nos')}</label><label>Lifts${inp('lifts',PL.lifts,'nos')}</label></div>
     <div class="box-h"><h2>Scope of works</h2><span class="code">Tick what this project includes</span></div>
+    ${(PT_C[PL.ptype]||[]).length?`<div class="pl-scope"><div><div class="code" style="margin-bottom:6px"><b>${esc(PL.ptype.toUpperCase())} WORKS</b></div>${PT_C[PL.ptype].map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-plsc="${k}" ${PL.scope[k]!==false?'checked':''}>${L(l)}</label>`).join('')}</div></div>`:''}
     <div class="pl-scope">${['Civil','Interiors'].map(g=>`<div><div class="code" style="margin-bottom:6px"><b>${g.toUpperCase()}</b></div>${PL_SCOPE.filter(x=>x[2]===g).map(([k,l])=>`<label class="pl-chk"><input type="checkbox" data-plsc="${k}" ${PL.scope[k]?'checked':''} ${k==='struct'?'disabled':''}>${L(l)}</label>`).join('')}
       ${plCus().filter(x=>x.grp===g).map(x=>`<div class="pl-chk"><input type="checkbox" data-plsc="${x.key}" ${PL.scope[x.key]!==false?'checked':''} aria-label="Include"><span style="flex:1">${L(x.title)} <span class="pill p-blue">added</span><span class="code"> ${x.wd} days</span></span><button type="button" class="btn sm ghost" data-plcdel="${x.key}" title="Delete this item" aria-label="Delete ${L(x.title)}">${ico('x')}</button></div>`).join('')}</div>`).join('')}</div>
     ${CANW?`<div class="box-h"><h2>Add your own item</h2><span class="code">Untick any item above to remove it</span></div>
@@ -4556,7 +4591,7 @@ async function plSave(){
   const match=r=>{let t=old.find(x=>!used.has(x.id)&&x.plk===r.key);if(!t)t=old.find(x=>!used.has(x.id)&&!x.plk&&x.title===r.title);if(t)used.add(t.id);return t;};
   const ids={},recs=[],now=Date.now();on.forEach(r=>{const t=match(r);ids[r.key]=t?t.id:nid();if(t)prev[r.key]=t;});
   const wbs={};let grp={pre:1,soil:1,exc:2,ftg:2,plinth:2,sump:2,cwall:2,struct:3,head:3,bw:4,mep:4,ipl:4,dw:4};const cnt={};
-  on.forEach(r=>{const g=grp[r.sc]||(['fc','mk','ward','tv','light','wallp','furn'].includes(r.sc)?6:r.sc==='clean'?7:5);cnt[g]=(cnt[g]||0)+1;wbs[r.key]=`${g}.${cnt[g]}`;});
+  on.forEach(r=>{const g=grp[r.sc]||(['fc','mk','ward','tv','light','wallp','furn'].includes(r.sc)?6:r.sc==='clean'?7:(PT_C[PL.ptype]||[]).some(x=>x[0]===r.sc)?8:5);cnt[g]=(cnt[g]||0)+1;wbs[r.key]=`${g}.${cnt[g]}`;});
   let upd=0,add=0;
   on.forEach(r=>{const t=prev[r.key],done=t&&t.status==='Completed';
     const cm=[...((t&&t.comments)||[])];if(r.comment&&!cm.some(x=>x.t===r.comment))cm.push({t:r.comment,by:ME.name||ME.email,at:now});
@@ -4578,11 +4613,11 @@ async function plSave(){
     const ms=[['Booking / agreement',5,null],['Foundation & footings',10,k('ftg')],['Plinth beam',5,k('plinth')],...slabs.map(r=>[r.title.replace('Beams & roof slab — ','')+' roof slab',se,r.key]),
       ['Brickwork / blockwork',10,lastOf('bw')],['Plastering',10,k('epl')||lastOf('ipl')],['Flooring & tiling',10,lastOf('fl')],['Doors, windows, electrical & plumbing',10,k('fit')],['Painting & handover',10,k('clean')]];
     const tot=ms.reduce((s,m)=>s+m[1],0);ms.filter(([st])=>!msKeep.has(st)).forEach(([st,pc,key])=>recs.push(['milestones',nid(),{project:p.id,stage:st,pct:+(pc*100/tot).toFixed(1),plm:1,...(key?{task:ids[key]}:{due:c.start}),by:ME.id,at:now}]));}
-  const plan=JSON.parse(JSON.stringify({start:PL.start,months:PL.months,city:PL.city,sun:PL.sun,floors:PL.floors,rooms:PL.rooms,toilets:PL.toilets,kitchens:PL.kitchens,lifts:PL.lifts,scope:PL.scope,hol:PL.hol,ed:PL.ed,ms:!!(document.getElementById('pl-ms')||{}).checked,at:now}));
+  const plan=JSON.parse(JSON.stringify({ptype:PL.ptype,start:PL.start,months:PL.months,city:PL.city,sun:PL.sun,floors:PL.floors,rooms:PL.rooms,toilets:PL.toilets,kitchens:PL.kitchens,lifts:PL.lifts,scope:PL.scope,hol:PL.hol,ed:PL.ed,ms:!!(document.getElementById('pl-ms')||{}).checked,at:now}));
   const msg=old.length?`Activity schedule updated: ${upd} changed${add?`, ${add} added`:''}${del.length?`, ${del.length} removed`:''}${keepOff.length?` (${keepOff.length} already started kept)`:''} · ${fd(c.start)} → ${fd(c.end)}`
     :`Schedule saved: ${on.length} activities, ${fd(c.start)} → ${fd(c.end)}`;
   const ok=await write(async()=>{await dbBatch(recs);for(const t of del)await db.doc('tasks/'+t.id).delete();for(const id of msDel)await db.doc('milestones/'+id).delete();
-    await db.doc('projects/'+p.id).update({start:c.start,end:c.end,plan});},msg);
+    await db.doc('projects/'+p.id).update({start:c.start,end:c.end,plan,ptype:PL.ptype});},msg);
   if(ok){S.proj=p.id;try{localStorage.setItem('bm-proj',p.id);}catch(_){}S.view='schedule';render();scrollTo(0,0);}
 }
 /* open the planner, optionally filled from a project / estimate */
@@ -4592,11 +4627,12 @@ function plOpen(pid,o){
   PL.pid=pid||PL.pid;const p=proj(PL.pid),est=(p&&p.estimate)||{};
   const sv=!o&&p&&p.plan&&typeof p.plan==='object'?JSON.parse(JSON.stringify(p.plan)):null;
   if(o){Object.assign(PL,o);}else if(sv){const {at:_a,ms,...rest}=sv;Object.assign(PL,{scope:{},ed:{},hol:''},rest);PL.ms=ms;}else if(est.floors&&est.floors.length){plFromEst(est);PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));PL.lifts=(est.heads||[]).some(h=>h.hd==='Lift'&&h.amt)?'1':'0';}
+  if(!o){const pt=(sv&&sv.ptype)||(p&&p.ptype);PL.ptype=PTYPES.includes(pt)?pt:'Residential house';if(!sv)plSetType(PL.ptype);}
   if(p&&p.start&&!PL.start)PL.start=p.start;if(!sv)PL.ed={};S.view='planner';render();scrollTo(0,0);
 }
 /* comments on saved activities (Activity schedule) */
 function taskComments(id){
-  const t=D.tasks.find(x=>x.id===id);if(!t)return;const cs=t.comments||[];
+  const t=TS().find(x=>x.id===id);if(!t)return;const cs=t.comments||[];
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="tcForm" data-task="${esc(id)}">
     <div class="pane-h"><h2>Comments</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
     <div class="pane-b"><p><b data-notr>${esc(t.title)}</b><br><span class="code">${esc(pname(t.project))} · ${fd(t.start)} → ${fd(t.due)}</span></p>
@@ -4605,9 +4641,9 @@ function taskComments(id){
     <div class="pane-f"><button type="button" class="btn" data-close>Close</button>${CANW?`<button class="btn pri">${ico('check')}<span>Add comment</span></button>`:''}</div></form></div>`;
 }
 async function taskCommentAdd(f){
-  const id=f.dataset.task,t=D.tasks.find(x=>x.id===id),txt=(f.elements.t.value||'').trim();if(!t||!txt)return;
+  const id=f.dataset.task,t=TS().find(x=>x.id===id),txt=(f.elements.t.value||'').trim();if(!t||!txt)return;
   const cs=[...(t.comments||[]),{t:txt,by:ME.name||ME.email,at:Date.now()}];
-  const ok=await write(()=>db.doc('tasks/'+id).update({comments:cs}),'Comment added');if(ok){t.comments=cs;taskComments(id);}
+  const ok=await write(()=>db.doc(TC()+'/'+id).update({comments:cs}),'Comment added');if(ok){t.comments=cs;taskComments(id);}
 }
 /* ---- events ---- */
 function plRe(sel,pos){render();const x=document.querySelector(sel);if(x){x.focus();try{x.setSelectionRange(pos,pos);}catch(_){}}}
@@ -4621,7 +4657,8 @@ document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!t.clo
   if(t.id==='pl-hol'){PL.hol=t.value;return;}
 },true);
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};if(S.view!=='planner')return;
-  if(t.id==='pl-pid'){PL.pid=t.value;const p=proj(t.value);if(p){const est=p.estimate||{};plFromEst(est);if(est.floors&&est.floors.length)PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));if(p.start)PL.start=p.start;}render();return;}
+  if(t.id==='pl-type'){plSetType(t.value);render();return;}
+  if(t.id==='pl-pid'){PL.pid=t.value;const p=proj(t.value);if(p){if(p.ptype&&PTYPES.includes(p.ptype))plSetType(p.ptype);const est=p.estimate||{};plFromEst(est);if(est.floors&&est.floors.length)PL.floors=est.floors.map(f=>({n:f.n,a:String(f.a)}));if(p.start)PL.start=p.start;}render();return;}
   if(t.id==='pl-start'){PL.start=t.value;render();return;}if(t.id==='pl-city'){PL.city=+t.value;render();return;}
   if(t.id==='pl-sun'){PL.sun=t.checked;render();return;}if(t.id==='pl-ms'){PL.ms=t.checked;return;}
   if(t.id==='pl-hol'||d.plf!==undefined||d.plt!==undefined||d.plc!==undefined){render();return;}
@@ -4955,7 +4992,7 @@ document.addEventListener('submit',e=>{if(e.target.id==='lhForm'){e.preventDefau
 const addD=(s,k)=>{if(!s)return s;const d=new Date(s+'T00:00');d.setDate(d.getDate()+k);return isoD(d);};
 const dDiff=(a,b)=>Math.round((new Date(a+'T00:00')-new Date(b+'T00:00'))/864e5);
 function schedFollowers(t,mode){
-  const same=D.tasks.filter(x=>x.project===t.project&&x.id!==t.id);
+  const same=TS().filter(x=>x.project===t.project&&x.id!==t.id);
   if(mode==='later')return same.filter(x=>(x.start||x.due||'')>=(t.due||t.start||''));
   if(mode!=='linked'||!t.wbs)return [];
   const out=new Map(),q=[t];
@@ -4966,13 +5003,13 @@ function schedFollowers(t,mode){
 }
 const recOf=r=>{const {id,...d}=r;return d;};
 async function schedApply(t,patch,mode){
-  const delta=patch.due&&t.due?dDiff(patch.due,t.due):0;const list=[['tasks',t.id,{...recOf(t),...patch}]];
-  if(delta&&mode&&mode!=='none')schedFollowers(t,mode).forEach(x=>list.push(['tasks',x.id,{...recOf(x),start:addD(x.start,delta),due:addD(x.due,delta)}]));
+  const delta=patch.due&&t.due?dDiff(patch.due,t.due):0;const list=[[TC(),t.id,{...recOf(t),...patch}]];
+  if(delta&&mode&&mode!=='none')schedFollowers(t,mode).forEach(x=>list.push([TC(),x.id,{...recOf(x),start:addD(x.start,delta),due:addD(x.due,delta)}]));
   const ok=await write(()=>dbBatch(list),list.length>1?`Saved · ${list.length-1} following ${list.length-1===1?'activity':'activities'} moved ${delta>0?'+':''}${delta} days`:'Saved');
   return ok;
 }
 function schedEdit(id){
-  const t=D.tasks.find(x=>x.id===id);if(!t)return;const hasLinks=schedFollowers(t,'linked').length;
+  const t=TS().find(x=>x.id===id);if(!t)return;const hasLinks=schedFollowers(t,'linked').length;
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="seForm" data-task="${esc(id)}">
    <div class="pane-h"><h2>Edit activity</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
    <div class="pane-b">
@@ -4988,7 +5025,7 @@ function schedEdit(id){
    </div>
    <div class="pane-f"><button type="button" class="btn ghost warn" data-sedel="${esc(id)}">${S.confirm==='se'+id?'Tap again to delete':ico('trash-2')}</button><button type="button" class="btn" data-edit="tasks:${esc(id)}">All fields</button><button class="btn pri">${ico('check')}<span>Save</span></button></div></form></div>`;
 }
-document.addEventListener('submit',async e=>{if(e.target.id!=='seForm')return;e.preventDefault();const f=e.target,t=D.tasks.find(x=>x.id===f.dataset.task);if(!t)return;
+document.addEventListener('submit',async e=>{if(e.target.id!=='seForm')return;e.preventDefault();const f=e.target,t=TS().find(x=>x.id===f.dataset.task);if(!t)return;
   const g=k=>f.elements[k].value;const patch={title:g('title').trim(),start:g('start'),due:g('due'),progress:g('progress')===''?'':Math.max(0,Math.min(100,n(g('progress')))),status:g('status'),who:g('who'),resource:g('resource'),notes:g('notes')};
   if(patch.status==='Completed')patch.progress=100;if(patch.start&&patch.due&&patch.due<patch.start){toast('Finish is before start.');return;}
   if(await schedApply(t,patch,g('mode'))){document.getElementById('layer').innerHTML='';render();}},true);
@@ -5027,24 +5064,24 @@ document.addEventListener('change',e=>{const t=e.target;if(t.id==='st-sort'){S.s
     const b=document.getElementById('stDelSel');if(b){b.disabled=!S.stSel.size;b.classList.toggle('warn',!!S.stSel.size);b.querySelector('span').textContent=`Delete selected${S.stSel.size?' ('+S.stSel.size+')':''}`;}}});
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#stAdd,#stRenum,#stDups,#stDelSel');if(!b)return;
   const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-  const ts=D.tasks.filter(t=>inProj(t)&&(t.start||t.due));
+  const ts=TS().filter(t=>inProj(t)&&(t.start||t.due));
   if(b.id==='stAdd'){const last=ts.reduce((m,t)=>(t.due||'')>m?t.due:m,'');const st=last?addD(last,1):today();
     const nums=ts.map(t=>parseInt(String(t.wbs||'').split('.')[0])).filter(x=>!isNaN(x)),w=nums.length?String(Math.max(...nums)+1):'1';
-    if(await write(()=>db.collection('tasks').add({project:S.proj,wbs:w,title:'New activity',start:st,due:addD(st,4),progress:0,status:'Not started',by:ME.id,at:Date.now()}),'Row added at the end — type its name'))
+    if(await write(()=>db.collection(TC()).add({project:S.proj,wbs:w,title:'New activity',start:st,due:addD(st,4),progress:0,status:'Not started',by:ME.id,at:Date.now()}),'Row added at the end — type its name'))
       {render();setTimeout(()=>{const x=[...document.querySelectorAll('[data-st$=":title"]')].find(i=>i.value==='New activity');if(x){x.scrollIntoView({block:'center'});x.focus();x.select();}},120);}return;}
   if(b.id==='stRenum'){const rows=[...document.querySelectorAll('[data-st$=":wbs"]')].map(x=>x.dataset.st.split(':')[0]);const by={};
-    const list=rows.map((id,i)=>{const t=D.tasks.find(x=>x.id===id);by[t.wbs||'']=String(i+1);return [t,String(i+1)];});
-    const out=list.map(([t,w])=>['tasks',t.id,{...recOf(t),wbs:w,pred:String(t.pred||'').split(/\s*,\s*/).filter(Boolean).map(p=>by[p]||p).join(', ')}]);
+    const list=rows.map((id,i)=>{const t=TS().find(x=>x.id===id);by[t.wbs||'']=String(i+1);return [t,String(i+1)];});
+    const out=list.map(([t,w])=>[TC(),t.id,{...recOf(t),wbs:w,pred:String(t.pred||'').split(/\s*,\s*/).filter(Boolean).map(p=>by[p]||p).join(', ')}]);
     if(await write(()=>dbBatch(out),`Renumbered 1 to ${out.length}`))render();return;}
   if(b.id==='stDups'){const G={};ts.forEach(t=>(G[schDupKey(t)]=G[schDupKey(t)]||[]).push(t));const ids=[];
-    Object.values(G).filter(g=>g.length>1).forEach(g=>{g.sort((a,c)=>((+c.progress||0)*10+(c.comments||[]).length)-((+a.progress||0)*10+(a.comments||[]).length));g.slice(1).forEach(t=>ids.push(t.id));});if(await write(async()=>{for(const id of ids)await db.doc('tasks/'+id).delete();},`${ids.length} duplicate${ids.length>1?'s':''} removed`))render();return;}
+    Object.values(G).filter(g=>g.length>1).forEach(g=>{g.sort((a,c)=>((+c.progress||0)*10+(c.comments||[]).length)-((+a.progress||0)*10+(a.comments||[]).length));g.slice(1).forEach(t=>ids.push(t.id));});if(await write(async()=>{for(const id of ids)await db.doc(TC()+'/'+id).delete();},`${ids.length} duplicate${ids.length>1?'s':''} removed`))render();return;}
   if(b.id==='stDelSel'){const ids=[...(S.stSel||[])];if(!ids.length)return;if(!b.dataset.sure){b.dataset.sure=1;b.querySelector('span').textContent=`Tap again to delete ${ids.length}`;return;}
-    if(await write(async()=>{for(const id of ids)await db.doc('tasks/'+id).delete();},`${ids.length} activit${ids.length>1?'ies':'y'} deleted`)){S.stSel=new Set();render();}return;}});
+    if(await write(async()=>{for(const id of ids)await db.doc(TC()+'/'+id).delete();},`${ids.length} activit${ids.length>1?'ies':'y'} deleted`)){S.stSel=new Set();render();}return;}});
 document.addEventListener('change',async e=>{const t0=e.target;if(t0.id==='st-mode'){S.stMode=t0.value;return;}
-  const k=t0.dataset&&t0.dataset.st;if(!k)return;const [id,fld]=k.split(':');const t=D.tasks.find(x=>x.id===id);if(!t)return;
+  const k=t0.dataset&&t0.dataset.st;if(!k)return;const [id,fld]=k.split(':');const t=TS().find(x=>x.id===id);if(!t)return;
   let v=t0.value;if(fld==='progress')v=v===''?'':Math.max(0,Math.min(100,n(v)));if(fld==='title'&&!v.trim()){t0.value=t.title;return;}
   if(fld==='days'){const d=Math.round(n(v));if(!t.start||!(d>=1)){toast(t.start?'Days must be 1 or more':'Set the start date first');t0.value=t.start&&t.due?dDiff(t.due,t.start)+1:'';return;}await schedApply(t,{due:addD(t.start,d-1)},S.stMode||'linked');return;}
-  if(fld==='wbs'||fld==='pred'){v=v.trim();await write(()=>db.doc('tasks/'+id).update({[fld]:v}),'Saved');return;}
+  if(fld==='wbs'||fld==='pred'){v=v.trim();await write(()=>db.doc(TC()+'/'+id).update({[fld]:v}),'Saved');return;}
   const patch={[fld]:v};if(fld==='status'&&v==='Completed')patch.progress=100;
   if(fld==='start'&&t.start&&t.due&&v){patch.due=addD(t.due,dDiff(v,t.start));}   // moving the start keeps the duration
   if((patch.due||t.due)&&(patch.start||t.start)&&(patch.due||t.due)<(patch.start||t.start)){toast('Finish is before start.');t0.value=t[fld]||'';return;}
@@ -5061,14 +5098,14 @@ function schedShiftDialog(){
 }
 document.addEventListener('submit',async e=>{if(e.target.id!=='ssForm')return;e.preventDefault();const f=e.target;const pid=S.proj!=='all'?S.proj:f.elements.project.value,from=f.elements.from.value,k=Math.round(n(f.elements.days.value));
   if(!k){toast('Enter the number of days.');return;}
-  const ts=D.tasks.filter(t=>t.project===pid&&(t.start||t.due||'')>=from&&!(f.elements.open.checked&&t.status==='Completed'));
+  const ts=TS().filter(t=>t.project===pid&&(t.start||t.due||'')>=from&&!(f.elements.open.checked&&t.status==='Completed'));
   if(!ts.length){toast('No activities start on or after that date.');return;}
-  const ok=await write(()=>dbBatch(ts.map(t=>['tasks',t.id,{...recOf(t),start:addD(t.start,k),due:addD(t.due,k)}])),`${ts.length} activities moved ${k>0?'+':''}${k} days`);
+  const ok=await write(()=>dbBatch(ts.map(t=>[TC(),t.id,{...recOf(t),start:addD(t.start,k),due:addD(t.due,k)}])),`${ts.length} activities moved ${k>0?'+':''}${k} days`);
   if(ok){document.getElementById('layer').innerHTML='';render();}},true);
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-sedit]');if(b){e.stopPropagation();schedEdit(b.dataset.sedit);return;}}
   {const b=e.target.closest('[data-sedel]');if(b){const id=b.dataset.sedel;if(S.confirm!=='se'+id){S.confirm='se'+id;b.textContent='Tap again to delete';return;}S.confirm=null;
-    write(()=>db.doc('tasks/'+id).delete(),'Activity deleted').then(ok=>{if(ok){document.getElementById('layer').innerHTML='';render();}});return;}}
+    write(()=>db.doc(TC()+'/'+id).delete(),'Activity deleted').then(ok=>{if(ok){document.getElementById('layer').innerHTML='';render();}});return;}}
   const id=(e.target.closest('button')||{}).id;
   if(id==='schedTbl'){S.schedTable=!S.schedTable;render();return;}
   if(id==='schedXls'){schedExport();return;}
@@ -5479,7 +5516,7 @@ function vDrawLib(){
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
         ${x.has?relBtn(c):''}${x.has&&!relHide()?apButtons(c,x.k):''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
-  return header('Drawings library',`<button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>`)+
+  return header('Drawings library',canView('designsched')?`<button class="btn" data-go="designsched">${ico('pen-tool')}Design schedule</button>`:canView('schedule')?`<button class="btn" data-go="schedule">${ico('gantt-chart')}Construction schedule</button>`:'')+
    dlFloorBox(pid)+`<div class="box">${relCan()?`<div class="dl-edit-row"><button type="button" class="btn sm" data-dledit>${ico('pencil')}<span>Edit list</span></button></div>`:''}<div class="srow">${tabs}</div>${grpSel}
     <div class="dl-prog"><div class="prog"><i style="width:${items.length?Math.round(n/items.length*100):0}%"></i></div><span class="code">${n} of ${items.length} ${esc(DL.grp||(TT&&TT.l)||DL.disc)} ${DL.disc==='3D views'?'views':'drawings'} uploaded</span>
       ${relCan()&&items.some(x=>x.has&&x.cur&&!x.cur.rel&&apStage(x.cur)>=3&&x.cur.status!=='Superseded')?`<button type="button" class="btn sm pri" data-dlrelall>${ico('send')}<span>Release all approved</span></button>`:''}${n?`<button type="button" class="btn sm" data-dlshareall>${ico('share-2')}<span>Share all ${esc(DL.grp||(TT&&TT.l)||DL.disc)}</span></button>`:''}</div>
@@ -5691,6 +5728,7 @@ Object.assign(ICONS,{
   'corner-up-left':ICONS['corner-up-left']||'<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>'});
 
 /* two new team roles: Draftsman and Senior architect (they see what an architect sees) */
+ROLE_VIEWS['Senior architect']=ROLE_VIEWS['Senior architect']||[...ROLE_VIEWS['Architect'],'schedule','tasks'];   // the project architect sees both schedules
 ['Draftsman','Senior architect'].forEach(r=>{if(!ROLE_VIEWS[r])ROLE_VIEWS[r]=ROLE_VIEWS['Architect'];UI_OF[r]='design';CAT_OF[r]='design';});
 /* offered in Team / sign-up only once the server knows these two roles (see wtSrv) */
 function apAddRoles(){['Draftsman','Senior architect'].forEach(r=>{const o=MOD.team.fields.find(f=>f.k==='role').o;if(!o.includes(r))o.splice(o.indexOf('Structural engineer')+1,0,r);
@@ -6345,6 +6383,122 @@ function bmUpdNow(quiet){if(quiet&&!bmBusy()){location.reload();return;}
   d.innerHTML=`${ico('sparkles')}<span style="flex:1">A new version of BuildMitr is ready.</span><button type="button" class="btn sm pri" id="bmUpdGo">Refresh</button><button type="button" class="btn sm ghost" id="bmUpdX" aria-label="Later">${ico('x')}</button>`;
   document.body.appendChild(d);d.querySelector('#bmUpdGo').onclick=()=>location.reload();d.querySelector('#bmUpdX').onclick=()=>d.remove();}
 
+/* ================= Design schedule generator =================
+   Lays out the design work of a project by its type: [key, section, activity, working days, after keys, options]
+   options: pf = one per floor, types = only for these project types, not = not for these types */
+const DS_SECT=['Project management','Architecture','3D & elevation','Structure','MEP','Interiors'];
+const DS_FACTOR={'Residential house':1,'Villa':1.1,'Apartment':1.4,'Commercial / office':1.4,'Industrial / factory':1.2,'Warehouse':1,'Restaurant / café':0.7,'Hotel':1.8,'Hospital / clinic':2,'School / college':1.4,'Retail / showroom':0.7};
+const DS_NOINT=['Industrial / factory','Warehouse'];
+const DS_HVAC=['Commercial / office','Industrial / factory','Restaurant / café','Hotel','Hospital / clinic','Retail / showroom','School / college'];
+const DS_FIRE=['Apartment','Commercial / office','Industrial / factory','Warehouse','Hotel','Hospital / clinic','School / college','Restaurant / café'];
+const DS_T=[
+ ['pm1','Project management','Kick-off meeting & client brief',2,[]],
+ ['pm2','Project management','Site visit, survey & site photographs',3,['pm1']],
+ ['pm3','Project management','Requirement sheet & area programme sign-off',4,['pm2']],
+ ['pm4','Project management','Fee proposal, agreement & advance',3,['pm3']],
+ ['pm5','Project management','Design programme & team allocation',1,['pm4']],
+ ['id1','Project management','Process / machinery layout with the client',7,['pm3'],{types:['Industrial / factory']}],
+ ['hs1','Project management','Medical planning & department layout with hospital consultant',10,['pm3'],{types:['Hospital / clinic']}],
+ ['ht1','Project management','Brand standards & operator review',5,['pm3'],{types:['Hotel']}],
+ ['ar1','Architecture','Concept design — zoning & 2–3 plan options',7,['pm5','id1','hs1','ht1']],
+ ['e1','3D & elevation','Massing study',3,['ar1']],
+ ['ar2','Architecture','Concept presentation & client feedback',3,['ar1','e1']],
+ ['ar3','Architecture','Schematic design — final floor plans',7,['ar2']],
+ ['ap1','Architecture','Typical floor & unit plans',6,['ar3'],{types:['Apartment']}],
+ ['cm1','Architecture','Core & shell planning',5,['ar3'],{types:['Commercial / office']}],
+ ['rs1','Architecture','Kitchen layout & equipment with kitchen consultant',5,['ar3'],{types:['Restaurant / café','Hotel']}],
+ ['sc1','Architecture','Classroom, lab & activity area planning',6,['ar3'],{types:['School / college']}],
+ ['pk1','Architecture','Parking, ramps & circulation',4,['ar3'],{types:['Apartment','Commercial / office','Hotel','Hospital / clinic']}],
+ ['ar4','Architecture','Design development — plans, sections & elevations',10,['ar3','ap1','cm1','rs1','sc1','pk1']],
+ ['ap2','Architecture','Amenities & clubhouse design',6,['ar4'],{types:['Apartment']}],
+ ['ar5','Architecture','Municipal / approval drawings',5,['ar4']],
+ ['ar6','Project management','Approval submission & follow-up',20,['ar5']],
+ ['ap4','Project management','RERA drawings & brochure plans',6,['ar5'],{types:['Apartment']}],
+ ['id4','Project management','Factory licence & pollution board drawings',10,['ar5'],{types:['Industrial / factory','Warehouse']}],
+ ['ar7','Architecture','Working drawings',4,['ar4','st2'],{pf:1}],
+ ['ar8','Architecture','Sections, elevations & staircase details',5,['ar7']],
+ ['ar9','Architecture','Door & window schedule, toilet & kitchen details',4,['ar8']],
+ ['e2','3D & elevation','Elevation design options (2–3)',6,['ar3']],
+ ['cm2','3D & elevation','Facade / glazing design',6,['e2'],{types:['Commercial / office','Hotel','Retail / showroom']}],
+ ['e3','3D & elevation','Final elevation 3D & colour scheme',5,['e2','cm2']],
+ ['e4','3D & elevation','Exterior renders (day & night)',4,['e3']],
+ ['e5','3D & elevation','Landscape & pool 3D',5,['e3'],{types:['Villa','Hotel','Apartment']}],
+ ['rs3','3D & elevation','Branding, signage & menu boards',5,['e3'],{types:['Restaurant / café','Retail / showroom']}],
+ ['e6','3D & elevation','Walkthrough video',6,['e4'],{types:['Villa','Apartment','Hotel','Commercial / office']}],
+ ['st1','Structure','Structural system & grid finalisation',3,['ar3']],
+ ['id2','Structure','PEB steel structure design coordination',10,['st1'],{types:['Industrial / factory','Warehouse']}],
+ ['st2','Structure','Structural analysis & design (ETABS)',10,['st1','ar4']],
+ ['st3','Structure','Foundation & column layout drawings',4,['st2']],
+ ['st4','Structure','Beam, slab & staircase reinforcement drawings',5,['st3'],{pf:1}],
+ ['m1','MEP','Electrical layouts — points, DBs & conduits',6,['ar4']],
+ ['m2','MEP','Plumbing, drainage & water supply layouts',5,['ar4']],
+ ['m3','MEP','HVAC layouts & load calculation',6,['ar4'],{types:DS_HVAC}],
+ ['m4','MEP','Fire fighting & fire alarm layouts, fire NOC drawings',6,['ar4'],{types:DS_FIRE}],
+ ['hs2','MEP','Medical gas pipeline design',6,['ar4'],{types:['Hospital / clinic']}],
+ ['rs2','MEP','Kitchen exhaust, fresh air & gas line design',4,['rs1'],{types:['Restaurant / café','Hotel']}],
+ ['id3','MEP','Utilities — compressed air, process water & power',6,['ar4','id1'],{types:['Industrial / factory']}],
+ ['m5','MEP','MEP coordination with structure & ceilings',3,['m1','m2','m3','m4','hs2','rs2','id3','st3']],
+ ['in1','Interiors','Interior brief, mood board & material palette',4,['ar3'],{not:DS_NOINT}],
+ ['in2','Interiors','Furniture layouts',4,['in1','ar4'],{not:DS_NOINT}],
+ ['ht2','Interiors','Typical guest room & mock-up room design',10,['in2'],{types:['Hotel']}],
+ ['hs3','Interiors','OT, ICU & isolation room detailing',8,['in2'],{types:['Hospital / clinic']}],
+ ['rs4','Interiors','Seating layout & bar counter details',4,['in2'],{types:['Restaurant / café']}],
+ ['rt2','Interiors','Display fixtures & visual merchandising',6,['in2'],{types:['Retail / showroom']}],
+ ['in3','Interiors','Interior 3D views',10,['in2','ht2','hs3','rs4','rt2'],{not:DS_NOINT}],
+ ['in4','Interiors','Client review of interior 3D & revisions',4,['in3'],{not:DS_NOINT}],
+ ['in5','Interiors','False ceiling layouts',4,['in4'],{not:DS_NOINT,pf:1}],
+ ['in6','Interiors','Lighting & switch-point layouts',4,['in5','m1'],{not:DS_NOINT,pf:1}],
+ ['in7','Interiors','Wardrobe, kitchen & TV unit joinery details',8,['in4'],{not:[...DS_NOINT,'Hospital / clinic','School / college','Retail / showroom','Commercial / office']}],
+ ['in8','Interiors','Flooring, wall finish & tile layouts',4,['in4'],{not:DS_NOINT}],
+ ['ht4','Interiors','FF&E specifications & schedule',8,['in4'],{types:['Hotel','Restaurant / café']}],
+ ['in9','Interiors','Material & finish schedule, interior BOQ',4,['in6','in7','in8','ht4'],{not:DS_NOINT}],
+ ['ar10','Architecture','Good-for-construction (GFC) drawing set issue',2,['ar9','st4','m5','in9','e4']],
+ ['hs5','Project management','NABH & fire compliance review',4,['ar10'],{types:['Hospital / clinic']}],
+ ['pm9','Project management','Handover of drawings to site & construction kick-off',2,['ar10','hs5','ar6']]];
+const DSG={pid:'',type:'Residential house',start:'',sect:{},sure:0};
+function dsOpen(){const p=proj(S.proj);if(!p){toast('Pick a project at the top first');return;}
+  DSG.pid=p.id;DSG.type=PTYPES.includes(p.ptype)?p.ptype:DSG.type;DSG.start=DSG.start||today();DSG.sure=0;DS_SECT.forEach(x=>{if(DSG.sect[x]===undefined)DSG.sect[x]=true;});dsDraw();}
+function dsBuild(){const fl=dlFloors(DSG.pid),f=DS_FACTOR[DSG.type]||1,T=DSG.type,hol=plHolidays();
+  const inc=it=>{const o=it[5]||{};if(!DSG.sect[it[1]])return false;if(o.types&&!o.types.includes(T))return false;if(o.not&&o.not.includes(T))return false;return true;};
+  const items=[];DS_T.filter(inc).forEach(it=>{const o=it[5]||{};if(o.pf&&fl.length>1)fl.forEach((fn,i)=>items.push({key:it[0]+'_'+i,base:it[0],disc:it[1],title:`${it[2]} — ${/slab|beam/i.test(it[2])?dlRoof(fn):fn}`,wd:it[3],after:i?[it[0]+'_'+(i-1)]:it[4],pf:1}));else items.push({key:it[0],base:it[0],disc:it[1],title:it[2],wd:it[3],after:it[4]});});
+  const keys=new Set(items.map(x=>x.key)),lastOf={};items.forEach(x=>lastOf[x.base]=x.key);
+  const isWork=d=>d.getDay()!==0&&!hol[isoD(d)],out={};
+  items.forEach(x=>{const af=x.after.map(k=>keys.has(k)?k:lastOf[k]).filter(Boolean);x.after=af;
+    let st=dOf(DSG.start);af.forEach(k=>{const p=out[k];if(p){const d=dOf(p.due);d.setDate(d.getDate()+1);if(d>st)st=d;}});while(!isWork(st))st.setDate(st.getDate()+1);
+    const wd=Math.max(1,Math.round(x.wd*(x.pf?Math.max(.6,f*.8):f)));let d=new Date(st),left=wd;while(true){if(isWork(d)){left--;if(!left)break;}d.setDate(d.getDate()+1);}
+    out[x.key]={...x,start:isoD(st),due:isoD(d),days:wd};});
+  const cnt={},wbs={};items.forEach(x=>{const g=DS_SECT.indexOf(x.disc)+1;cnt[g]=(cnt[g]||0)+1;wbs[x.key]=g+'.'+cnt[g];});
+  return items.map(x=>({...out[x.key],wbs:wbs[x.key],pred:x.after.map(k=>wbs[k]).filter(Boolean).join(', ')}));}
+function dsDraw(){const rows=dsBuild(),old=D.dtasks.filter(t=>t.project===DSG.pid),end=rows.reduce((m,r)=>r.due>m?r.due:m,DSG.start);
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane"><div class="pane-h"><h2>Generate design schedule</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" id="dsBody"><div class="fhead">
+    <label>Project<input value="${esc(pname(DSG.pid))}" disabled></label>
+    <label>Type of project<select id="ds-type">${PTYPES.map(t=>`<option ${DSG.type===t?'selected':''}>${esc(t)}</option>`).join('')}</select></label>
+    <label>Start date<input type="date" id="ds-start" value="${esc(DSG.start)}"></label></div>
+    <div class="code" style="margin:6px 0">Floors: ${esc(dlFloors(DSG.pid).join(' · '))} (change them in the Drawings library). Sundays and holidays are skipped.</div>
+    <div class="pl-scope"><div>${DS_SECT.map(x=>`<label class="pl-chk"><input type="checkbox" data-dssect="${esc(x)}" ${DSG.sect[x]?'checked':''}>${esc(x)}</label>`).join('')}</div></div>
+    <div class="note">${ico('calendar-range')}<span><b>${rows.length} activities</b> · ${fd(DSG.start)} → ${fd(end)} (about ${Math.max(1,Math.round((dOf(end)-dOf(DSG.start))/864e5/30.4*10)/10)} months)</span></div>
+    <div class="tbl-wrap" style="max-height:44vh"><table class="pl-tbl"><thead><tr><th>No.</th><th>Activity</th><th>Section</th><th>Start</th><th>Finish</th><th class="num">Days</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td class="code">${r.wbs}</td><td>${esc(r.title)}</td><td class="code">${esc(r.disc)}</td><td class="code">${fd(r.start)}</td><td class="code">${fd(r.due)}</td><td class="num">${r.days}</td></tr>`).join('')}</tbody></table></div>
+    ${old.length?`<div class="note warn">${ico('alert-triangle')}<span>This project already has ${old.length} design activities. Saving replaces the ones not started; activities with progress keep their progress and comments.</span></div>`:''}
+  </div><div class="pane-f srow"><button type="button" class="btn pri" id="dsSave">${ico('check')}<span>${old.length?'Update design schedule':'Save design schedule'}</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></div></div>`;}
+document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#dsBody'))return;
+  if(t.id==='ds-type'){DSG.type=t.value;dsDraw();return;}if(t.id==='ds-start'){if(t.value){DSG.start=t.value;dsDraw();}return;}
+  if(t.dataset.dssect){DSG.sect[t.dataset.dssect]=t.checked;dsDraw();}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#dsGen,#dsSave');if(!b)return;
+  if(b.id==='dsGen'){dsOpen();return;}
+  const rows=dsBuild(),pid=DSG.pid,old=D.dtasks.filter(t=>t.project===pid),now=Date.now(),list=[],used=new Set();
+  const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const started=t=>(t.status&&t.status!=='Not started')||(+t.progress||0)>0;
+  rows.forEach(r=>{const ex=old.find(t=>!used.has(t.id)&&(t.dk===r.key||t.title===r.title));const rec={project:pid,dk:r.key,wbs:r.wbs,title:r.title,disc:r.disc,start:r.start,due:r.due,pred:r.pred,source:'BuildMitr design schedule ('+DSG.type+')'};
+    if(ex){used.add(ex.id);const done=ex.status==='Completed';list.push(['dtasks',ex.id,{...recOf(ex),...rec,...(done?{start:ex.start,due:ex.due}:{}),upd:now}]);}
+    else list.push(['dtasks',nid(),{...rec,progress:0,status:'Not started',by:ME.id,at:now}]);});
+  const del=old.filter(t=>!used.has(t.id)&&!started(t));
+  const p=proj(pid);
+  const ok=await write(async()=>{for(let k=0;k<list.length;k+=60)await dbBatch(list.slice(k,k+60));for(const t of del)await db.doc('dtasks/'+t.id).delete();
+    if(p&&p.ptype!==DSG.type&&isAdmin())await db.doc('projects/'+pid).update({ptype:DSG.type});},`Design schedule saved: ${rows.length} activities`);
+  if(ok){closeLayer();S.view='designsched';S.schedTable=false;render();}});
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -6376,7 +6530,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
