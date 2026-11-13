@@ -180,7 +180,7 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .checks input{width:auto}
 .req::after{content:" *";color:var(--red-ink)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:500;z-index:40;max-width:calc(100% - 32px)}
-.toast{pointer-events:none}body:has(#layer .drawer) .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top,0px))}
+.toast{pointer-events:none}main{padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))!important}body:has(#layer .drawer) .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top,0px))}
 .note{font-size:13px;color:var(--muted);background:var(--accent-soft);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start}
 .note svg.i{color:var(--accent);margin-top:2px}
 
@@ -393,7 +393,7 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .cal-y{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:12px 16px}
 .cal-ym{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}.cal-ym:hover,.cal-ym:focus-visible{border-color:var(--green)}
 .cal-yg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.cal-yg i{aspect-ratio:1;border-radius:2px;background:color-mix(in srgb,var(--line) 60%,transparent)}.cal-yg i.td{outline:2px solid var(--accent)}
-.cal-ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px}
+.cal-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}.cal-ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px}
 @media (max-width:700px){.cal-c{min-height:54px}.cal-xs,.cal-lv,.cal-n em{display:none}.cal-dots{display:flex}.cal-bar{padding:8px 10px}.cal-t{min-width:0}}
 .md-task{display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}.md-task.ov b{color:var(--red-ink)}.md-task input{width:20px;height:20px}
 .md-add{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px}.md-add input[name=t]{flex:1;min-width:200px}
@@ -6932,7 +6932,7 @@ function calBox(where){
   const d0=today();if(!CAL.m)CAL.m=ymOf(d0);if(!CAL.sel)CAL.sel=d0;
   const people=calPeople(),canAdd=calCanEdit(null);
   const [y,m]=CAL.m.split('-').map(Number);
-  const title=CAL.mode==='year'?String(y):new Date(y,m-1,1).toLocaleDateString(LOC(),{month:'long',year:'numeric'});
+  const title=CAL.mode==='year'?String(y):CAL.mode==='list'?(()=>{const a=CAL.sel||d0,e=dOf(a);e.setDate(e.getDate()+59);const f=x=>new Date(x+'T00:00').toLocaleDateString(LOC(),{day:'numeric',month:'short'});return f(a)+' – '+f(isoD(e));})():new Date(y,m-1,1).toLocaleDateString(LOC(),{month:'long',year:'numeric'});
   const tools=`<div class="cal-bar"><div class="cal-nav"><button type="button" class="btn sm ghost" data-calm="-1" aria-label="Previous">‹</button><b class="cal-t">${esc(title)}</b><button type="button" class="btn sm ghost" data-calm="1" aria-label="Next">›</button><button type="button" class="btn sm" data-caltoday>Today</button></div>
     <div class="cal-nav">${[['month','Month'],['year','Year'],['list','List']].map(([k,l])=>`<button type="button" class="btn sm ${CAL.mode===k?'pri':''}" data-calmode="${k}">${l}</button>`).join('')}
     <select data-calwho aria-label="Whose work"><option value="all" ${CAL.who==='all'?'selected':''}>Everyone</option><option value="me" ${CAL.who==='me'?'selected':''}>My work</option>${people.filter(p=>p.account!==ME.id).map(p=>`<option value="${esc(p.account)}" ${CAL.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
@@ -6971,7 +6971,7 @@ function calDay(d){
       <div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b>
       <div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${c&&c.repeat?' · '+esc((CAL_REP.find(r=>r[0]===c.repeat)||[])[1]||''):''}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')+(onLeave(u,d)?' (on leave)':'')).join(', '):''}${x.src==='cal'&&x.who.length>1?` · ${doneN}/${x.who.length} done`:''}</div>
       ${c&&c.notes?`<div class="code" style="white-space:pre-wrap">${esc(c.notes)}</div>`:''}</div>
-      ${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm ghost" data-caledit="${esc(x.id)}" aria-label="Change">${ico('pencil')}</button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}" title="Not on this day">Skip day</button>`:''}`:x.src!=='cal'?`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`:''}</div>`;};
+      ${x.src==='cal'&&calCanEdit(c)?`<div class="cal-act"><button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}" title="Not on this day">Skip day</button>`:''}</div>`:x.src!=='cal'?`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`:''}</div>`;};
   return `<div class="cal-day"><div class="srow"><b style="flex:1">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}${hol?` · ${esc(hol)}`:''}</b>${calCanEdit(null)?`<button type="button" class="btn sm" data-caladd="${d}">${ico('plus')}<span>Add work this day</span></button>`:''}</div>
     ${busy.length?`<div class="note">${ico('alert-triangle')}<span>Busy day: ${busy.map(([u,k])=>`${esc(pnm(u))} has ${k} works`).join(', ')}.</span></div>`:''}
     ${xs.length?xs.map(row).join(''):`<div class="empty">Nothing scheduled.${calCanEdit(null)?' Tap “Add work this day” to plan something.':''}</div>`}
@@ -6987,7 +6987,14 @@ function calList(){
   const a=CAL.sel||today(),b=(()=>{const d=dOf(a);d.setDate(d.getDate()+59);return isoD(d);})();
   const xs=calItems(a,b).filter(x=>x.src==='cal'||x.first),by={};xs.forEach(x=>(by[x.date]=by[x.date]||[]).push(x));
   const ds=Object.keys(by).sort();
-  return `<div class="cal-list">${ds.length?ds.map(d=>`<div class="md-g">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}))}</div>${by[d].map(x=>`<div class="cal-r" style="--c:${calColor(x.project)}"><span class="cal-bar-c"></span><div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}${x.src!=='cal'?' <span class="pill p-grey">starts</span>':''}</b><div class="code">${x.project?esc(pname(x.project))+' · ':''}${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))).join(', '):''}</div></div><button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div>`).join('')}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
+  return `<div class="cal-list">${ds.length?ds.map(d=>`<div class="md-g">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}))}</div>${by[d].map(x=>{const mine=x.src==='cal'&&x.who.includes(ME.id),c=x.c;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${d}" ${calDone(x.id,d)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}<div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}${x.src!=='cal'?' <span class="pill p-grey">starts</span>':''}</b><div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')).join(', '):''}</div></div>
+      <div class="cal-act">${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}">Skip day</button>`:''}`:''}<button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div></div>`;}).join('')}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
+function calIntoTasks(h){if(!canView('calendar'))return h;const xs=calOpen(30,30).sort((a,b)=>(b.first?1:0)-(a.first?1:0)||a.due0.localeCompare(b.due0)),d0=today();
+  const box=`<div class="box"><div class="box-h">${foldBtn('caltasks')}${ico('calendar')}<h2>Calendar work</h2><span class="code">${xs.length} open · next 30 days</span>${calCanEdit(null)?`<button type="button" class="btn sm pri" data-caladd="${d0}">${ico('plus')}<span>Schedule work</span></button>`:''}${canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Calendar</button>`:''}</div>
+  ${folded('caltasks')?'':xs.length?xs.map(x=>{const mine=x.who.includes(ME.id),ov=x.due0<d0;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${x.due0}" ${calDone(x.id,x.due0)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}
+    <div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b><div class="code"><span class="${ov?'late-t':''}">${ov?'Late · ':''}${fd(x.due0)}</span> · ${esc(calPn(x)||'Office')} · ${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(calDone(x.id,x.due0,u)?' ✓':'')).join(', '):''}</div></div>
+    <div class="cal-act">${calCanEdit(x.c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>`:''}</div></div>`;}).join(''):`<div class="empty">No calendar work in the next 30 days.</div>`}</div>`;
+  const i=h.indexOf('<div class="box');return i<0?h+box:h.slice(0,i)+box+h.slice(i);}
 function vCalendar(){
   const mineN=calMine(today()).filter(x=>!x.done).length;
   return header('Calendar',`<button type="button" class="btn" data-calics>${ico('download')}<span>Add my work to phone calendar</span></button>`)
@@ -7074,30 +7081,40 @@ const WF={who:'all',type:'all',all:false};
 function wfItems(){const d0=today(),out=[];
   [['tasks','Site'],['dtasks','Design']].forEach(([col,lab])=>{if(!canView(col)&&!canView(col==='tasks'?'schedule':'designsched'))return;
     (D[col]||[]).filter(t=>inProj(t)&&t.status!=='Completed').forEach(t=>out.push({...t,col,lab,due0:t.due||t.start||''}));});
-  return out.filter(x=>(WF.type==='all'||WF.type===x.lab)&&(WF.who==='all'||(WF.who==='none'?!x.who:WF.who==='me'?x.who===ME.id:x.who===WF.who)))
+  if(canView('calendar'))out.push(...calOpen(30,60));
+  const hasW=(x,u)=>Array.isArray(x.who)?x.who.includes(u):x.who===u,noW=x=>Array.isArray(x.who)?!x.who.length:!x.who;
+  return out.filter(x=>(WF.type==='all'||WF.type===x.lab)&&(WF.who==='all'||(WF.who==='none'?noW(x):hasW(x,WF.who==='me'?ME.id:WF.who))))
     .sort((a,b)=>(b.first?1:0)-(a.first?1:0)||((a.due0&&a.due0<d0)?0:1)-((b.due0&&b.due0<d0)?0:1)||String(a.due0||'9999').localeCompare(String(b.due0||'9999')));}
-const wfEdit=x=>CANW0&&canEditView(x.col==='tasks'?'tasks':'dtasks');
+const wfEdit=x=>x.col==='cal'?calCanEdit(x.c):CANW0&&canEditView(x.col==='tasks'?'tasks':'dtasks');
+/* calendar work that is still open: late one-time work (last `back` days) and the next date of each work (next `fwd` days) */
+function calOpen(back,fwd){const d0=today(),out=[];const add=(d,k)=>{const x=dOf(d0);x.setDate(x.getDate()+k);return isoD(x);};
+  (D.cal||[]).filter(c=>(inProj(c)||(c.who||[]).includes(ME.id))).forEach(c=>{const ppl=c.who||[];const allDone=d=>ppl.length?ppl.every(u=>calDone(c.id,d,u)):false;
+    let due='';
+    if(!c.repeat){const last=c.end&&c.end>c.start?c.end:c.start;if(last>=add(d0,-back)&&last<=add(d0,fwd)&&!allDone(last))due=last<d0?last:(c.start>d0?c.start:d0);}
+    else for(let k=0;k<=fwd;k++){const d=add(d0,k);if(calOn(c,d)&&!allDone(d)){due=d;break;}}
+    if(due)out.push({id:c.id,c,col:'cal',lab:'Calendar',title:c.title,project:c.project,pn:c.pn,who:ppl,due0:due,first:!!c.first,kind:c.kind,time:c.time,repeat:c.repeat,doneN:ppl.filter(u=>calDone(c.id,due,u)).length});});
+  return out;}
 function wfBox(){
   const fk='wf';const xs=wfItems(),d0=today(),late=xs.filter(x=>x.due0&&x.due0<d0).length,ppl=schPeople();
   const head=`<div class="box-h">${foldBtn(fk)}${ico('list-checks')}<h2>Work to do first</h2><span class="code">${xs.length} open${late?` · <span style="color:var(--red-ink)">${late} late</span>`:''}</span></div>`;
   if(folded(fk))return `<div class="box">${head}</div>`;
   const show=WF.all?xs:xs.slice(0,12);
-  return `<div class="box">${head}<div class="sch-f"><label class="code">Show<select id="wfType"><option value="all">Design & site</option><option value="Design" ${WF.type==='Design'?'selected':''}>Design / drawings</option><option value="Site" ${WF.type==='Site'?'selected':''}>Site work</option></select></label>
+  return `<div class="box">${head}<div class="sch-f"><label class="code">Show<select id="wfType"><option value="all">Design & site</option><option value="Design" ${WF.type==='Design'?'selected':''}>Design / drawings</option><option value="Site" ${WF.type==='Site'?'selected':''}>Site work</option><option value="Calendar" ${WF.type==='Calendar'?'selected':''}>Calendar work</option></select></label>
     <label class="code">Assigned to<select id="wfWho"><option value="all">Everyone</option><option value="me" ${WF.who==='me'?'selected':''}>Me</option><option value="none" ${WF.who==='none'?'selected':''}>Not assigned yet</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${WF.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label>
     <span class="code">⭐ = do first (tap the star to set)</span></div>
   ${show.length?`<div class="tbl-wrap"><table class="wf-t"><thead><tr><th></th><th>Work</th><th>Type</th><th>Project</th><th>Assigned to</th><th>Due</th><th class="num">Done</th></tr></thead><tbody>
   ${show.map(x=>{const ov=x.due0&&x.due0<d0,ed=wfEdit(x);return `<tr><td><button type="button" class="wf-star ${x.first?'on':''}" ${ed?`data-wfstar="${x.col}|${esc(x.id)}"`:'disabled'} aria-label="${x.first?'Remove do first':'Mark do first'}" aria-pressed="${!!x.first}">⭐</button></td>
-    <td><b>${x.wbs?`<span class="code">${esc(x.wbs)}</span> `:''}${esc(x.title)}</b>${x.col==='dtasks'&&x.disc?`<div class="code">${esc(secOf(x))}</div>`:''}</td>
-    <td><span class="pill ${x.lab==='Design'?'p-blue':'p-amber'}">${x.lab}</span></td><td>${esc(pname(x.project))}</td>
-    <td>${ed?`<select data-wfwho="${x.col}|${esc(x.id)}" aria-label="Assigned to"><option value="">— not assigned</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${x.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`:esc(x.who?pnm(x.who):'—')}</td>
-    <td class="${ov?'late-t':''}">${x.due0?(ov?'Late · ':'')+fd(x.due0):'—'}</td><td class="num">${x.status==='Completed'?100:n(x.progress)}%</td></tr>`;}).join('')}</tbody></table></div>
+    <td><b>${x.wbs?`<span class="code">${esc(x.wbs)}</span> `:''}${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b>${x.col==='dtasks'&&x.disc?`<div class="code">${esc(secOf(x))}</div>`:''}${x.col==='cal'?`<div class="code">${esc(x.kind||'')}${x.repeat?' · '+esc((CAL_REP.find(r=>r[0]===x.repeat)||[])[1]||''):''}</div>`:''}</td>
+    <td><span class="pill ${x.lab==='Design'?'p-blue':x.lab==='Calendar'?'p-green':'p-amber'}">${x.lab}</span></td><td>${esc(x.col==='cal'?(calPn(x)||'Office'):pname(x.project))}</td>
+    <td>${x.col==='cal'?`${esc(x.who.map(u=>pnm(u)).join(', ')||'—')}${ed?` <button type="button" class="btn sm ghost" data-caledit="${esc(x.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}`:ed?`<select data-wfwho="${x.col}|${esc(x.id)}" aria-label="Assigned to"><option value="">— not assigned</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${x.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`:esc(x.who?pnm(x.who):'—')}</td>
+    <td class="${ov?'late-t':''}">${x.due0?(ov?'Late · ':'')+fd(x.due0):'—'}</td><td class="num">${x.col==='cal'?(x.who.length?`${x.doneN}/${x.who.length}`:'—'):(x.status==='Completed'?100:n(x.progress))+'%'}</td></tr>`;}).join('')}</tbody></table></div>
   ${xs.length>12?`<div class="srow"><button type="button" class="btn sm" id="wfAll">${WF.all?'Show fewer':'Show all '+xs.length}</button></div>`:''}`:`<div class="empty">Nothing open here.</div>`}</div>`;}
 document.addEventListener('change',async e=>{const t=e.target;
   if(t.id==='wfType'){WF.type=t.value;render();return;}if(t.id==='wfWho'){WF.who=t.value;render();return;}
   if(t.dataset&&t.dataset.wfwho){const [c,id]=t.dataset.wfwho.split('|');await write(()=>db.doc(c+'/'+id).update({who:t.value}),t.value?'Assigned to '+pnm(t.value):'Unassigned');render();}});
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-wfstar],#wfAll');if(!b)return;
   if(b.id==='wfAll'){WF.all=!WF.all;render();return;}
-  const [c,id]=b.dataset.wfstar.split('|'),x=(D[c]||[]).find(r=>r.id===id);if(!x)return;await write(()=>db.doc(c+'/'+id).update({first:!x.first}),x.first?'Removed from do first':'⭐ Marked to do first');render();});
+  const [c,id]=b.dataset.wfstar.split('|'),x=(D[c]||[]).find(r=>r.id===id);if(c==='cal'&&x&&!calCanEdit(x))return;if(!x)return;await write(()=>db.doc(c+'/'+id).update({first:!x.first}),x.first?'Removed from do first':'⭐ Marked to do first');render();});
 
 /* ================= Notifications on this device =================
    When new data arrives from the server: a chat message for me, or a task / design activity / calendar work
@@ -7179,7 +7196,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
