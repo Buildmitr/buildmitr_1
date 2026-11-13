@@ -367,6 +367,27 @@ body.scrolled .bar .psw{flex:none}body.scrolled .bar .psw select{padding:5px 8px
 .md-hero h2{font-family:var(--f-display);font-size:24px;margin:4px 0 10px}.md-hero{padding:16px}.md-hero>.btn,.md-hero .note{margin-top:12px}
 .md-chk{display:flex;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer}.md-chk input{width:20px;height:20px}.md-chk input:checked+span{text-decoration:line-through;color:var(--muted)}
 .md-g{padding:8px 16px 4px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.btn.danger{color:var(--red-ink)}
+.cal-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.cal-nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cal-t{min-width:130px;text-align:center}.cal-nav select{max-width:170px}.cal-chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.cal-wd{background:var(--panel);font-size:12px;color:var(--muted);text-align:center;padding:6px 0;font-weight:600}
+.cal-c{all:unset;box-sizing:border-box;background:var(--panel);min-height:96px;padding:4px 5px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0;position:relative}
+.cal-c:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}.cal-c.out{opacity:.45}.cal-c.off{background:color-mix(in srgb,var(--line) 45%,var(--panel))}
+.cal-c.sel{box-shadow:inset 0 0 0 2px var(--accent)}.cal-c.drop{box-shadow:inset 0 0 0 2px var(--amber-ink)}
+.cal-n{font-size:12px;font-weight:600;display:flex;gap:4px;align-items:baseline;min-width:0}.cal-n em{font-style:normal;font-weight:400;color:var(--red-ink);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-dn{display:inline-block;min-width:20px;text-align:center;border-radius:10px}.cal-c.td .cal-dn{background:var(--accent);color:var(--on-accent)}
+.cal-xs{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cal-ch{display:block;font-size:11px;line-height:1.35;padding:1px 5px;border-radius:4px;background:color-mix(in srgb,var(--c) 16%,transparent);border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.cal-ch.sch{background:transparent;border-left-style:dashed;color:var(--muted)}.cal-ch.done{text-decoration:line-through;opacity:.6}.cal-ch i{font-style:normal;font-weight:600}.cal-ch[draggable=true]{cursor:grab}
+.cal-more{font-size:11px;color:var(--muted)}.cal-lv{font-size:10px;color:var(--blue-ink,#1d4ed8)}.cal-dots{display:none;gap:2px;flex-wrap:wrap}.cal-dots i{width:6px;height:6px;border-radius:3px;display:block}
+.cal-day{border-bottom:1px solid var(--line)}.cal-day .note{margin:6px 16px}
+.cal-r{display:flex;gap:10px;align-items:center;padding:9px 16px;border-top:1px solid var(--line)}.cal-r input{width:20px;height:20px;accent-color:var(--c)}.cal-bar-c{width:4px;align-self:stretch;border-radius:2px;background:var(--c);flex:0 0 4px}
+.cal-y{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:12px 16px}
+.cal-ym{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}.cal-ym:hover,.cal-ym:focus-visible{border-color:var(--green)}
+.cal-yg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}.cal-yg i{aspect-ratio:1;border-radius:2px;background:color-mix(in srgb,var(--line) 60%,transparent)}.cal-yg i.td{outline:2px solid var(--accent)}
+.cal-ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px}
+@media (max-width:700px){.cal-c{min-height:54px}.cal-xs,.cal-lv,.cal-n em{display:none}.cal-dots{display:flex}.cal-bar{padding:8px 10px}.cal-t{min-width:0}}
 .md-task{display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}.md-task.ov b{color:var(--red-ink)}.md-task input{width:20px;height:20px}
 .md-add{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px}.md-add input[name=t]{flex:1;min-width:200px}
 .md-proj{padding:10px 16px;border-top:1px solid var(--line)}
@@ -1150,6 +1171,7 @@ function vDashboard(){
     ${canView('leads')?`<div class="tile"><b>${D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).length}</b><span>Lead follow-ups due</span></div>`:''}
     <div class="tile"><b>${num(f(D.equiplog).filter(x=>x.date===t).reduce((s,x)=>s+(+x.hours||0),0))}</b><span>Equipment hours today</span></div>
   </div>
+  ${canView('calendar')?calBox('dash'):''}
   <div class="grid2">
     <div class="box"><div class="box-h">${ico('notebook-pen')}<h2>Latest daily reports</h2>${CANW?`<button class="btn sm pri" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:''}</div>
       ${dprs.length?dprs.map(r=>`<div style="padding:12px 16px;border-bottom:1px solid var(--line)"><div class="code">${fd(r.date)} · ${esc(pname(r.project))} · ${esc(nm(r.by))}</div><div style="overflow-wrap:anywhere">${esc(r.work)}</div>${(r.photos||[]).length?`<div class="thumbs" style="display:flex;gap:4px;margin-top:6px">${r.photos.slice(0,4).map(id=>`<img src="/_blob/${esc(id)}" alt="" style="width:48px;height:48px;border-radius:6px;object-fit:cover">`).join('')}</div>`:''}</div>`).join(''):`<div class="empty">No daily reports yet.</div>`}</div>
@@ -2565,7 +2587,7 @@ function raOverride(role){const o=D.roleaccess.find(x=>x.id===ROLE_KEY(role));re
 function raDefaultEdit(role,k){
   if(k==='projects')return ['Architect','Senior architect','Accountant'].includes(role);   // who may add projects (the admin and project manager always can)
   if(role==='Client')return k==='changes';
-  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms','dtasks','designsched'].includes(k)||(k==='projects'&&['Architect','Senior architect'].includes(role));
+  if(['Architect','Structural engineer','Draftsman','Senior architect'].includes(role))return ['documents','issues','changes','forms','dtasks','designsched','calendar'].includes(k)||(k==='projects'&&['Architect','Senior architect'].includes(role));
   return true;
 }
 function raVal(role,k){
@@ -6646,12 +6668,12 @@ function vMyDay(){
   const routine=R.length?`<div class="box"><div class="box-h">${ico('clipboard-check')}<h2>Daily routine</h2><span class="pill ${done.size>=R.length?'p-green':'p-grey'}">${R.filter(x=>done.has(x)).length}/${R.length}</span></div>
     ${R.map(x=>`<label class="md-chk"><input type="checkbox" data-mdrt="${esc(x)}" ${done.has(x)?'checked':''}><span>${esc(x)}</span></label>`).join('')}</div>`:'';
   /* today's work: tasks assigned to me + my own tasks */
-  const mine=[...(D.tasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'tasks'})),...(D.dtasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'dtasks'})),...(D.ptask||[]).filter(x=>x.user===ME.id).map(x=>({...x,src:'ptask'}))]
+  const mine=[...(D.tasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'tasks'})),...(D.dtasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'dtasks'})),...(D.ptask||[]).filter(x=>x.user===ME.id).map(x=>({...x,src:'ptask'})),...calMine(d0),...calMissed()]
     .filter(x=>x.status!=='Completed'&&!x.done);
   const dueOf=x=>x.due||x.start||'';const ov=mine.filter(x=>dueOf(x)&&dueOf(x)<d0),td=mine.filter(x=>!dueOf(x)||(x.start||d0)<=d0&&dueOf(x)>=d0),up=mine.filter(x=>!ov.includes(x)&&!td.includes(x));
-  const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0))];
-  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="code">${x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
-    ${x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
+  const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0)),...calMine(d0).filter(x=>x.done)];
+  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="code">${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
+    ${x.src==='cal'?`<button type="button" class="btn sm" data-go="calendar" data-calday="${esc(x.date)}">${x.time?esc(x.time):'Calendar'}</button>`:x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
   const grp=(n,xs)=>xs.length?`<div class="md-g">${n} · ${xs.length}</div>${xs.map(trow).join('')}`:'';
   const work=`<div class="box"><div class="box-h">${ico('list-checks')}<h2>Today's work</h2><span class="code">${doneToday.length}/${doneToday.length+td.length+ov.length} done</span></div>
     ${grp('Overdue',ov)}${grp('Today',td)}${grp('Coming up',up.slice(0,6))}${!mine.length?'<div class="empty">Nothing assigned to you. Add your own tasks below.</div>':''}
@@ -6667,7 +6689,7 @@ function vMyDay(){
   const leave=`<div class="box"><div class="box-h">${ico('plane')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
-  return header('My day')+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`;
+  return header('My day')+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
 }
 async function mdTick(item,on){const d0=today(),id=`${ME.id}_${d0}`,t=myTick(),done=new Set((t&&t.done)||[]);on?done.add(item):done.delete(item);
   await write(()=>db.doc('rtick/'+id).set({user:ME.id,name:ME.name||'',date:d0,role:meRole(),done:[...done],of:routineFor(meRole()).length,mgr:(myTeamRec()||{}).mgr||''}),null);render();}
@@ -6788,6 +6810,192 @@ async function atCert(tid){const t=D.team.find(x=>x.id===tid);if(!t)return;toast
   pdf.setFontSize(11);pdf.text(`Date: ${fd(today())}`,30,178);pdf.line(200,172,265,172);pdf.text('Authorised signatory',232.5,178,{align:'center'});
   await saveFile(`${(t.kind||'Internship')} certificate - ${t.name}.pdf`.replace(/[\\/:*?"<>|]/g,' '),pdf.output('blob'));}
 
+/* ================= Calendar: schedule work for months and years, assign it to the team =================
+   cal = scheduled work (title, project, dates, repeat, people). caldone = each person's own "done" tick for one day.
+   The project schedules (construction and design tasks), approved leave and holidays are shown too.
+   Work assigned to someone appears in their My day on that day automatically. */
+COLS.push('cal','caldone');['cal','caldone'].forEach(c=>{if(!D[c])D[c]=[];});
+{const g=NAV[0].items;if(!g.some(x=>x[0]==='calendar')){const i=g.findIndex(x=>x[0]==='dashboard');g.splice(i>=0?i+1:1,0,['calendar','calendar','Calendar','క్యాలెండర్']);}}
+Object.keys(ROLE_VIEWS).forEach(r=>{const a=ROLE_VIEWS[r];if(Array.isArray(a)&&r!=='none'&&r!=='Client'&&!a.includes('calendar'))a.push('calendar');});
+EDIT_TIE.calendar='calendar';
+const CAL_KINDS=['Site work','Design work','Site visit','Meeting','Inspection / checking','Concrete pour','Material delivery','Client payment','Approval / submission','Office work','Other'];
+const CAL_REP=[['','Does not repeat'],['daily','Every day'],['weekdays','Every working day'],['weekly','Every week'],['monthly','Every month'],['yearly','Every year']];
+const CAL_PAL=['#2f7d55','#2563eb','#c2410c','#7c3aed','#0e7490','#b91c1c','#a16207','#be185d','#4d7c0f','#475569'];
+const CAL={m:'',sel:'',mode:'month',who:'all',sched:true};
+const calPn=x=>{const n=x.project?pname(x.project):'';return n&&n!=='—'?n:((x.c&&x.c.pn)||x.pn||'');};
+const calColor=pid=>{if(!pid)return '#64748b';const i=PJ().findIndex(p=>p.id===pid);return CAL_PAL[(i<0?0:i)%CAL_PAL.length];};
+const calCanEdit=c=>CANW0&&canEditView('calendar')&&(!c||isAdmin()||curRole()==='Project manager'||c.by===ME.id);
+const calPeople=()=>D.team.filter(t=>t.account&&t.role!=='Client'&&t.status!=='Removed');
+const calDone=(cid,date,uid)=>(D.caldone||[]).find(x=>x.id===`${uid||ME.id}_${cid}_${date}`);
+const ymOf=d=>d.slice(0,7);
+function calAddM(ym,k){const [y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+k,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+const dimOf=(y,m)=>new Date(y,m,0).getDate();
+/* is one scheduled work on this date? */
+function calOn(c,d){
+  if(!c||!c.start||d<c.start)return false;if(c.until&&d>c.until)return false;if((c.skip||[]).includes(d))return false;
+  const r=c.repeat||'';if(!r)return d<=(c.end&&c.end>=c.start?c.end:c.start);
+  const a=dOf(c.start),b=dOf(d);
+  if(r==='daily')return true;
+  if(r==='weekdays'){const w=b.getDay();return w!==0&&!(w===6&&!hrCfg().sat)&&!plHolidays()[d];}
+  if(r==='weekly')return a.getDay()===b.getDay();
+  if(r==='monthly'){const dd=Math.min(a.getDate(),dimOf(b.getFullYear(),b.getMonth()+1));return b.getDate()===dd;}
+  if(r==='yearly')return c.start.slice(5)===d.slice(5)||(c.start.slice(5)==='02-29'&&d.slice(5)==='02-28'&&dimOf(b.getFullYear(),2)===28);
+  return false;}
+const calWhoOK=xs=>CAL.who==='all'||(xs||[]).includes(CAL.who==='me'?ME.id:CAL.who);
+/* everything on the calendar between two dates, one entry per day */
+function calItems(from,to){
+  const out=[],days=[];for(let d=dOf(from);isoD(d)<=to;d.setDate(d.getDate()+1))days.push(isoD(d));
+  const inP=r=>inProj(r)||(r.who||[]).includes(ME.id);
+  (D.cal||[]).filter(c=>inP(c)&&calWhoOK(c.who)).forEach(c=>days.forEach(d=>{if(calOn(c,d))out.push({src:'cal',id:c.id,c,date:d,title:c.title,project:c.project,who:c.who||[],kind:c.kind,time:c.time});}));
+  if(CAL.sched)[['tasks','Site'],['dtasks','Design']].forEach(([col,lab])=>{if(!canView(col==='tasks'?'schedule':'designsched')&&!canView(col))return;
+    (D[col]||[]).filter(t=>inProj(t)&&t.status!=='Completed'&&(t.start||t.due)&&calWhoOK(t.who?[t.who]:[])).forEach(t=>{const a=t.start||t.due,b=t.due&&t.due>=a?t.due:a;
+      days.forEach(d=>{if(d>=a&&d<=b)out.push({src:col,id:t.id,date:d,title:t.title,project:t.project,who:t.who?[t.who]:[],kind:lab+' schedule',first:d===a||d===from,last:d===b});});});});
+  return out;}
+function calLeaves(d){return (D.leave||[]).filter(l=>l.status==='Approved'&&l.from<=d&&(l.to||l.from)>=d);}
+function calLoad(d){const m={};calItems(d,d).forEach(x=>x.who.forEach(u=>m[u]=(m[u]||0)+1));return m;}
+/* today's calendar work for one person (My day) */
+function calMine(d,uid){uid=uid||ME.id;return (D.cal||[]).filter(c=>(c.who||[]).includes(uid)&&calOn(c,d)).map(c=>({src:'cal',id:c.id+'|'+d,cid:c.id,date:d,title:c.title,project:c.project,pn:c.pn,due:d,start:d,time:c.time,kind:c.kind,done:!!calDone(c.id,d,uid)}));}
+function calMissed(uid){const d0=today(),out=[];for(let k=1;k<=7;k++){const d=new Date(dOf(d0));d.setDate(d.getDate()-k);const ds=isoD(d);
+  (D.cal||[]).filter(c=>!c.repeat&&(c.who||[]).includes(uid||ME.id)&&calOn(c,ds)&&(c.end||c.start)===ds&&!calDone(c.id,ds,uid)).forEach(c=>out.push({src:'cal',id:c.id+'|'+ds,cid:c.id,date:ds,title:c.title,project:c.project,due:ds,start:c.start,kind:c.kind}));}return out;}
+
+/* ---------------- the calendar box (Dashboard, My day and the Calendar page) ---------------- */
+function calBox(where){
+  const d0=today();if(!CAL.m)CAL.m=ymOf(d0);if(!CAL.sel)CAL.sel=d0;
+  const people=calPeople(),canAdd=calCanEdit(null);
+  const [y,m]=CAL.m.split('-').map(Number);
+  const title=CAL.mode==='year'?String(y):new Date(y,m-1,1).toLocaleDateString(LOC(),{month:'long',year:'numeric'});
+  const tools=`<div class="cal-bar"><div class="cal-nav"><button type="button" class="btn sm ghost" data-calm="-1" aria-label="Previous">‹</button><b class="cal-t">${esc(title)}</b><button type="button" class="btn sm ghost" data-calm="1" aria-label="Next">›</button><button type="button" class="btn sm" data-caltoday>Today</button></div>
+    <div class="cal-nav">${[['month','Month'],['year','Year'],['list','List']].map(([k,l])=>`<button type="button" class="btn sm ${CAL.mode===k?'pri':''}" data-calmode="${k}">${l}</button>`).join('')}
+    <select data-calwho aria-label="Whose work"><option value="all" ${CAL.who==='all'?'selected':''}>Everyone</option><option value="me" ${CAL.who==='me'?'selected':''}>My work</option>${people.filter(p=>p.account!==ME.id).map(p=>`<option value="${esc(p.account)}" ${CAL.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+    <label class="cal-chk"><input type="checkbox" data-calsched ${CAL.sched?'checked':''}> Project schedules</label></div></div>`;
+  let body='';
+  if(CAL.mode==='year')body=calYear(y);
+  else if(CAL.mode==='list')body=calList();
+  else body=calMonth(y,m)+calDay(CAL.sel);
+  const head=`<div class="box-h">${ico('calendar')}<h2>Calendar</h2>${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}">${ico('plus')}<span>Schedule work</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
+  return `<div class="box cal ${where==='page'?'cal-page':''}">${head}${tools}${body}</div>`;}
+function calChip(x){const done=x.src==='cal'&&x.who.includes(ME.id)&&calDone(x.id,x.date);const col=calColor(x.project);
+  const drag=x.src==='cal'&&!x.c.repeat&&calCanEdit(x.c);
+  return `<span class="cal-ch ${x.src!=='cal'?'sch':''} ${done?'done':''}" style="--c:${col}" ${drag?`draggable="true" data-caldrag="${esc(x.id)}"`:''} title="${esc(x.title+(x.project?' · '+pname(x.project):''))}">${x.time?`<i>${esc(x.time)}</i> `:''}${esc(x.title)}</span>`;}
+function calMonth(y,m){
+  const first=new Date(y,m-1,1),start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+  const cells=[];for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);cells.push(isoD(d));}
+  while(cells.length>35&&cells.slice(-7).every(d=>+d.slice(5,7)!==m))cells.splice(-7);
+  const items=calItems(cells[0],cells[cells.length-1]),by={};items.forEach(x=>(by[x.date]=by[x.date]||[]).push(x));
+  const hol=plHolidays(),c=hrCfg(),d0=today();
+  const wk=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  return `<div class="cal-g" role="grid">${wk.map(w=>`<div class="cal-wd">${w}</div>`).join('')}${cells.map(d=>{const dt=dOf(d),w=dt.getDay(),off=w===0||(w===6&&!c.sat)||hol[d];
+    const xs=(by[d]||[]).sort((a,b)=>(a.src==='cal'?0:1)-(b.src==='cal'?0:1)||String(a.time||'').localeCompare(String(b.time||''))),lv=calLeaves(d).length;
+    return `<button type="button" class="cal-c ${+d.slice(5,7)!==m?'out':''} ${off?'off':''} ${d===d0?'td':''} ${d===CAL.sel?'sel':''}" data-calday="${d}" data-caldrop="${d}">
+      <span class="cal-n"><b class="cal-dn">${dt.getDate()}</b>${hol[d]?`<em>${esc(hol[d])}</em>`:''}</span>
+      <span class="cal-xs">${xs.slice(0,3).map(calChip).join('')}${xs.length>3?`<span class="cal-more">+${xs.length-3} more</span>`:''}</span>
+      <span class="cal-dots">${xs.slice(0,5).map(x=>`<i style="background:${calColor(x.project)}"></i>`).join('')}</span>
+      ${lv?`<span class="cal-lv">${lv} on leave</span>`:''}</button>`;}).join('')}</div>`;}
+function calDay(d){
+  const xs=calItems(d,d),lv=calLeaves(d),load=calLoad(d),hol=plHolidays()[d];
+  const busy=Object.entries(load).filter(([,k])=>k>=4);
+  const row=x=>{const c=x.c,mine=x.src==='cal'&&x.who.includes(ME.id),dn=mine&&calDone(x.id,d);
+    const doneN=x.src==='cal'?x.who.filter(u=>calDone(x.id,d,u)).length:0;
+    return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${d}" ${dn?'checked':''} aria-label="Done">`:`<span class="cal-bar-c"></span>`}
+      <div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b>
+      <div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${c&&c.repeat?' · '+esc((CAL_REP.find(r=>r[0]===c.repeat)||[])[1]||''):''}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')+(onLeave(u,d)?' (on leave)':'')).join(', '):''}${x.src==='cal'&&x.who.length>1?` · ${doneN}/${x.who.length} done`:''}</div>
+      ${c&&c.notes?`<div class="code" style="white-space:pre-wrap">${esc(c.notes)}</div>`:''}</div>
+      ${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm ghost" data-caledit="${esc(x.id)}" aria-label="Change">${ico('pencil')}</button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}" title="Not on this day">Skip day</button>`:''}`:x.src!=='cal'?`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`:''}</div>`;};
+  return `<div class="cal-day"><div class="srow"><b style="flex:1">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}${hol?` · ${esc(hol)}`:''}</b>${calCanEdit(null)?`<button type="button" class="btn sm" data-caladd="${d}">${ico('plus')}<span>Add work this day</span></button>`:''}</div>
+    ${busy.length?`<div class="note">${ico('alert-triangle')}<span>Busy day: ${busy.map(([u,k])=>`${esc(pnm(u))} has ${k} works`).join(', ')}.</span></div>`:''}
+    ${xs.length?xs.map(row).join(''):`<div class="empty">Nothing scheduled.${calCanEdit(null)?' Tap “Add work this day” to plan something.':''}</div>`}
+    ${lv.length?`<div class="srow"><span class="code">${ico('plane')} On leave: ${lv.map(l=>esc(pnm(l.user))+' ('+esc(l.type)+')').join(', ')}</span></div>`:''}</div>`;}
+function calYear(y){
+  const items=calItems(`${y}-01-01`,`${y}-12-31`),cnt={};items.forEach(x=>cnt[x.date]=(cnt[x.date]||0)+1);
+  const d0=today();
+  return `<div class="cal-y">${Array.from({length:12},(_,i)=>{const m=i+1,f=new Date(y,i,1),pad=(f.getDay()+6)%7,n=dimOf(y,m);
+    const tot=Object.keys(cnt).filter(k=>k.startsWith(`${y}-${String(m).padStart(2,'0')}`)).reduce((s,k)=>s+cnt[k],0);
+    return `<button type="button" class="cal-ym" data-calym="${y}-${String(m).padStart(2,'0')}"><b>${esc(f.toLocaleDateString(LOC(),{month:'long'}))}</b><span class="code">${tot?tot+' scheduled':''}</span>
+      <span class="cal-yg">${'<i></i>'.repeat(pad)}${Array.from({length:n},(_,k)=>{const ds=`${y}-${String(m).padStart(2,'0')}-${String(k+1).padStart(2,'0')}`,c=cnt[ds]||0;return `<i class="${ds===d0?'td':''}" style="${c?`background:color-mix(in srgb,var(--green) ${Math.min(25+c*18,100)}%,transparent)`:''}"></i>`;}).join('')}</span></button>`;}).join('')}</div>`;}
+function calList(){
+  const a=CAL.sel||today(),b=(()=>{const d=dOf(a);d.setDate(d.getDate()+59);return isoD(d);})();
+  const xs=calItems(a,b).filter(x=>x.src==='cal'||x.first),by={};xs.forEach(x=>(by[x.date]=by[x.date]||[]).push(x));
+  const ds=Object.keys(by).sort();
+  return `<div class="cal-list">${ds.length?ds.map(d=>`<div class="md-g">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}))}</div>${by[d].map(x=>`<div class="cal-r" style="--c:${calColor(x.project)}"><span class="cal-bar-c"></span><div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}${x.src!=='cal'?' <span class="pill p-grey">starts</span>':''}</b><div class="code">${x.project?esc(pname(x.project))+' · ':''}${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))).join(', '):''}</div></div><button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div>`).join('')}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
+function vCalendar(){
+  const mineN=calMine(today()).filter(x=>!x.done).length;
+  return header('Calendar',`<button type="button" class="btn" data-calics>${ico('download')}<span>Add my work to phone calendar</span></button>`)
+    +(mineN?`<div class="note">${ico('list-checks')}<span>${mineN} work${mineN>1?'s':''} scheduled for you today — they are also in My day.</span>${canView('myday')?`<button type="button" class="btn sm" data-go="myday">My day</button>`:''}</div>`:'')
+    +calBox('page');}
+
+/* ---------------- add / change scheduled work ---------------- */
+function calForm(c,date){c=c||{};const ppl=calPeople(),who=new Set(c.who||(c.id||isAdmin()?[]:[ME.id])),pid=c.project||(S.proj!=='all'?S.proj:'');
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="calForm" data-id="${esc(c.id||'')}"><div class="pane-h"><h2>${c.id?'Change scheduled work':'Schedule work'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b fhead" style="display:grid;gap:12px">
+    <label class="wide">What work<input name="title" required maxlength="120" value="${esc(c.title||'')}" placeholder="e.g. First floor slab concreting, Elevation drawings to client"></label>
+    <label>Project<select name="project"><option value="">Office / no project</option>${PJ().map(p=>`<option value="${esc(p.id)}" ${pid===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
+    <label>Type<select name="kind">${CAL_KINDS.map(k=>`<option ${c.kind===k?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
+    <label>Date<input type="date" name="start" required value="${esc(c.start||date||today())}"></label>
+    <label>Till (for work over many days)<input type="date" name="end" value="${esc(c.end||'')}"></label>
+    <label>Time (optional)<input type="time" name="time" value="${esc(c.time||'')}"></label>
+    <label>Repeat<select name="repeat">${CAL_REP.map(([k,l])=>`<option value="${k}" ${(c.repeat||'')===k?'selected':''}>${l}</option>`).join('')}</select></label>
+    <label>Repeat until (blank = no end)<input type="date" name="until" value="${esc(c.until||'')}"></label>
+    <div class="wide"><div class="code" style="margin-bottom:6px">Assign to — it shows in their My day on each date</div>
+      <div class="cal-ppl">${ppl.map(p=>`<label class="pl-chk"><input type="checkbox" name="who" value="${esc(p.account)}" ${who.has(p.account)?'checked':''}> ${esc(p.name)} <span class="code">${esc(p.role||'')}</span></label>`).join('')||'<span class="code">Add your team first (Team).</span>'}</div></div>
+    <label class="wide">Notes<textarea name="notes" rows="3" maxlength="1000">${esc(c.notes||'')}</textarea></label>
+    <div class="wide code" id="calWarn"></div>
+  </div><div class="pane-f"><button class="btn pri">${ico('check')}<span>${c.id?'Save':'Schedule'}</span></button>${c.id?`<button type="button" class="btn danger" data-caldel="${esc(c.id)}">${ico('trash-2')}<span>Delete</span></button>`:''}<button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;
+  calWarn();}
+function calWarn(){const f=document.getElementById('calForm');if(!f)return;const w=document.getElementById('calWarn');const d=f.elements.start.value;
+  const who=[...f.querySelectorAll('input[name=who]:checked')].map(x=>x.value);const lv=who.filter(u=>onLeave(u,d)),load=calLoad(d),busy=who.filter(u=>(load[u]||0)>=3);
+  w.innerHTML=(lv.length?`⚠ On leave that day: ${lv.map(u=>esc(pnm(u))).join(', ')}. `:'')+(busy.length?`⚠ Already busy that day: ${busy.map(u=>esc(pnm(u))+' ('+load[u]+')').join(', ')}.`:'');}
+function calIcs(){const d0=today(),xs=(D.cal||[]).filter(c=>(c.who||[]).includes(ME.id)&&(c.repeat?(!c.until||c.until>=d0):(c.end||c.start)>=d0));
+  if(!xs.length){toast('Nothing is scheduled for you yet');return;}
+  const z=s=>String(s||'').replace(/[\\,;]/g,m=>'\\'+m).replace(/\n/g,'\\n'),dd=s=>s.replace(/-/g,'');
+  const nx=s=>{const d=dOf(s);d.setDate(d.getDate()+1);return dd(isoD(d));};
+  const RR={daily:'FREQ=DAILY',weekdays:'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'+(hrCfg().sat?',SA':''),weekly:'FREQ=WEEKLY',monthly:'FREQ=MONTHLY',yearly:'FREQ=YEARLY'};
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BuildMitr//Calendar//EN','CALSCALE:GREGORIAN'];
+  xs.forEach(c=>{L.push('BEGIN:VEVENT','UID:'+c.id+'@buildmitr','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z');
+    if(c.time){const t=c.time.replace(':','')+'00';L.push('DTSTART:'+dd(c.start)+'T'+t,'DURATION:PT1H');}else L.push('DTSTART;VALUE=DATE:'+dd(c.start),'DTEND;VALUE=DATE:'+nx(!c.repeat&&c.end&&c.end>c.start?c.end:c.start));
+    if(c.repeat&&RR[c.repeat])L.push('RRULE:'+RR[c.repeat]+(c.until?';UNTIL='+dd(c.until):''));
+    L.push('SUMMARY:'+z(c.title+(c.project?' — '+pname(c.project):'')),'DESCRIPTION:'+z((c.kind||'')+(c.notes?'\n'+c.notes:'')),'END:VEVENT');});
+  L.push('END:VCALENDAR');saveFile('BuildMitr - my work.ics',new Blob([L.join('\r\n')],{type:'text/calendar'}));}
+/* bell: my work today */
+{const _ca=computeAlerts;computeAlerts=function(){const A_=_ca();try{if(canView('calendar'))calMine(today()).filter(x=>!x.done).forEach(x=>A_.push({sev:'med',txt:`Today: ${x.title}${x.project?' ('+pname(x.project)+')':''}`,view:canView('myday')?'myday':'calendar',pid:x.project}));}catch(_){}return A_;};}
+
+async function calTick(cid,d,on){const c=(D.cal||[]).find(x=>x.id===cid);if(!c)return;const id=`${ME.id}_${cid}_${d}`;
+  if(on)await write(()=>db.doc('caldone/'+id).set({user:ME.id,cal:cid,date:d,own:c.by||'',title:c.title,at:Date.now()}),'Done ✓');
+  else await write(()=>db.doc('caldone/'+id).delete(),null);render();}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset)return;
+  if(t.dataset.calck){const [cid,d]=t.dataset.calck.split('|');calTick(cid,d,t.checked);return;}
+  if(t.dataset.mdcal){const [cid,d]=t.dataset.mdcal.split('|');calTick(cid,d,t.checked);return;}
+  if(t.dataset.calwho!==undefined){CAL.who=t.value;render();return;}
+  if(t.dataset.calsched!==undefined){CAL.sched=t.checked;render();return;}
+  if(t.closest&&t.closest('#calForm'))calWarn();});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-calm],[data-caltoday],[data-calmode],[data-calday],[data-calym],[data-caladd],[data-caledit],[data-caldel],[data-calskip],[data-calics]');if(!b)return;const ds=b.dataset;
+  if(ds.calm){const k=+ds.calm;if(CAL.mode==='year')CAL.m=calAddM(CAL.m,12*k);else if(CAL.mode==='list'){const d=dOf(CAL.sel||today());d.setDate(d.getDate()+60*k);CAL.sel=isoD(d);CAL.m=ymOf(CAL.sel);}else CAL.m=calAddM(CAL.m,k);render();return;}
+  if(ds.caltoday!==undefined){CAL.sel=today();CAL.m=ymOf(CAL.sel);render();return;}
+  if(ds.calmode){CAL.mode=ds.calmode;render();return;}
+  if(ds.calym){CAL.m=ds.calym;CAL.mode='month';CAL.sel=ds.calym+'-01';render();return;}
+  if(ds.calday){CAL.sel=ds.calday;if(ds.calmode2){CAL.mode='month';CAL.m=ymOf(CAL.sel);}render();return;}
+  if(ds.caladd!==undefined){calForm(null,ds.caladd||CAL.sel);return;}
+  if(ds.caledit){const c=(D.cal||[]).find(x=>x.id===ds.caledit);if(c)calForm(c);return;}
+  if(ds.caldel){const c=(D.cal||[]).find(x=>x.id===ds.caldel);if(!c)return;if(b.dataset.sure!=='1'){b.dataset.sure='1';b.querySelector('span').textContent='Tap again to delete';return;}
+    const ok=await write(()=>db.doc('cal/'+c.id).delete(),'Deleted');if(ok){closeLayer();render();}return;}
+  if(ds.calskip){const [cid,d]=ds.calskip.split('|'),c=(D.cal||[]).find(x=>x.id===cid);if(!c)return;await write(()=>db.doc('cal/'+cid).update({skip:[...new Set([...(c.skip||[]),d])]}),'Removed from '+fd(d)+' only');render();return;}
+  if(ds.calics!==undefined){calIcs();return;}});
+document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='calForm')return;e.preventDefault();
+  const g=k=>f.elements[k].value.trim(),start=g('start'),end=g('end'),rep=g('repeat');
+  const who=[...f.querySelectorAll('input[name=who]:checked')].map(x=>x.value);
+  const id=f.dataset.id||`c${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`,old=(D.cal||[]).find(x=>x.id===id)||{};
+  const rec={title:g('title'),project:g('project'),pn:g('project')?pname(g('project')):'',kind:g('kind'),start,end:!rep&&end&&end>start?end:'',time:g('time'),repeat:rep,until:rep?g('until'):'',who,notes:g('notes'),skip:old.skip||[]};
+  if(!rec.title)return;
+  const ok=await write(()=>db.doc('cal/'+id).set(rec),f.dataset.id?'Saved':`Scheduled${who.length?' — sent to '+who.map(u=>pnm(u)).join(', '):''}`);
+  if(ok){CAL.sel=start;CAL.m=ymOf(start);closeLayer();render();}});
+/* drag a one-time work to another day (computer) */
+document.addEventListener('dragstart',e=>{const b=e.target.closest&&e.target.closest('[data-caldrag]');if(b&&e.dataTransfer){e.dataTransfer.setData('text/plain','cal:'+b.dataset.caldrag);e.dataTransfer.effectAllowed='move';}});
+document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('[data-caldrop]');if(c){e.preventDefault();c.classList.add('drop');}});
+document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('[data-caldrop]');if(c)c.classList.remove('drop');});
+document.addEventListener('drop',async e=>{const c=e.target.closest&&e.target.closest('[data-caldrop]');if(!c)return;e.preventDefault();const v=(e.dataTransfer&&e.dataTransfer.getData('text/plain'))||'';if(!v.startsWith('cal:'))return;
+  const x=(D.cal||[]).find(r=>r.id===v.slice(4));const to=c.dataset.caldrop;if(!x||!calCanEdit(x)||x.repeat||to===x.start)return;
+  const sh=Math.round((dOf(to)-dOf(x.start))/864e5),ne=x.end?(()=>{const d=dOf(x.end);d.setDate(d.getDate()+sh);return isoD(d);})():'';
+  await write(()=>db.doc('cal/'+x.id).update({start:to,end:ne}),`Moved to ${fd(to)}`);CAL.sel=to;render();});
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -6819,7 +7027,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&CANW&&!['Client','none','Architect','Structural engineer','Draftsman','Senior architect'].includes(curRole()));}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
+    v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?vModule(v):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
