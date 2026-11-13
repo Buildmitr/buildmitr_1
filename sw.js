@@ -1,5 +1,5 @@
 // BuildMitr offline support: keeps the app and its helper libraries on the phone
-const CACHE='buildmitr-v66';
+const CACHE='buildmitr-v67';
 const CORE=['./','./index.html','./manifest.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
@@ -10,3 +10,7 @@ self.addEventListener('fetch',e=>{
   // libraries from cdnjs and fonts: use the saved copy first
   if(/cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u.host)){e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(n=>{const c=n.clone();caches.open(CACHE).then(x=>x.put(e.request,c));return n;})));}
 });
+// tapping a BuildMitr notification opens (or brings forward) the app on the right page
+self.addEventListener('notificationclick',e=>{e.notification.close();const v=(e.notification.data&&e.notification.data.view)||'';
+  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{const c=cs[0];
+    if(c){c.postMessage({bmView:v});return c.focus();}return self.clients.openWindow('./'+(v?'#v='+v:''));}));});

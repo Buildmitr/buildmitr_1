@@ -197,6 +197,12 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .pl-mh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}.pl-mon ul{margin:6px 0 0;padding-left:18px;font-size:13px}.pl-mon li{margin:3px 0}
 .pl-cm{border-left:3px solid var(--accent);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:4px}
 .g-cm{font-size:12px;margin-left:6px}
+.fold-b{padding:4px}.fold-b[aria-expanded=false] svg{transform:rotate(-90deg)}
+.wf-t td{vertical-align:middle}.wf-star{all:unset;cursor:pointer;font-size:18px;line-height:1;filter:grayscale(1);opacity:.35}.wf-star.on{filter:none;opacity:1}.wf-star:focus-visible{outline:2px solid var(--accent)}
+.wf-t select{max-width:150px}.late-t{color:var(--red-ink);font-weight:600}
+.sch-f{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px}.sch-f label{display:flex;gap:6px;align-items:center}.sch-f select{max-width:240px}
+.g-sec{background:color-mix(in srgb,var(--accent) 7%,var(--panel));min-height:40px}.g-secb{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:8px 12px;grid-column:1/-1}.g-secb:focus-visible{outline:2px solid var(--accent)}
+.g-secb[aria-expanded=false] svg{transform:rotate(-90deg)}.g-sec .g-track{display:none}
 .g-row{display:grid;grid-template-columns:240px 1fr;align-items:center;border-bottom:1px solid var(--line);min-height:46px}
 .g-lab{padding:8px 14px;min-width:0;overflow-wrap:anywhere}.g-lab b{display:block;font-size:14px;line-height:1.3;white-space:normal}.g-lab span{font-size:12px;color:var(--muted);display:block;line-height:1.4;margin-top:2px}.g-lab .g-dt{white-space:nowrap;display:inline}.g-lab b span{display:inline;font-size:inherit;margin:0;color:var(--muted)}.g-lab .g-acts{display:inline-flex;gap:2px;flex-wrap:wrap}
 .g-track{position:relative;height:100%;min-height:46px;margin-right:14px}
@@ -630,7 +636,7 @@ const MOD={
     {k:'status',l:'Status',t:'select',o:['Not started','In progress','Completed','On hold'],list:1},{k:'pred',l:'Predecessors',t:'text'},{k:'gates',l:'Checklists that must be approved before this can be marked Completed',t:'tplmulti',list:1},{k:'source',l:'Imported from',t:'text'},{k:'notes',l:'Notes',t:'textarea'}]},
   dtasks:{label:'Design activities',te:'డిజైన్ పనులు',icon:'pen-tool',fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'wbs',l:'No.',t:'text',list:1},{k:'title',l:'Activity',t:'text',req:1,list:1},
-    {k:'disc',l:'Section',t:'select',o:['Project management','Architecture','3D & elevation','Structure','MEP','Interiors'],list:1},{k:'who',l:'Assigned to',t:'member',list:1},
+    {k:'disc',l:'Section',t:'select',o:['Project management','Architecture','3D views','Structure','MEP','Interiors'],list:1},{k:'who',l:'Assigned to',t:'member',list:1},
     {k:'start',l:'Start date',t:'date'},{k:'due',l:'Due date',t:'date',list:1},{k:'progress',l:'Progress %',t:'number',list:1,max:100},
     {k:'status',l:'Status',t:'select',o:['Not started','In progress','Completed','On hold'],list:1},{k:'pred',l:'Predecessors',t:'text'},{k:'resource',l:'Team / person',t:'text'},{k:'source',l:'Made from',t:'text'},{k:'notes',l:'Notes',t:'textarea'}]},
   issues:{label:'Issues & snags',te:'సమస్యలు & లోపాలు',icon:'alert-triangle',actions:['whatsapp'],fields:[
@@ -1158,7 +1164,7 @@ function vDashboard(){
   const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${canView('invoices')&&CANW?`<button class="btn sm" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn sm" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
-  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+siteBox+ownerBox()+mktBox()+`
+  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+ntBox()+siteBox+ownerBox()+mktBox()+`
   ${S.stale?`<div class="note">${ico('wifi-off')}<span>Can't reach the server right now — figures may be out of date.</span></div>`:''}
   <div class="box tiles">
     <div class="tile"><b>${openT.length}</b><span>Open tasks${late.length?` · <span style="color:var(--red-ink)">${late.length} late</span>`:''}</span></div>
@@ -1171,6 +1177,7 @@ function vDashboard(){
     ${canView('leads')?`<div class="tile"><b>${D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).length}</b><span>Lead follow-ups due</span></div>`:''}
     <div class="tile"><b>${num(f(D.equiplog).filter(x=>x.date===t).reduce((s,x)=>s+(+x.hours||0),0))}</b><span>Equipment hours today</span></div>
   </div>
+  ${wfBox()}
   ${canView('calendar')?calBox('dash'):''}
   <div class="grid2">
     <div class="box"><div class="box-h">${ico('notebook-pen')}<h2>Latest daily reports</h2>${CANW?`<button class="btn sm pri" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:''}</div>
@@ -1178,7 +1185,7 @@ function vDashboard(){
     <div class="box"><div class="box-h">${ico('alert-triangle')}<h2>Open issues</h2></div>
       ${openI.length?`<div class="tbl-wrap"><table><tbody>${openI.slice(0,8).map(i=>`<tr><td><b>${esc(i.title)}</b><div class="code">${esc(pname(i.project))}</div></td><td>${cell(MOD.issues.fields[2],i)}</td><td>${fd(i.due)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No open issues.</div>`}</div>
     <div class="box"><div class="box-h">${ico('list-checks')}<h2>Tasks due soon</h2></div>
-      ${openT.length?`<div class="tbl-wrap"><table><tbody>${openT.sort((a,b)=>(a.due||'9').localeCompare(b.due||'9')).slice(0,8).map(x=>`<tr><td><b>${esc(x.title)}</b><div class="code">${esc(nm(x.who))}</div></td><td>${cell(MOD.tasks.fields[5],x)}</td><td style="${x.due&&x.due<t?'color:var(--red-ink)':''}">${fd(x.due)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No open tasks.</div>`}</div>
+      ${openT.length?`<div class="tbl-wrap"><table><tbody>${openT.sort((a,b)=>(a.due||'9').localeCompare(b.due||'9')).slice(0,8).map(x=>`<tr><td><b>${esc(x.title)}</b><div class="code">${esc(pnm(x.who))}</div></td><td>${cell(MOD.tasks.fields[5],x)}</td><td style="${x.due&&x.due<t?'color:var(--red-ink)':''}">${fd(x.due)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No open tasks.</div>`}</div>
     <div class="box"><div class="box-h">${ico('arrow-left-right')}<h2>Pending material requests</h2></div>
       ${pend.length?`<div class="tbl-wrap"><table><tbody>${pend.slice(0,8).map(r=>`<tr><td><b>${esc(r.material)}</b><div class="code">${esc(pname(r.project))}</div></td><td class="num">${num(r.qty)} ${esc(r.unit||'')}</td><td>${fd(r.needBy)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No pending requests.</div>`}</div>
   </div>`;
@@ -1222,6 +1229,7 @@ function vSettings(){
   const admin=ME.isOwner||ME.canEdit;
   return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
   ${myProfileBox(admin)}
+  <div class="box"><div class="box-h">${ico('bell')}<h2>Notifications</h2></div>${ntSettings()}<div class="srow"><span class="code">Shows a Windows / phone notification when someone messages you, gives you a task or drawing, changes it, or schedules work for you — while BuildMitr is open or running in the background (the Windows app keeps running in the tray).</span></div></div>
   ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
     <label class="code">Company name<input id="o-name" value="${esc(org.name||'')}" ${admin?'':'disabled'} placeholder="e.g. BuildMitr"></label>
@@ -1385,7 +1393,9 @@ const TC=()=>S.view==='designsched'?'dtasks':'tasks';
 const TS=()=>D[TC()]||[];
 function vSchedule(){const DS=S.view==='designsched',VK=DS?'designsched':'schedule';
   const wbsKey=w=>String(w||'').split(/[.\-]/).map(x=>String(x).padStart(5,'0')).join('.');
-  const ts=TS().filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
+  let ts=TS().filter(t=>inProj(t)&&(t.start||t.due)).map(t=>({...t,s:t.start||t.due,e:t.due||t.start})).sort((a,b)=>(a.wbs&&b.wbs&&a.project===b.project)?wbsKey(a.wbs).localeCompare(wbsKey(b.wbs)):a.s.localeCompare(b.s));
+  const allTs=ts;if(DS&&S.dsSec&&S.dsSec!=='all')ts=ts.filter(t=>secOf(t)===S.dsSec);if(S.schWho&&S.schWho!=='all')ts=ts.filter(t=>S.schWho==='none'?!t.who:t.who===S.schWho);
+  const secBar=(DS||true)&&allTs.length?schFilterBar(allTs,DS):'';
   const ed=CANW&&canEditView(S.view==='designsched'?'designsched':'tasks');const other=DS?(canView('schedule')?`<button class="btn" data-go="schedule">${ico('gantt-chart')}Construction schedule</button>`:''):(canView('designsched')?`<button class="btn" data-go="designsched">${ico('pen-tool')}Design schedule</button>`:'');
   const btn=`${other}`+(CANW?`${DS?(ed?`<button class="btn" id="dsGen">${ico('sparkles')}Generate design schedule</button>`:''):isAdmin()?`<button class="btn" id="schedGen">${ico('gantt-chart')}Generate work schedule</button>`:''}${ed&&TS().some(t=>inProj(t)&&(t.start||t.due))?`<button class="btn ${S.schedTable?'pri':''}" id="schedTbl">${ico('pencil')}${S.schedTable?'Show timeline':'Edit as table'}</button><button class="btn" id="schedShift">${ico('arrow-left-right')}Shift schedule</button>`:''}${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}${TS().some(t=>inProj(t))?`<button class="btn" id="schedXls">${ico('file-down')}Download Excel</button>`:''}<button class="btn" data-import="1">${ico('file-up')}Upload Excel</button><button class="btn pri" data-add="${TC()}">${ico('plus')}Add activity</button>`:'');
   if(!ts.length)return header(label(VK),btn)+(DS?`<div class="box hero-empty">${ico('pen-tool')}<h2>No design schedule yet</h2><p>Tap <b>Generate design schedule</b>: choose the type of project (house, villa, apartment, office, factory, restaurant, hotel, hospital…) and BuildMitr lays out project management, architecture, 3D & elevation, structure, MEP and interior activities with dates. Everything can be edited afterwards.</p>${btn}</div>`:`<div class="box hero-empty">${ico('gantt-chart')}<h2>No scheduled activities</h2><p>Add tasks with a start and due date (for example "Footing excavation", "GF slab casting"). They appear here as a timeline with progress against today.</p>${btn}</div>`);
@@ -1398,16 +1408,23 @@ function vSchedule(){const DS=S.view==='designsched',VK=DS?'designsched':'schedu
   {const vw=innerWidth||1000,trackW=Math.max(vw<=720?vw*0.44+420:760,Math.min(vw,1400)-300)-(vw<=720?vw*0.44:240),need=58,step=Math.max(1,Math.ceil(need/(trackW/Math.max(1,ticks.length))));   // keep month labels apart on narrow screens
     const keep=ticks.filter((t,i)=>i%step===0);ticks.length=0;ticks.push(...keep);}
   const tdy=day(today());
-  if(S.schedTable&&ed)return header(label(VK),btn)+schedTable(ts);
+  if(!ts.length)return header(label(VK),btn)+secBar+`<div class="box"><div class="empty">Nothing in this section${S.schWho&&S.schWho!=='all'?' for this person':''}.</div></div>`;
+  if(S.schedTable&&ed)return header(label(VK),btn)+secBar+schedTable(ts,DS);
   const SE=DS?{ds:1,rain:{},bands:'',hl:'',wet:()=>false,warn:[],hs:Object.entries(plHolidays()).filter(([d])=>d>=ts[0].s&&d<=ts[ts.length-1].e),city:''}:schedSeason(ts,min,max,pos);
-  const rows=ts.map(t=>{const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
+  if(!S.dsFold)S.dsFold=new Set();
+  const grp=DS&&(!S.dsSec||S.dsSec==='all');let tsR=ts;if(grp){const order=[...dsSecs(),...new Set(ts.map(secOf))];tsR=[...ts].sort((a,b)=>order.indexOf(secOf(a))-order.indexOf(secOf(b)));}
+  let lastSec=null;
+  const rows=tsR.map(t=>{const sc=grp?secOf(t):null;let head='';if(grp&&sc!==lastSec){lastSec=sc;const xs=ts.filter(x=>secOf(x)===sc),dn=xs.filter(x=>x.status==='Completed').length,fo=S.dsFold.has(sc);
+      head=`<div class="g-row g-sec"><button type="button" class="g-secb" data-dsfold="${esc(sc)}" aria-expanded="${!fo}">${ico('chevron-down')}<b>${esc(sc)}</b><span class="code">${dn}/${xs.length} done</span></button><div class="g-track"></div></div>`;}
+    if(grp&&S.dsFold.has(sc))return head;
+    const done=t.status==='Completed'?100:+t.progress||0;const late=t.status!=='Completed'&&t.e<today();
     const w=Math.max(.8,(day(t.e)-day(t.s)+1)/span*100);
-    return `<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${(()=>{const w=S.proj==='all'?pname(t.project):(t.who?nm(t.who):'');return w&&w!=='—'?esc(w)+' · ':'';})()}<span class="g-dt">${fd(t.s)} → ${fd(t.e)}</span> <span class="g-acts"><button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></span></div>
+    return head+`<div class="g-row"><div class="g-lab"><b>${t.wbs?`<span class="code">${esc(t.wbs)}</span> `:''}${esc(t.title)}${(t.gates||[]).length?(gateMissing(t).length?` <span title="Needs approved: ${esc(gateMissing(t).join(', '))}">🔒</span>`:' <span title="Checklists approved">✅</span>'):''}</b><span>${(()=>{const w=[S.proj==='all'?pname(t.project):'',t.who?'👤 '+pnm(t.who):''].filter(x=>x&&x!=='—').join(' · ');return w?esc(w)+' · ':'';})()}<span class="g-dt">${fd(t.s)} → ${fd(t.e)}</span> <span class="g-acts"><button type="button" class="linkish g-cm" data-tcm="${esc(t.id)}" title="Comments">💬${(t.comments||[]).length?' '+(t.comments||[]).length:''}</button>${ed?`<button type="button" class="linkish g-cm" data-sedit="${esc(t.id)}" title="Edit activity" aria-label="Edit ${esc(t.title)}">✎ Edit</button>`:''}</span></span></div>
       <div class="g-track"${ed?` data-sedit="${esc(t.id)}" style="cursor:pointer" title="Tap to edit"`:''}>${SE.bands}${SE.hl}<div class="g-bar ${late?'late':SE.wet(t)?'pl-wet':''}" style="left:${pos(day(t.s))};width:${w.toFixed(2)}%" title="${esc(t.title)} · ${done}%"><i style="width:${done}%"></i></div></div></div>`;}).join('');
   const late=ts.filter(t=>t.status!=='Completed'&&t.e<today()).length;
   const planned=ts.filter(t=>t.e<=today()).length,doneN=ts.filter(t=>t.status==='Completed').length;
   const s0=ts.reduce((m,t)=>t.s<m?t.s:m,ts[0].s),e0=ts.reduce((m,t)=>t.e>m?t.e:m,ts[0].e);
-  return header(label(VK),btn)+`<div class="grid2"><div class="box"><div class="box-h"><h2>Timeline</h2><span class="code">${fd(s0)} → ${fd(e0)}${SE.city?' · '+esc(SE.city):''}</span></div><div class="tiles"><div class="tile"><b>${((day(e0)-day(s0)+1)/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div><div class="tile"><b>${SE.hs.length}</b><span>Holidays inside</span></div></div></div>
+  return header(label(VK),btn)+secBar+`<div class="grid2"><div class="box"><div class="box-h"><h2>Timeline</h2><span class="code">${fd(s0)} → ${fd(e0)}${SE.city?' · '+esc(SE.city):''}</span></div><div class="tiles"><div class="tile"><b>${((day(e0)-day(s0)+1)/30.4).toFixed(1)}</b><span>Months</span></div><div class="tile"><b>${ts.length}</b><span>Activities</span></div><div class="tile"><b>${doneN}</b><span>Completed</span></div><div class="tile"><b>${planned}</b><span>Should be done by today</span></div><div class="tile"><b style="color:${late?'var(--red-ink)':'inherit'}">${late}</b><span>Behind schedule</span></div><div class="tile"><b>${SE.hs.length}</b><span>Holidays inside</span></div></div></div>
   <div class="box"><div class="box-h"><h2>${DS?'Time check':'Season & time check'}</h2></div>${SE.warn.length?`<div class="pl-warn">${SE.warn.map(([sv,t])=>`<div class="pl-w ${sv}">${ico(sv==='high'?'alert-triangle':'info')}<span>${esc(t)}</span></div>`).join('')}</div>`:`<div class="note">${ico('check')}<span>${DS?'Nothing behind schedule.':'No season or time problems found.'}</span></div>`}</div></div>
   <div class="box"><div class="box-h"><h2>Calendar view</h2>${DS?'':`<span class="code"><span class="pl-key rain"></span> monsoon <span class="pl-key hv"></span> heavy monsoon <span class="pl-key hol"></span> holiday <span class="pl-key wet"></span> outdoor work in monsoon</span>`}</div><div class="tbl-wrap"><div class="gantt">
     <div class="g-row g-head"><div class="g-lab"></div><div class="g-track">${SE.bands}${ticks.map(([v,l])=>`<span class="g-tick" style="left:${pos(v)}">${l}</span>`).join('')}<span class="g-today" style="left:${pos(tdy)}"><em>Today</em></span></div></div>
@@ -2534,7 +2551,8 @@ function ownerBox(){
     const late=ts.filter(x=>x.status!=='Completed'&&x.due&&x.due<t).length;const dpr=D.dpr.some(d=>d.project===p.id&&d.date===t);
     return {p,pc,got,spent,late,dpr};});
   if(!rows.length)return '';
-  return `<div class="box"><div class="box-h">${ico('briefcase')}<h2>All sites at a glance</h2>
+  if(folded('own'))return `<div class="box"><div class="box-h">${foldBtn('own')}${ico('briefcase')}<h2>All projects review</h2><span class="code">${rows.length} projects · ${rows.filter(r=>r.late).length} with late tasks</span></div></div>`;
+  return `<div class="box"><div class="box-h">${foldBtn('own')}${ico('briefcase')}<h2>All projects review</h2>
     <span class="code" style="margin-left:auto">See their screen:</span>${['Site engineer','Architect','Client','Marketing'].map(r=>`<button class="btn sm" data-viewas="${r}">${esc(r)}</button>`).join('')}</div>
   <div class="tbl-wrap"><table><thead><tr><th>Project</th><th>Progress</th><th class="num">Contract</th><th class="num">Received</th><th class="num">Spent</th><th>Late tasks</th><th>Today's report</th></tr></thead><tbody>
   ${rows.map(r=>`<tr><td><button class="btn sm ghost" style="padding:2px 4px" data-proj="${r.p.id}"><b>${esc(r.p.name)}</b></button><div class="code">${esc(r.p.prefix||'')}</div></td><td><div style="display:flex;gap:8px;align-items:center"><div class="prog"><i style="width:${r.pc}%"></i></div><span class="code">${r.pc}%</span></div></td>
@@ -3276,7 +3294,8 @@ function gasDb(org,pre){
   try{window.addEventListener('online',()=>flush());window.addEventListener('beforeunload',ev=>{if(out.length){ev.preventDefault();ev.returnValue='';}});}catch(_){}
   const poll=async()=>{if(polling||!ready)return;polling=true;
     try{const j=await gasApi('since',{ts:cursor});
-      const pi=pendingIds();(j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c)&&!pi.has(c+'|'+id))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>{if(!pi.has(c+'|'+id))drop(c,id);});
+      const pi=pendingIds();try{if(window.bmIncoming&&(j.rows||[]).length)window.bmIncoming(j.rows.filter(([c,id])=>!pi.has(c+'|'+id)).map(([c,id,s])=>{const o=(store[c]||[]).find(x=>x.id===id);return [c,id,parse(s),o?o.data:null];}));}catch(_){}
+      (j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c)&&!pi.has(c+'|'+id))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>{if(!pi.has(c+'|'+id))drop(c,id);});
       cursor=Math.max(cursor,(j.now||Date.now())-3000);if((j.rows||[]).length||(j.gone||[]).length)saveCache();}catch(_){}
     polling=false;};
   const tick=()=>{const hidden=document.visibilityState==='hidden';setTimeout(async()=>{await poll();tick();},hidden?30000:(S.view==='messages'?4000:8000));};
@@ -3293,8 +3312,8 @@ function gasDb(org,pre){
     COLS.forEach(c=>(ls[c]||[]).forEach(f=>f(snap(c))));tick();})();
   const docRef=(c,id)=>({
     get:async()=>{const r=(store[c]||[]).find(x=>x.id===id);return {id,exists:!!r,data:()=>r?r.data:undefined};},
-    set:async o=>{put(c,id,o);saveCache();await send('put',{col:c,id,data:o});},
-    update:async o=>{const prev=(store[c]||[]).find(x=>x.id===id);if(!prev)throw {code:'invalid_argument'};put(c,id,{...prev.data,...o});saveCache();await send('merge',{col:c,id,patch:o});},
+    set:async o=>{try{NTF.mine[c+'|'+id]=Date.now();}catch(_){}put(c,id,o);saveCache();await send('put',{col:c,id,data:o});},
+    update:async o=>{try{NTF.mine[c+'|'+id]=Date.now();}catch(_){}const prev=(store[c]||[]).find(x=>x.id===id);if(!prev)throw {code:'invalid_argument'};put(c,id,{...prev.data,...o});saveCache();await send('merge',{col:c,id,patch:o});},
     delete:async()=>{drop(c,id);saveCache();await send('del',{col:c,id});}});
   return {
     doc:path=>{const i=path.indexOf('/');return docRef(path.slice(0,i),path.slice(i+1));},
@@ -3303,7 +3322,7 @@ function gasDb(org,pre){
       onSnapshot:next=>{(ls[c]=ls[c]||[]).push(next);if(ready)setTimeout(()=>next(snap(c)),0);return()=>{};}}),
     refreshNow:poll,
     /* many entries in one request (e.g. a whole work schedule) */
-    batch:async list=>{list.forEach(([c,id,d])=>put(c,id,d));saveCache();for(let i=0;i<list.length;i+=300)await send('putMany',{items:list.slice(i,i+300)});},
+    batch:async list=>{list.forEach(([c,id,d])=>{try{NTF.mine[c+'|'+id]=Date.now();}catch(_){}put(c,id,d);});saveCache();for(let i=0;i<list.length;i+=300)await send('putMany',{items:list.slice(i,i+300)});},
     delMany:async list=>{list.forEach(([c,id])=>drop(c,id));saveCache();for(let i=0;i<list.length;i+=1500)await send('delMany',{items:list.slice(i,i+1500)});},
     flush,pending:()=>out.length,
     reset:()=>toast('Your data is saved on the server — nothing to reset.')
@@ -4738,6 +4757,15 @@ async function docTplSave(name,def){
   const ok=await write(()=>db.doc('org/main').update(patch),`Template “${name}” saved`);if(ok)render();return ok;}
 const docTplKey=k=>docIsQ(k)?'Quotation':'Invoice';
 const orgMain=()=>D.org.find(o=>o.id==='main')||{};
+/* design schedule sections (Architecture, Structure, 3D views, Interiors…): the admin can edit the list */
+/* boxes that can be closed / opened (remembered on this device) */
+let FOLD={};try{FOLD=JSON.parse(localStorage.getItem('bm-fold')||'{}')||{};}catch(_){}
+const folded=k=>!!FOLD[k];
+const foldBtn=(k,open)=>`<button type="button" class="btn sm ghost fold-b" data-fold="${k}" aria-expanded="${!folded(k)}" aria-label="${folded(k)?'Open':'Close'}">${ico('chevron-down')}</button>`;
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-fold]');if(!b)return;const k=b.dataset.fold;FOLD[k]=!FOLD[k];try{localStorage.setItem('bm-fold',JSON.stringify(FOLD));}catch(_){}render();});
+const DS_SEC_DEF=['Project management','Architecture','Structure','3D views','MEP','Interiors'];
+const dsSecs=()=>{const l=orgMain().dsSecs;return Array.isArray(l)&&l.length?l:DS_SEC_DEF;};
+const secOf=t=>{const d=String(t.disc||'');return d==='3D & elevation'?'3D views':(d||'Other');};
 const inr2=x=>'₹'+(+x||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fdLong=s=>s?new Date(s+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'';
 function inWords(v){v=Math.round(+v||0);if(!v)return 'Zero';
@@ -5068,22 +5096,40 @@ Object.assign(ICONS,{'list-ordered':ICONS['list-ordered']||'<path d="M10 12h11"/
 /* edit the whole schedule as a table: number, name, dates, days, progress, status, links; add, delete, duplicates */
 const schDupKey=t=>[t.project,String(t.title||'').trim().toLowerCase(),t.start||'',t.due||''].join('|');
 function schDups(ts){const seen={},d=[];ts.forEach(t=>{const k=schDupKey(t);if(seen[k])d.push(t);else seen[k]=t;});return d;}
-function schedTable(ts){
+/* section drop-down (design schedule) + "assigned to" filter */
+function schPeople(){return D.team.filter(t=>t.account&&t.role!=='Client'&&t.status!=='Removed');}
+function schFilterBar(all,DS){const secs=[...new Set([...dsSecs(),...all.map(secOf)])].filter(x=>all.some(t=>secOf(t)===x)||dsSecs().includes(x));
+  const cnt=x=>all.filter(t=>secOf(t)===x).length,ppl=schPeople();
+  return `<div class="box sch-f">${DS?`<label class="code">Section<select id="dsSec"><option value="all">All sections (${all.length})</option>${secs.map(x=>`<option value="${esc(x)}" ${S.dsSec===x?'selected':''}>${esc(x)} (${cnt(x)})</option>`).join('')}</select></label>`:''}
+    <label class="code">Assigned to<select id="schWho"><option value="all">Everyone</option><option value="none" ${S.schWho==='none'?'selected':''}>Not assigned yet</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${S.schWho===p.account?'selected':''}>${esc(p.name)} (${all.filter(t=>t.who===p.account).length})</option>`).join('')}</select></label>
+    ${DS&&!S.schedTable?`<button type="button" class="btn sm ghost" id="dsFoldAll">${S.dsFold&&S.dsFold.size?'Open all sections':'Close all sections'}</button>`:''}
+    ${DS&&isAdmin()?`<button type="button" class="btn sm" id="dsSecEdit">${ico('pencil')}<span>Edit sections</span></button>`:''}</div>`;}
+function dsSecForm(){const l=dsSecs();
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="dsSecForm"><div class="pane-h"><h2>Design schedule sections</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" style="display:grid;gap:8px"><p class="code">Rename, add or remove sections (e.g. Architecture, Structure, 3D views, Interiors, Landscape). Renaming moves its activities to the new name in every project.</p>
+    <div id="dsSecRows">${l.map(x=>`<div class="dle-row"><input data-dssec value="${esc(x)}" data-old="${esc(x)}" maxlength="40"><button type="button" class="btn sm ghost" data-dssecdel aria-label="Remove">${ico('x')}</button></div>`).join('')}</div>
+    <button type="button" class="btn sm" id="dsSecAdd">${ico('plus')}<span>Add section</span></button></div>
+  <div class="pane-f"><button class="btn pri">${ico('check')}<span>Save</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;}
+function schedTable(ts,DS){
   if(!S.stSel)S.stSel=new Set();const sel=S.stSel;[...sel].forEach(id=>{if(!ts.some(t=>t.id===id))sel.delete(id);});
   if(S.stSort==='date')ts=[...ts].sort((a,b)=>String(a.s).localeCompare(String(b.s))||schWbsKey(a.wbs).localeCompare(schWbsKey(b.wbs)));
-  const dups=new Set(schDups(ts).map(t=>t.id)),SO=MOD.tasks.fields.find(f=>f.k==='status').o;
+  const dups=new Set(schDups(ts).map(t=>t.id)),SO=MOD.tasks.fields.find(f=>f.k==='status').o,PPL=schPeople();
   return `<div class="box"><div class="box-h" style="flex-wrap:wrap;gap:8px"><h2>Edit activities</h2>
     <label class="code" style="display:flex;gap:6px;align-items:center">Sort by<select id="st-sort"><option value="wbs" ${S.stSort!=='date'?'selected':''}>number</option><option value="date" ${S.stSort==='date'?'selected':''}>start date</option></select></label>
     <label class="code" style="display:flex;gap:6px;align-items:center">When a finish date changes:<select id="st-mode"><option value="linked" ${S.stMode==='linked'||!S.stMode?'selected':''}>move linked activities</option><option value="later" ${S.stMode==='later'?'selected':''}>move all later activities</option><option value="none" ${S.stMode==='none'?'selected':''}>move only that one</option></select></label></div>
   <div class="srow st-bar">${S.proj!=='all'?`<button type="button" class="btn sm" id="stAdd">${ico('plus')}<span>Add row</span></button>`:''}
     <button type="button" class="btn sm" id="stRenum" title="Number the activities 1, 2, 3… in the order shown">${ico('list-ordered')}<span>Renumber</span></button>
     ${dups.size?`<button type="button" class="btn sm warn" id="stDups">${ico('copy')}<span>Remove ${dups.size} duplicate${dups.size>1?'s':''}</span></button>`:''}
-    <button type="button" class="btn sm ${sel.size?'warn':''}" id="stDelSel" ${sel.size?'':'disabled'}>${ico('trash-2')}<span>Delete selected${sel.size?' ('+sel.size+')':''}</span></button>
+    <select id="stWhoSel" ${sel.size?'':'disabled'} aria-label="Assign selected to"><option value="">Assign selected to…</option>${PPL.map(p=>`<option value="${esc(p.account)}">${esc(p.name)}</option>`).join('')}<option value="-">Nobody (unassign)</option></select>
+    ${DS?`<select id="stSecSel" ${sel.size?'':'disabled'} aria-label="Move selected to section"><option value="">Move selected to section…</option>${dsSecs().map(x=>`<option>${esc(x)}</option>`).join('')}</select>`:''}
+    <button type="button" class="btn sm ${sel.size?'warn':''}" id="stDelSel" ${sel.size?'':'disabled'}>${ico('trash-2')}<span>${sel.size&&S.stSure&&Date.now()-S.stSure<8000?'Tap again to delete '+sel.size:'Delete selected'+(sel.size?' ('+sel.size+')':'')}</span></button>
     <button type="button" class="btn sm" id="schedXls">${ico('file-down')}<span>Download Excel</span></button><button type="button" class="btn sm" data-import="1">${ico('file-up')}<span>Upload Excel</span></button></div>
-  <div class="tbl-wrap"><table class="pl-tbl st-tbl"><thead><tr><th><input type="checkbox" id="stAll" aria-label="Select all" ${sel.size&&sel.size===ts.length?'checked':''}></th><th>No.</th><th>Activity</th><th>Start</th><th>Finish</th><th class="num">Days</th><th class="num">Progress</th><th>Status</th><th>After</th><th></th></tr></thead><tbody>
+  <div class="tbl-wrap"><table class="pl-tbl st-tbl"><thead><tr><th><input type="checkbox" id="stAll" aria-label="Select all" ${sel.size&&sel.size===ts.length?'checked':''}></th><th>No.</th><th>Activity</th>${DS?'<th>Section</th>':''}<th>Assigned to</th><th>Start</th><th>Finish</th><th class="num">Days</th><th class="num">Progress</th><th>Status</th><th>After</th><th></th></tr></thead><tbody>
   ${ts.map(t=>`<tr class="${dups.has(t.id)?'st-dup':''}"><td><input type="checkbox" data-stsel="${t.id}" ${sel.has(t.id)?'checked':''} aria-label="Select ${esc(t.title||'')}"></td>
     <td><input data-st="${t.id}:wbs" value="${esc(t.wbs||'')}" style="width:62px" aria-label="Number"></td>
     <td><input data-st="${t.id}:title" value="${esc(t.title||'')}" style="min-width:220px;width:100%" aria-label="Activity">${S.proj==='all'?`<div class="code">${esc(pname(t.project))}</div>`:''}${dups.has(t.id)?'<span class="pill p-red">Duplicate</span>':''}</td>
+    ${DS?`<td><select data-st="${t.id}:disc" aria-label="Section">${[...new Set([...dsSecs(),secOf(t)])].map(x=>`<option ${secOf(t)===x?'selected':''}>${esc(x)}</option>`).join('')}</select></td>`:''}
+    <td><select data-st="${t.id}:who" aria-label="Assigned to" style="max-width:150px"><option value="">—</option>${PPL.map(p=>`<option value="${esc(p.account)}" ${t.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
     <td><input type="date" data-st="${t.id}:start" value="${esc(t.start||'')}" aria-label="Start"></td><td><input type="date" data-st="${t.id}:due" value="${esc(t.due||'')}" aria-label="Finish"></td>
     <td class="num"><input data-st="${t.id}:days" value="${t.start&&t.due?dDiff(t.due,t.start)+1:''}" inputmode="numeric" style="width:54px;text-align:right" aria-label="Days"></td>
     <td class="num"><input data-st="${t.id}:progress" value="${esc(t.status==='Completed'?100:(t.progress??''))}" inputmode="numeric" style="width:58px;text-align:right" aria-label="Progress"></td>
@@ -5095,6 +5141,7 @@ function schedTable(ts){
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='st-sort'){S.stSort=t.value;render();return;}
   if(t.id==='stAll'){S.stSel=new Set(t.checked?[...document.querySelectorAll('[data-stsel]')].map(x=>x.dataset.stsel):[]);render();return;}
   if(t.dataset&&t.dataset.stsel){if(!S.stSel)S.stSel=new Set();t.checked?S.stSel.add(t.dataset.stsel):S.stSel.delete(t.dataset.stsel);
+    ['stWhoSel','stSecSel'].forEach(k=>{const x=document.getElementById(k);if(x)x.disabled=!S.stSel.size;});
     const b=document.getElementById('stDelSel');if(b){b.disabled=!S.stSel.size;b.classList.toggle('warn',!!S.stSel.size);b.querySelector('span').textContent=`Delete selected${S.stSel.size?' ('+S.stSel.size+')':''}`;}}});
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#stAdd,#stRenum,#stDups,#stDelSel');if(!b)return;
   const nid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
@@ -5109,17 +5156,34 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
     if(await write(()=>dbBatch(out),`Renumbered 1 to ${out.length}`))render();return;}
   if(b.id==='stDups'){const G={};ts.forEach(t=>(G[schDupKey(t)]=G[schDupKey(t)]||[]).push(t));const ids=[];
     Object.values(G).filter(g=>g.length>1).forEach(g=>{g.sort((a,c)=>((+c.progress||0)*10+(c.comments||[]).length)-((+a.progress||0)*10+(a.comments||[]).length));g.slice(1).forEach(t=>ids.push(t.id));});if(await write(async()=>{for(const id of ids)await db.doc(TC()+'/'+id).delete();},`${ids.length} duplicate${ids.length>1?'s':''} removed`))render();return;}
-  if(b.id==='stDelSel'){const ids=[...(S.stSel||[])];if(!ids.length)return;if(!b.dataset.sure){b.dataset.sure=1;b.querySelector('span').textContent=`Tap again to delete ${ids.length}`;return;}
-    if(await write(async()=>{for(const id of ids)await db.doc(TC()+'/'+id).delete();},`${ids.length} activit${ids.length>1?'ies':'y'} deleted`)){S.stSel=new Set();render();}return;}});
+  if(b.id==='stDelSel'){const ids=[...(S.stSel||[])];if(!ids.length)return;if(!b.dataset.sure&&!(S.stSure&&Date.now()-S.stSure<8000)){b.dataset.sure=1;S.stSure=Date.now();b.querySelector('span').textContent=`Tap again to delete ${ids.length}`;return;}
+    S.stSure=0;if(await write(async()=>{for(const id of ids)await db.doc(TC()+'/'+id).delete();},`${ids.length} activit${ids.length>1?'ies':'y'} deleted`)){S.stSel=new Set();render();}return;}});
 document.addEventListener('change',async e=>{const t0=e.target;if(t0.id==='st-mode'){S.stMode=t0.value;return;}
   const k=t0.dataset&&t0.dataset.st;if(!k)return;const [id,fld]=k.split(':');const t=TS().find(x=>x.id===id);if(!t)return;
   let v=t0.value;if(fld==='progress')v=v===''?'':Math.max(0,Math.min(100,n(v)));if(fld==='title'&&!v.trim()){t0.value=t.title;return;}
   if(fld==='days'){const d=Math.round(n(v));if(!t.start||!(d>=1)){toast(t.start?'Days must be 1 or more':'Set the start date first');t0.value=t.start&&t.due?dDiff(t.due,t.start)+1:'';return;}await schedApply(t,{due:addD(t.start,d-1)},S.stMode||'linked');return;}
+  if(fld==='disc'||fld==='who'){await write(()=>db.doc(TC()+'/'+id).update({[fld]:v}),fld==='who'?(v?'Assigned to '+pnm(v):'Unassigned'):'Moved to '+v);if(fld==='disc')render();return;}
   if(fld==='wbs'||fld==='pred'){v=v.trim();await write(()=>db.doc(TC()+'/'+id).update({[fld]:v}),'Saved');return;}
   const patch={[fld]:v};if(fld==='status'&&v==='Completed')patch.progress=100;
   if(fld==='start'&&t.start&&t.due&&v){patch.due=addD(t.due,dDiff(v,t.start));}   // moving the start keeps the duration
   if((patch.due||t.due)&&(patch.start||t.start)&&(patch.due||t.due)<(patch.start||t.start)){toast('Finish is before start.');t0.value=t[fld]||'';return;}
   await schedApply(t,patch,S.stMode||'linked');},true);
+document.addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='dsSec'){S.dsSec=t.value;render();return;}
+  if(t.id==='schWho'){S.schWho=t.value;render();return;}
+  if((t.id==='stWhoSel'||t.id==='stSecSel')&&t.value){const ids=[...(S.stSel||[])];if(!ids.length)return;const who=t.id==='stWhoSel';const v=t.value==='-'?'':t.value;
+    const out=ids.map(id=>TS().find(x=>x.id===id)).filter(Boolean).map(x=>[TC(),x.id,{...recOf(x),[who?'who':'disc']:v}]);
+    if(await write(()=>dbBatch(out),who?`${out.length} activit${out.length>1?'ies':'y'} ${v?'assigned to '+pnm(v):'unassigned'}`:`${out.length} moved to ${v}`)){S.stSel=new Set();render();}}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-dsfold],#dsFoldAll,#dsSecEdit,#dsSecAdd,[data-dssecdel]');if(!b)return;
+  if(b.dataset.dsfold!==undefined){if(!S.dsFold)S.dsFold=new Set();const k=b.dataset.dsfold;S.dsFold.has(k)?S.dsFold.delete(k):S.dsFold.add(k);render();return;}
+  if(b.id==='dsFoldAll'){if(S.dsFold&&S.dsFold.size)S.dsFold=new Set();else S.dsFold=new Set(TS().filter(inProj).map(secOf));render();return;}
+  if(b.id==='dsSecEdit'){dsSecForm();return;}
+  if(b.id==='dsSecAdd'){document.getElementById('dsSecRows').insertAdjacentHTML('beforeend',`<div class="dle-row"><input data-dssec value="" data-old="" maxlength="40" placeholder="New section"><button type="button" class="btn sm ghost" data-dssecdel aria-label="Remove">${ico('x')}</button></div>`);return;}
+  if(b.dataset.dssecdel!==undefined){b.closest('.dle-row').remove();return;}});
+document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='dsSecForm')return;e.preventDefault();
+  const rows=[...f.querySelectorAll('[data-dssec]')].map(i=>({n:i.value.trim(),o:i.dataset.old})).filter(r=>r.n);const list=[...new Set(rows.map(r=>r.n))];if(!list.length){toast('Keep at least one section');return;}
+  const ren=rows.filter(r=>r.o&&r.o!==r.n),mv=[];ren.forEach(r=>(D.dtasks||[]).filter(t=>secOf(t)===r.o).forEach(t=>mv.push(['dtasks',t.id,{...recOf(t),disc:r.n}])));
+  const ok=await write(async()=>{await db.doc('org/main').update({dsSecs:list});if(mv.length)await dbBatch(mv);},`Sections saved${mv.length?' · '+mv.length+' activities moved':''}`);if(ok){closeLayer();render();}});
 /* shift a stretch of the schedule */
 function schedShiftDialog(){
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="ssForm"><div class="pane-h"><h2>Shift schedule</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
@@ -6449,7 +6513,7 @@ function bmUpdNow(quiet){if(quiet&&!bmBusy()){location.reload();return;}
 /* ================= Design schedule generator =================
    Lays out the design work of a project by its type: [key, section, activity, working days, after keys, options]
    options: pf = one per floor, types = only for these project types, not = not for these types */
-const DS_SECT=['Project management','Architecture','3D & elevation','Structure','MEP','Interiors'];
+const DS_SECT=['Project management','Architecture','3D views','Structure','MEP','Interiors'];
 const DS_FACTOR={'Residential house':1,'Villa':1.1,'Apartment':1.4,'Commercial / office':1.4,'Industrial / factory':1.2,'Warehouse':1,'Restaurant / café':0.7,'Hotel':1.8,'Hospital / clinic':2,'School / college':1.4,'Retail / showroom':0.7};
 const DS_NOINT=['Industrial / factory','Warehouse'];
 const DS_HVAC=['Commercial / office','Industrial / factory','Restaurant / café','Hotel','Hospital / clinic','Retail / showroom','School / college'];
@@ -6464,7 +6528,7 @@ const DS_T=[
  ['hs1','Project management','Medical planning & department layout with hospital consultant',10,['pm3'],{types:['Hospital / clinic']}],
  ['ht1','Project management','Brand standards & operator review',5,['pm3'],{types:['Hotel']}],
  ['ar1','Architecture','Concept design — zoning & 2–3 plan options',7,['pm5','id1','hs1','ht1']],
- ['e1','3D & elevation','Massing study',3,['ar1']],
+ ['e1','3D views','Massing study',3,['ar1']],
  ['ar2','Architecture','Concept presentation & client feedback',3,['ar1','e1']],
  ['ar3','Architecture','Schematic design — final floor plans',7,['ar2']],
  ['ap1','Architecture','Typical floor & unit plans',6,['ar3'],{types:['Apartment']}],
@@ -6481,13 +6545,13 @@ const DS_T=[
  ['ar7','Architecture','Working drawings',4,['ar4','st2'],{pf:1}],
  ['ar8','Architecture','Sections, elevations & staircase details',5,['ar7']],
  ['ar9','Architecture','Door & window schedule, toilet & kitchen details',4,['ar8']],
- ['e2','3D & elevation','Elevation design options (2–3)',6,['ar3']],
- ['cm2','3D & elevation','Facade / glazing design',6,['e2'],{types:['Commercial / office','Hotel','Retail / showroom']}],
- ['e3','3D & elevation','Final elevation 3D & colour scheme',5,['e2','cm2']],
- ['e4','3D & elevation','Exterior renders (day & night)',4,['e3']],
- ['e5','3D & elevation','Landscape & pool 3D',5,['e3'],{types:['Villa','Hotel','Apartment']}],
- ['rs3','3D & elevation','Branding, signage & menu boards',5,['e3'],{types:['Restaurant / café','Retail / showroom']}],
- ['e6','3D & elevation','Walkthrough video',6,['e4'],{types:['Villa','Apartment','Hotel','Commercial / office']}],
+ ['e2','3D views','Elevation design options (2–3)',6,['ar3']],
+ ['cm2','3D views','Facade / glazing design',6,['e2'],{types:['Commercial / office','Hotel','Retail / showroom']}],
+ ['e3','3D views','Final elevation 3D & colour scheme',5,['e2','cm2']],
+ ['e4','3D views','Exterior renders (day & night)',4,['e3']],
+ ['e5','3D views','Landscape & pool 3D',5,['e3'],{types:['Villa','Hotel','Apartment']}],
+ ['rs3','3D views','Branding, signage & menu boards',5,['e3'],{types:['Restaurant / café','Retail / showroom']}],
+ ['e6','3D views','Walkthrough video',6,['e4'],{types:['Villa','Apartment','Hotel','Commercial / office']}],
  ['st1','Structure','Structural system & grid finalisation',3,['ar3']],
  ['id2','Structure','PEB steel structure design coordination',10,['st1'],{types:['Industrial / factory','Warehouse']}],
  ['st2','Structure','Structural analysis & design (ETABS)',10,['st1','ar4']],
@@ -6647,7 +6711,7 @@ const monthRange=(ym)=>{const [y,m]=(ym||today().slice(0,7)).split('-').map(Numb
 const myEod=d=>(D.eod||[]).find(x=>x.user===ME.id&&x.date===(d||today()));
 const myTick=d=>(D.rtick||[]).find(x=>x.user===ME.id&&x.date===(d||today()));
 const PSTAGES=['Enquiry','Agreement','Advance','Design','Approval','Construction','Handover'];
-const PSERV=['Architecture','Structure','Interiors','MEP','3D & elevation','Turnkey construction','Project management'];
+const PSERV=['Architecture','Structure','Interiors','MEP','3D views','Turnkey construction','Project management'];
 function stageStrip(p,editable){const st=p.stages||{};const last=PSTAGES.reduce((m,s,i)=>st[s]?i:m,-1);
   return `<div class="pst">${PSTAGES.map((s,i)=>`<button type="button" class="pst-s ${st[s]?'done':''} ${i===last+1?'next':''}" ${editable?`data-pstage="${esc(p.id)}|${esc(s)}"`:'disabled'} title="${st[s]?esc(s)+' · '+fd(st[s]):esc(s)}">${st[s]?ico('check'):''}<span>${esc(s)}</span></button>`).join('')}</div>`;}
 const canStage=p=>CANW&&(isAdmin()||(p&&p.by===ME.id));
@@ -6675,9 +6739,10 @@ function vMyDay(){
     .filter(x=>x.status!=='Completed'&&!x.done);
   const dueOf=x=>x.due||x.start||'';const ov=mine.filter(x=>dueOf(x)&&dueOf(x)<d0),td=mine.filter(x=>!dueOf(x)||(x.start||d0)<=d0&&dueOf(x)>=d0),up=mine.filter(x=>!ov.includes(x)&&!td.includes(x));
   const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0)),...calMine(d0).filter(x=>x.done)];
-  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="code">${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
+  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b><div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
     ${x.src==='cal'?`<button type="button" class="btn sm" data-go="calendar" data-calday="${esc(x.date)}">${x.time?esc(x.time):'Calendar'}</button>`:x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
-  const grp=(n,xs)=>xs.length?`<div class="md-g">${n} · ${xs.length}</div>${xs.map(trow).join('')}`:'';
+  const srt=xs=>[...xs].sort((a,b)=>(b.first?1:0)-(a.first?1:0)||String(dueOf(a)||'9999').localeCompare(String(dueOf(b)||'9999')));
+  const grp=(n,xs)=>xs.length?`<div class="md-g">${n} · ${xs.length}</div>${srt(xs).map(trow).join('')}`:'';
   const work=`<div class="box"><div class="box-h">${ico('list-checks')}<h2>Today's work</h2><span class="code">${doneToday.length}/${doneToday.length+td.length+ov.length} done</span></div>
     ${grp('Overdue',ov)}${grp('Today',td)}${grp('Coming up',up.slice(0,6))}${!mine.length?'<div class="empty">Nothing assigned to you. Add your own tasks below.</div>':''}
     ${MD.add?`<form id="mdAddForm" class="md-add"><input name="t" required placeholder="What do you need to do?" autofocus><input name="d" type="date" value="${d0}"><select name="p"><option value="">No project</option>${PJ().map(p=>`<option value="${p.id}">${esc(pname(p.id))}</option>`).join('')}</select><button class="btn sm pri">Add</button><button type="button" class="btn sm ghost" data-mdadd="0">Cancel</button></form>`
@@ -6692,7 +6757,7 @@ function vMyDay(){
   const leave=`<div class="box"><div class="box-h">${ico('plane')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
-  return header('My day')+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
+  return header('My day')+ntBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
 }
 async function mdTick(item,on){const d0=today(),id=`${ME.id}_${d0}`,t=myTick(),done=new Set((t&&t.done)||[]);on?done.add(item):done.delete(item);
   await write(()=>db.doc('rtick/'+id).set({user:ME.id,name:ME.name||'',date:d0,role:meRole(),done:[...done],of:routineFor(meRole()).length,mgr:(myTeamRec()||{}).mgr||''}),null);render();}
@@ -6875,7 +6940,9 @@ function calBox(where){
   if(CAL.mode==='year')body=calYear(y);
   else if(CAL.mode==='list')body=calList();
   else body=calMonth(y,m)+calDay(CAL.sel);
-  const head=`<div class="box-h">${ico('calendar')}<h2>Calendar</h2>${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}">${ico('plus')}<span>Schedule work</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
+  const fk='cal-'+where,fo=where!=='page'&&folded(fk);
+  const head=`<div class="box-h">${where!=='page'?foldBtn(fk):''}${ico('calendar')}<h2>Calendar</h2>${fo?`<span class="code">${calMine(d0).filter(x=>!x.done).length} for you today</span>`:''}${canAdd?`<button type="button" class="btn sm pri" data-caladd="${esc(CAL.sel)}">${ico('plus')}<span>Schedule work</span></button>`:''}${where!=='page'&&canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Open full calendar</button>`:''}</div>`;
+  if(fo)return `<div class="box cal">${head}</div>`;
   return `<div class="box cal ${where==='page'?'cal-page':''}">${head}${tools}${body}</div>`;}
 function calChip(x){const done=x.src==='cal'&&x.who.includes(ME.id)&&calDone(x.id,x.date);const col=calColor(x.project);
   const drag=x.src==='cal'&&!x.c.repeat&&calCanEdit(x.c);
@@ -6998,6 +7065,87 @@ document.addEventListener('drop',async e=>{const c=e.target.closest&&e.target.cl
   const x=(D.cal||[]).find(r=>r.id===v.slice(4));const to=c.dataset.caldrop;if(!x||!calCanEdit(x)||x.repeat||to===x.start)return;
   const sh=Math.round((dOf(to)-dOf(x.start))/864e5),ne=x.end?(()=>{const d=dOf(x.end);d.setDate(d.getDate()+sh);return isoD(d);})():'';
   await write(()=>db.doc('cal/'+x.id).update({start:to,end:ne}),`Moved to ${fd(to)}`);CAL.sel=to;render();});
+
+/* ================= Work to do first (Dashboard) =================
+   Open construction tasks and design activities in one list: ⭐ "do first" ones on top, then late, then by due date.
+   Shows the type (Design / Site), the project and who it is assigned to; editors can reassign or star from here. */
+const WF={who:'all',type:'all',all:false};
+function wfItems(){const d0=today(),out=[];
+  [['tasks','Site'],['dtasks','Design']].forEach(([col,lab])=>{if(!canView(col)&&!canView(col==='tasks'?'schedule':'designsched'))return;
+    (D[col]||[]).filter(t=>inProj(t)&&t.status!=='Completed').forEach(t=>out.push({...t,col,lab,due0:t.due||t.start||''}));});
+  return out.filter(x=>(WF.type==='all'||WF.type===x.lab)&&(WF.who==='all'||(WF.who==='none'?!x.who:WF.who==='me'?x.who===ME.id:x.who===WF.who)))
+    .sort((a,b)=>(b.first?1:0)-(a.first?1:0)||((a.due0&&a.due0<d0)?0:1)-((b.due0&&b.due0<d0)?0:1)||String(a.due0||'9999').localeCompare(String(b.due0||'9999')));}
+const wfEdit=x=>CANW0&&canEditView(x.col==='tasks'?'tasks':'dtasks');
+function wfBox(){
+  const fk='wf';const xs=wfItems(),d0=today(),late=xs.filter(x=>x.due0&&x.due0<d0).length,ppl=schPeople();
+  const head=`<div class="box-h">${foldBtn(fk)}${ico('list-checks')}<h2>Work to do first</h2><span class="code">${xs.length} open${late?` · <span style="color:var(--red-ink)">${late} late</span>`:''}</span></div>`;
+  if(folded(fk))return `<div class="box">${head}</div>`;
+  const show=WF.all?xs:xs.slice(0,12);
+  return `<div class="box">${head}<div class="sch-f"><label class="code">Show<select id="wfType"><option value="all">Design & site</option><option value="Design" ${WF.type==='Design'?'selected':''}>Design / drawings</option><option value="Site" ${WF.type==='Site'?'selected':''}>Site work</option></select></label>
+    <label class="code">Assigned to<select id="wfWho"><option value="all">Everyone</option><option value="me" ${WF.who==='me'?'selected':''}>Me</option><option value="none" ${WF.who==='none'?'selected':''}>Not assigned yet</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${WF.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label>
+    <span class="code">⭐ = do first (tap the star to set)</span></div>
+  ${show.length?`<div class="tbl-wrap"><table class="wf-t"><thead><tr><th></th><th>Work</th><th>Type</th><th>Project</th><th>Assigned to</th><th>Due</th><th class="num">Done</th></tr></thead><tbody>
+  ${show.map(x=>{const ov=x.due0&&x.due0<d0,ed=wfEdit(x);return `<tr><td><button type="button" class="wf-star ${x.first?'on':''}" ${ed?`data-wfstar="${x.col}|${esc(x.id)}"`:'disabled'} aria-label="${x.first?'Remove do first':'Mark do first'}" aria-pressed="${!!x.first}">⭐</button></td>
+    <td><b>${x.wbs?`<span class="code">${esc(x.wbs)}</span> `:''}${esc(x.title)}</b>${x.col==='dtasks'&&x.disc?`<div class="code">${esc(secOf(x))}</div>`:''}</td>
+    <td><span class="pill ${x.lab==='Design'?'p-blue':'p-amber'}">${x.lab}</span></td><td>${esc(pname(x.project))}</td>
+    <td>${ed?`<select data-wfwho="${x.col}|${esc(x.id)}" aria-label="Assigned to"><option value="">— not assigned</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${x.who===p.account?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`:esc(x.who?pnm(x.who):'—')}</td>
+    <td class="${ov?'late-t':''}">${x.due0?(ov?'Late · ':'')+fd(x.due0):'—'}</td><td class="num">${x.status==='Completed'?100:n(x.progress)}%</td></tr>`;}).join('')}</tbody></table></div>
+  ${xs.length>12?`<div class="srow"><button type="button" class="btn sm" id="wfAll">${WF.all?'Show fewer':'Show all '+xs.length}</button></div>`:''}`:`<div class="empty">Nothing open here.</div>`}</div>`;}
+document.addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='wfType'){WF.type=t.value;render();return;}if(t.id==='wfWho'){WF.who=t.value;render();return;}
+  if(t.dataset&&t.dataset.wfwho){const [c,id]=t.dataset.wfwho.split('|');await write(()=>db.doc(c+'/'+id).update({who:t.value}),t.value?'Assigned to '+pnm(t.value):'Unassigned');render();}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-wfstar],#wfAll');if(!b)return;
+  if(b.id==='wfAll'){WF.all=!WF.all;render();return;}
+  const [c,id]=b.dataset.wfstar.split('|'),x=(D[c]||[]).find(r=>r.id===id);if(!x)return;await write(()=>db.doc(c+'/'+id).update({first:!x.first}),x.first?'Removed from do first':'⭐ Marked to do first');render();});
+
+/* ================= Notifications on this device =================
+   When new data arrives from the server: a chat message for me, or a task / design activity / calendar work
+   assigned to me (new, newly assigned, or changed by someone else) → a Windows / phone notification
+   (or a small message at the bottom when BuildMitr is already on screen). Nothing is sent for my own changes. */
+const NTF={mine:{},unread:-1,last:{}};
+const ntOK=()=>typeof Notification!=='undefined'&&Notification.permission==='granted';
+const ntOn=()=>{try{return localStorage.getItem('bm-notif')!=='off';}catch(_){return true;}};
+function ntShow(title,body,view,tag){
+  if(!ntOn())return;
+  try{if(navigator.setAppBadge&&typeof chatUnread==='function')navigator.setAppBadge(chatUnread()+calMine(today()).filter(x=>!x.done).length).catch(()=>{});}catch(_){}
+  if(document.visibilityState==='visible'&&document.hasFocus&&document.hasFocus()){toast(title+(body?' — '+body:''));return;}
+  if(!ntOK()){toast(title+(body?' — '+body:''));return;}
+  const o={body:String(body||'').slice(0,180),tag:tag||'bm-'+Date.now(),icon:'icon-192.png',badge:'icon-192.png',data:{view:view||''},renotify:true};
+  try{if(navigator.serviceWorker&&navigator.serviceWorker.controller){navigator.serviceWorker.ready.then(r=>r.showNotification(title,o)).catch(()=>{try{new Notification(title,o);}catch(_){}});return;}}catch(_){}
+  try{const n=new Notification(title,o);n.onclick=()=>{try{window.focus();}catch(_){}if(view){S.view=view;render();}n.close();};}catch(_){}}
+/* called by the data layer with each batch from the server: [collection, id, data, old data] */
+window.bmIncoming=function(list){
+  if(!ME||!ME.id||!S.ready)return;const me=ME.id,now=Date.now(),mine=k=>NTF.mine[k]&&now-NTF.mine[k]<120000;
+  const out=[];
+  list.forEach(([c,id,d,old])=>{if(!d||mine(c+'|'+id))return;
+    if(c==='chats'){if(old||d.by===me||(typeof myChatId==='function'&&d.from===myChatId()))return;out.push(['chat',d]);return;}
+    if(c==='tasks'||c==='dtasks'){if(d.who!==me)return;const lab=c==='dtasks'?'Design task':'Site task',pn=d.project?pname(d.project):'';
+      if(!old||old.who!==me){out.push(['task',`New ${lab.toLowerCase()} for you`,`${d.title}${pn?' · '+pn:''}${d.due?' · due '+fd(d.due):''}`,c==='dtasks'?'designsched':'schedule']);return;}
+      const ch=[];if(old.status!==d.status)ch.push(d.status);if(old.due!==d.due&&d.due)ch.push('due '+fd(d.due));if(!!old.first!==!!d.first&&d.first)ch.push('⭐ do first');
+      if((d.comments||[]).length>(old.comments||[]).length){const k=d.comments[d.comments.length-1]||{};if(k.by!==me)ch.push('comment: '+String(k.t||k.text||'').slice(0,80));}
+      if(ch.length)out.push(['task',`${lab} updated: ${d.title}`,ch.join(' · '),c==='dtasks'?'designsched':'schedule']);return;}
+    if(c==='cal'){if(!(d.who||[]).includes(me))return;if(old&&(old.who||[]).includes(me)&&old.start===d.start&&old.title===d.title)return;
+      out.push(['task',old&&(old.who||[]).includes(me)?'Calendar work changed':'New work scheduled for you',`${d.title} · ${fd(d.start)}${d.time?' '+d.time:''}${d.project?' · '+pname(d.project):''}`,'myday']);return;}
+    if(c==='leave'&&old&&old.user===me&&old.status!==d.status&&['Approved','Rejected'].includes(d.status))out.push(['task','Leave '+d.status.toLowerCase(),`${d.type} · ${fd(d.from)}`,'myday']);});
+  if(!out.length)return;
+  setTimeout(()=>{   // after the new data is in place
+    const chats=out.filter(x=>x[0]==='chat').map(x=>x[1]);
+    if(chats.length){const u=chatUnread();if(u>0){const m=chats[chats.length-1],who=typeof chatName==='function'?chatName(m.from):'Someone';
+      ntShow(chats.length>1?`${chats.length} new messages`:`Message from ${who}`,(chats.length>1?who+': ':'')+(m.text||(m.photos&&m.photos.length?'📷 Photo':'')),'messages','bm-chat');}}
+    out.filter(x=>x[0]==='task').slice(0,4).forEach((x,i)=>ntShow(x[1],x[2],x[3],'bm-t'+i+Date.now()));},400);};
+function ntBox(){if(typeof Notification==='undefined'||!ME.id)return '';
+  if(Notification.permission==='granted')return '';
+  if(Notification.permission==='denied')return '';
+  return `<div class="note">${ico('bell')}<span style="flex:1">Get a notification on this ${/Mobi|Android|iPhone/i.test(navigator.userAgent)?'phone':'computer'} when someone messages you or gives you a task.</span><button type="button" class="btn sm pri" id="ntAsk">Turn on notifications</button></div>`;}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#ntAsk,#ntOff,#ntTest');if(!b)return;
+  if(b.id==='ntAsk'){try{const r=await Notification.requestPermission();try{localStorage.setItem('bm-notif','on');}catch(_){}toast(r==='granted'?'Notifications are on for this device':'Notifications were not allowed — you can allow them in the browser / phone settings');}catch(_){toast('This browser cannot show notifications');}render();return;}
+  if(b.id==='ntOff'){const on=!ntOn();try{localStorage.setItem('bm-notif',on?'on':'off');}catch(_){}toast(on?'Notifications on':'Notifications off on this device');render();return;}
+  if(b.id==='ntTest'){const v=document.visibilityState;setTimeout(()=>{if(ntOK()){navigator.serviceWorker&&navigator.serviceWorker.controller?navigator.serviceWorker.ready.then(r=>r.showNotification('BuildMitr',{body:'Notifications work on this device ✓',icon:'icon-192.png'})):new Notification('BuildMitr',{body:'Notifications work on this device ✓'});}else toast('Allow notifications first');},300);}});
+/* settings row */
+function ntSettings(){if(typeof Notification==='undefined')return `<div class="srow"><span class="code">This browser cannot show notifications.</span></div>`;
+  const p=Notification.permission;return `<div class="srow" style="flex-wrap:wrap;gap:8px"><b style="flex:1">Notifications on this device</b>${p==='granted'?`<span class="pill ${ntOn()?'p-green':'p-grey'}">${ntOn()?'On':'Off'}</span><button type="button" class="btn sm" id="ntOff">${ntOn()?'Turn off':'Turn on'}</button><button type="button" class="btn sm" id="ntTest">Send a test</button>`:p==='denied'?'<span class="code">Blocked — allow notifications for BuildMitr in the browser or phone settings.</span>':`<button type="button" class="btn sm pri" id="ntAsk">Turn on</button>`}</div>`;}
+/* opened from a notification */
+try{navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',e=>{const v=e.data&&e.data.bmView;if(v&&S.ready&&canView(v)){S.view=v;render();}});}catch(_){}
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
