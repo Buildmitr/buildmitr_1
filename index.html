@@ -198,6 +198,9 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .pl-mh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}.pl-mon ul{margin:6px 0 0;padding-left:18px;font-size:13px}.pl-mon li{margin:3px 0}
 .pl-cm{border-left:3px solid var(--accent);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:4px}
 .g-cm{font-size:12px;margin-left:6px}
+.qt-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px}.qt-f>input[name=title]{flex:1 1 260px;min-width:0}.qt-f>select{flex:0 1 190px;min-width:0}.qt-f>input,.qt-f>select{width:auto}.qt-f>input[type=date]{flex:0 0 auto;width:auto}
+.qt-chk{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0;font-size:13px}.qt-chk label{display:flex;gap:4px;align-items:center}.qt-i{display:flex;color:var(--muted)}.qt-more{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding-top:6px}.qt-more[hidden]{display:none}.qt-w{grid-column:1/-1}
+@media (max-width:700px){.qt-f>select,.qt-f>input[type=date]{flex:1 1 45%}.qt-i{display:none}}
 .fold-b{padding:4px}.fold-b[aria-expanded=false] svg{transform:rotate(-90deg)}
 .wf-t td{vertical-align:middle}.wf-star{all:unset;cursor:pointer;font-size:18px;line-height:1;filter:grayscale(1);opacity:.35}.wf-star.on{filter:none;opacity:1}.wf-star:focus-visible{outline:2px solid var(--accent)}
 .wf-t select{max-width:150px}.late-t{color:var(--red-ink);font-weight:600}
@@ -1178,7 +1181,7 @@ function vDashboard(){
     ${canView('leads')?`<div class="tile"><b>${D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).length}</b><span>Lead follow-ups due</span></div>`:''}
     <div class="tile"><b>${num(f(D.equiplog).filter(x=>x.date===t).reduce((s,x)=>s+(+x.hours||0),0))}</b><span>Equipment hours today</span></div>
   </div>
-  ${wfBox()}
+  ${qtBox()}${wfBox()}
   ${canView('calendar')?calBox('dash'):''}
   <div class="grid2">
     <div class="box"><div class="box-h">${ico('notebook-pen')}<h2>Latest daily reports</h2>${CANW?`<button class="btn sm pri" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:''}</div>
@@ -2498,7 +2501,7 @@ function vSiteHome(){
   const iss=by('issues').filter(x=>x.status!=='Resolved').sort((a,b)=>(a.who===ME.id?-1:0)-(b.who===ME.id?-1:0)||({High:0,Medium:1,Low:2}[a.severity]-{High:0,Medium:1,Low:2}[b.severity]));
   const acts=[['attbulk','calendar-check','Mark attendance'],['dprauto','notebook-pen',"Today's report"],['received','package-plus','Material received'],['requests','arrow-left-right','Request material'],['issue','package-minus','Material issued'],['issues','alert-triangle','Issue / snag'],['workupd','hammer','Work update'],['equiplog','gauge','Equipment hours'],['forms','clipboard-check','Checklist']]
     .filter(([k])=>k==='dprauto'?canView('dpr')&&canEditView('dpr'):k==='forms'?canView('forms'):k==='attbulk'?canEditView('attendance'):canView(k)&&canEditView(k));
-  return head+`<div class="box site-head"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:160px"><b>${esc(p.name)}</b><div class="code">${esc(p.address||'')}</div></div>
+  return head+qtBox()+`<div class="box site-head"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:160px"><b>${esc(p.name)}</b><div class="code">${esc(p.address||'')}</div></div>
     ${p.loc?`<a class="btn sm" href="https://www.google.com/maps/dir/?api=1&destination=${p.loc.lat},${p.loc.lng}" target="_blank" rel="noopener noreferrer">${ico('navigation')}Directions</a>`:''}</div>
     <div class="tiles"><div class="tile"><b>${present}</b><span>Workers today</span></div>
     <div class="tile"><b style="color:${dprToday?'var(--green-ink)':'var(--amber-ink)'}">${dprToday?'Done':'Pending'}</b><span>Today's report</span></div>
@@ -2529,7 +2532,7 @@ function vDesk(){
   const sw=s=>({'For approval':'p-amber','Draft':'p-grey','Approved':'p-green','Superseded':'p-grey'}[s]||'p-grey');
   const docRow=d=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(d.title)}</b> <span class="code">${esc(d.rev||'')}</span><div class="code">${esc(pname(d.project))} · ${esc(d.cat||'')}</div></div><span class="pill ${sw(d.status)}">${esc(d.status||'—')}</span>
     ${(d.files||[]).slice(0,1).map(f=>`<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener" aria-label="Open">${ico('file-text')}</a>`).join('')}${d.link?`<a class="btn sm ghost" href="${esc(d.link)}" target="_blank" rel="noopener noreferrer" aria-label="Open link">${ico('external-link')}</a>`:''}${CANW&&canEditView('documents')?`<button class="btn sm ghost" data-edit="documents:${d.id}" aria-label="Edit">${ico('pencil')}</button>`:''}</div>`;
-  return header(hello(),CANW&&canEditView('documents')?`<button class="btn pri" data-add="documents">${ico('upload')}Upload drawing / revision</button>`:'')+
+  return header(hello(),CANW&&canEditView('documents')?`<button class="btn pri" data-add="documents">${ico('upload')}Upload drawing / revision</button>`:'')+qtBox()+
   `<div class="box tiles"><div class="tile"><b style="color:${forA.length?'var(--amber-ink)':'inherit'}">${forA.length}</b><span>Waiting for approval</span></div><div class="tile"><b>${draft.length}</b><span>Drafts</span></div>
    <div class="tile"><b>${appr.length}</b><span>Approved drawings</span></div><div class="tile"><b>${iss.length}</b><span>Open site questions</span></div><div class="tile"><b>${cos.length}</b><span>Change orders open</span></div><div class="tile"><b>${upcoming.length}</b><span>Work starting in 3 weeks</span></div></div>
   <div class="grid2">
@@ -6744,7 +6747,7 @@ function vMyDay(){
     .filter(x=>x.status!=='Completed'&&!x.done);
   const dueOf=x=>x.due||x.start||'';const ov=mine.filter(x=>dueOf(x)&&dueOf(x)<d0),td=mine.filter(x=>!dueOf(x)||(x.start||d0)<=d0&&dueOf(x)>=d0),up=mine.filter(x=>!ov.includes(x)&&!td.includes(x));
   const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0)),...calMine(d0).filter(x=>x.done)];
-  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b><div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
+  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b>${(x.chk||[]).length?`<div class="qt-chk">${x.chk.map((c,i)=>`<label><input type="checkbox" data-qtchk="${x.src}|${esc(x.id)}|${i}" ${c.done?'checked':''}> ${esc(c.t)}</label>`).join('')}<span class="code">${x.chk.filter(c=>c.done).length}/${x.chk.length}</span></div>`:''}${(x.files||[]).length&&x.src!=='cal'?`<div class="dl-files">${x.files.map(f=>`<span class="dl-f"><a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></span>`).join('')}</div>`:''}<div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
     ${x.src!=='ptask'&&(x.project||x.src!=='cal')?`<button type="button" class="btn sm" data-fin="${x.src==='cal'?'cal|'+esc(x.cid)+'|'+esc(x.date):x.src+'|'+esc(x.id)+'|'}" title="Upload the finished file into the Drawings library and mark this done">${ico('upload')}<span>Upload & finish</span></button>`:''}
     ${x.src==='cal'?`<button type="button" class="btn sm" data-go="calendar" data-calday="${esc(x.date)}">${x.time?esc(x.time):'Calendar'}</button>`:x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
   const srt=xs=>[...xs].sort((a,b)=>(b.first?1:0)-(a.first?1:0)||String(dueOf(a)||'9999').localeCompare(String(dueOf(b)||'9999')));
@@ -6763,7 +6766,7 @@ function vMyDay(){
   const leave=`<div class="box"><div class="box-h">${ico('calendar')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
-  return header('My day')+ntBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
+  return header('My day')+ntBox()+qtBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${projs}${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
 }
 async function mdTick(item,on){const d0=today(),id=`${ME.id}_${d0}`,t=myTick(),done=new Set((t&&t.done)||[]);on?done.add(item):done.delete(item);
   await write(()=>db.doc('rtick/'+id).set({user:ME.id,name:ME.name||'',date:d0,role:meRole(),done:[...done],of:routineFor(meRole()).length,mgr:(myTeamRec()||{}).mgr||''}),null);render();}
@@ -7275,6 +7278,50 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='finForm
   if(src==='cal')await calTick(id,date,true);
   else if(CANW0&&canEditView(src)){try{await db.doc(src+'/'+id).update({status:'Completed',progress:100,doneFile:key});}catch(_){}}
   closeLayer();toast(`${key} filed in the library — task done ✓`);render();});
+
+/* ================= Create task (quick box on every home screen) =================
+   Like the task bar in Powerplay / Onsite / RDash: type the task, pick project, person, due date and press Create.
+   "More" adds type (site / design), start date, priority (⭐ do first), notes, checklist and files.
+   The person sees it in My day and the bell (and a phone / PC notification if turned on). */
+const QT={more:false};
+const qtCols=()=>['tasks','dtasks'].filter(c=>CANW0&&canEditView(c));
+function qtBox(){const cols=qtCols();if(!S.ready||!cols.length||curRole()==='Client')return '';
+  const ppl=schPeople(),pid=S.proj!=='all'?S.proj:'',d0=today();
+  const defCol=cols.includes(['design'].includes(uiOf())?'dtasks':'tasks')?(['design'].includes(uiOf())?'dtasks':'tasks'):cols[0];
+  return `<div class="box qt"><form id="qtForm" class="qt-f" autocomplete="off">
+    <span class="qt-i">${ico('list-checks')}</span>
+    <input name="title" required maxlength="140" placeholder="Create a task… e.g. Send GF plan to client" aria-label="Task">
+    <select name="project" aria-label="Project">${PJ().length>1||!pid?'<option value="">Project…</option>':''}${PJ().map(p=>`<option value="${esc(p.id)}" ${pid===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select>
+    <select name="who" aria-label="Assign to"><option value="">Assign to…</option><option value="${esc(ME.id)}">Me</option>${ppl.filter(p=>p.account!==ME.id).map(p=>`<option value="${esc(p.account)}">${esc(p.name)}${p.role?' · '+esc(p.role):''}</option>`).join('')}</select>
+    <input type="date" name="due" value="${d0}" aria-label="Due date">
+    <button type="button" class="btn sm ghost" id="qtMore" aria-expanded="${QT.more}">${QT.more?'Less':'More'}</button>
+    <button class="btn pri">${ico('plus')}<span>Create</span></button>
+    <div class="qt-more" ${QT.more?'':'hidden'}>
+      <label>Type<select name="col">${cols.map(c=>`<option value="${c}" ${c===defCol?'selected':''}>${c==='dtasks'?'Design / drawing':'Site work'}</option>`).join('')}</select></label>
+      <label>Start<input type="date" name="start" value="${d0}"></label>
+      <label>Priority<select name="prio"><option value="">Normal</option><option value="1">⭐ Do first</option></select></label>
+      ${cols.includes('dtasks')?`<label>Section (design)<select name="disc"><option value="">—</option>${dsSecs().map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`:''}
+      <label class="qt-w">Notes<textarea name="notes" rows="2" maxlength="1000"></textarea></label>
+      <label class="qt-w">Checklist (one item per line)<textarea name="chk" rows="2" maxlength="1500" placeholder="Plan&#10;Sections&#10;Elevations"></textarea></label>
+      <label class="qt-w">Attach files<input type="file" name="att" multiple></label>
+    </div></form></div>`;}
+document.addEventListener('change',async e=>{const t=e.target;if(!t.dataset||!t.dataset.qtchk)return;const [c,id,i]=t.dataset.qtchk.split('|'),x=(D[c]||[]).find(r=>r.id===id);if(!x)return;
+  const chk=(x.chk||[]).map((k,j)=>j===+i?{...k,done:t.checked}:k),dn=chk.filter(k=>k.done).length,pr=Math.round(dn/chk.length*100);
+  await write(()=>db.doc(c+'/'+id).update({chk,progress:pr,...(pr===100?{status:'Completed'}:x.status==='Not started'?{status:'In progress'}:{})}),pr===100?'All done ✓':null);render();});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#qtMore');if(!b)return;QT.more=!QT.more;const m=document.querySelector('.qt-more');if(m)m.hidden=!QT.more;b.textContent=QT.more?'Less':'More';b.setAttribute('aria-expanded',QT.more);});
+document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='qtForm')return;e.preventDefault();
+  const g=k=>(f.elements[k]?String(f.elements[k].value||'').trim():''),cols=qtCols();
+  const col=cols.includes(g('col'))?g('col'):(cols.includes(['design'].includes(uiOf())?'dtasks':'tasks')?(['design'].includes(uiOf())?'dtasks':'tasks'):cols[0]);
+  const title=g('title');if(!title)return;const project=g('project');if(!project&&PJ().length){toast('Pick the project');f.elements.project.focus();return;}
+  const btn=f.querySelector('.btn.pri');btn.disabled=true;
+  const files=[];const att=f.elements.att&&f.elements.att.files;
+  if(att&&att.length&&A)for(const file of [...att]){if(file.size>10*1048576){toast(file.name+' is over 10 MB');continue;}try{const r=await A.upload(file,{type:fileType(file.name)||file.type||'application/octet-stream'});files.push({id:r.id,name:file.name,type:fileType(file.name)||file.type});}catch(_){toast(file.name+': upload failed');}}
+  const chk=g('chk').split('\n').map(x=>x.trim()).filter(Boolean).map(t=>({t,done:false}));
+  const due=g('due'),start=g('start')||today();
+  const rec={project,title,who:g('who'),start:start>due&&due?due:start,due,status:'Not started',progress:0,by:ME.id,at:Date.now(),...(g('prio')?{first:true}:{}),...(g('notes')?{notes:g('notes')}:{}),...(chk.length?{chk}:{}),...(files.length?{files}:{}),...(col==='dtasks'?{disc:g('disc')||''}:{})};
+  const id=`q${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;
+  const ok=await write(()=>db.doc(col+'/'+id).set(rec),`Task created${rec.who?' — given to '+(rec.who===ME.id?'you':pnm(rec.who)):''}`);
+  btn.disabled=false;if(ok){f.reset();if(f.elements.due)f.elements.due.value=today();render();}});
 
 /* ================= CSV export ================= */
 async function exportCsv(k){
