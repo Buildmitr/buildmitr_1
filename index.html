@@ -2564,6 +2564,7 @@ function raVal(role,k){
   return raEditable(k)&&raDefaultEdit(role,k)?'e':'v';
 }
 function canEditView(k){
+  if(k==='drawlib')k='documents';if(k==='docmaker')k='invoices';   // screens that work on another screen's records
   const r=curRole();if(r==='none')return false;const t=curPerson();const pv=t&&t.role!=='Admin'?personOv(t.id):null;
   const val=kk=>pv&&pv[kk]?pv[kk]:raVal(r,kk);
   if(!pv&&fullAccess())return true;
