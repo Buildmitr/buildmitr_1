@@ -1,4 +1,4 @@
-# Builds the BuildMitr Android app (APK) whenever the android/ folder changes, and publishes it as the
+# Builds the BuildMitr Android app (APK for direct install + AAB for Google Play) whenever the android/ folder changes, and publishes it as the
 # "android-latest" release. The signing key is created once and kept in a private draft release.
 name: Android app
 on:
@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: '8.7' }
+        with: { gradle-version: '8.11.1' }
       - name: Signing key
         shell: bash
         run: |
@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee -a ../build.log
+          gradle assembleRelease bundleRelease -Pvcode=$((100 + GITHUB_RUN_NUMBER)) --no-daemon --stacktrace 2>&1 | tee -a ../build.log
       - name: Sign
         shell: bash
         run: |
@@ -52,7 +52,16 @@ jobs:
             "$BT/zipalign" -p -f 4 "$APK" aligned.apk
             "$BT/apksigner" sign --ks keys/buildmitr.jks --ks-pass env:KSP --ks-key-alias buildmitr --key-pass env:KSP --out BuildMitr.apk aligned.apk
             "$BT/apksigner" verify --print-certs BuildMitr.apk
-            printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":["%s"]}}]\n' "$(cat sha256.txt)" > assetlinks.json
+            AAB=$(find "$GITHUB_WORKSPACE/android" -name '*release*.aab' | head -1); echo "aab: $AAB"
+            [ -n "$AAB" ] || exit 4
+            cp "$AAB" BuildMitr.aab
+            jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore keys/buildmitr.jks -storepass:env KSP -keypass:env KSP BuildMitr.aab buildmitr
+            jarsigner -verify BuildMitr.aab | tail -1
+            # Fingerprints the website trusts: our key, plus Google Play's app-signing key (android/play-signing-sha256.txt, from Play Console > App integrity)
+            FP="\"$(cat sha256.txt)\""
+            if [ -s android/play-signing-sha256.txt ]; then FP="$FP,\"$(tr -d ' \r\n' < android/play-signing-sha256.txt)\""; fi
+            printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.buildmitr.app","sha256_cert_fingerprints":[%s]}}]\n' "$FP" > assetlinks.json
+            cat assetlinks.json
           } 2>&1 | tee -a build.log
       - name: Publish
         shell: bash
@@ -61,8 +70,8 @@ jobs:
           {
             gh release delete android-latest -y --cleanup-tag || true
             gh release create android-latest --title "BuildMitr for Android" \
-              --notes "Install BuildMitr.apk on Android (allow install from this source when asked). Built from commit ${GITHUB_SHA::7}." \
-              BuildMitr.apk assetlinks.json
+              --notes "BuildMitr.apk: install directly on Android (allow install from this source when asked). BuildMitr.aab: upload this one to Google Play Console. Version code $((100 + GITHUB_RUN_NUMBER)), commit ${GITHUB_SHA::7}." \
+              BuildMitr.apk BuildMitr.aab assetlinks.json
           } 2>&1 | tee -a build.log
       - name: Save the log if the build failed
         if: failure()
