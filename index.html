@@ -7033,6 +7033,7 @@ function calForm(c,date,task){c=c||{};const ppl=calPeople(),who=new Set(c.who||(
     <label>Repeat until (blank = no end)<input type="date" name="until" value="${esc(c.until||'')}"></label>
     <div class="wide"><div class="code" style="margin-bottom:6px">Assign to — it shows in their My day on each date</div>
       <div class="cal-ppl">${ppl.map(p=>`<label class="pl-chk"><input type="checkbox" name="who" value="${esc(p.account)}" ${who.has(p.account)?'checked':''}> ${esc(p.name)} <span class="code">${esc(p.role||'')}</span></label>`).join('')||'<span class="code">Add your team first (Team).</span>'}</div></div>
+    <label class="wide qa-ck"><input type="checkbox" name="mktask" ${c.id?(calWantsTask(c)?'checked':''):'checked'}> Also add to Tasks — each person gets a task (shows in Tasks and Work to do first)</label>
     <label class="wide">Notes<textarea name="notes" rows="3" maxlength="1000">${esc(c.notes||'')}</textarea></label>
     <div class="wide"><label>Attach files (reference drawings, photos, PDFs)<input type="file" name="att" multiple></label>
       ${(c.files||[]).length?`<div class="dl-files" style="margin-top:6px">${c.files.map(f=>`<label class="dl-f"><input type="checkbox" name="keepf" value="${esc(f.id)}" checked> <a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></label>`).join('')}</div><div class="code">Untick a file to remove it.</div>`:''}</div>
@@ -7085,7 +7086,8 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='calForm
   let files=(old.files||[]).filter(x=>[...f.querySelectorAll('input[name=keepf]:checked')].some(i=>i.value===x.id));
   const att=f.elements.att&&f.elements.att.files;if(att&&att.length){if(!A){toast('File upload needs Contributor access.');return;}
     for(const file of [...att]){if(file.size>10*1048576){toast(file.name+' is over 10 MB');continue;}toast('Uploading '+file.name+'…');try{const r=await A.upload(file,{type:fileType(file.name)||file.type||'application/octet-stream'});files.push({id:r.id,name:file.name,type:fileType(file.name)||file.type});}catch(e){toast(file.name+': '+(e.message||'upload failed'));}}}
-  const rec={files,title:g('title'),project:g('project'),pn:g('project')?pname(g('project')):'',kind:g('kind'),start,end:!rep&&end&&end>start?end:'',time:g('time'),repeat:rep,until:rep?g('until'):'',who,notes:g('notes'),skip:old.skip||[]};
+  const mk=!!(f.elements.mktask&&f.elements.mktask.checked);
+  const rec={files,mkTask:mk,title:g('title'),project:g('project'),pn:g('project')?pname(g('project')):'',kind:g('kind'),start,end:!rep&&end&&end>start?end:'',time:g('time'),repeat:rep,until:rep?g('until'):'',who,notes:g('notes'),skip:old.skip||[]};
   if(!rec.title)return;
   const ok=await write(()=>db.doc('cal/'+id).set(rec),f.dataset.id?'Saved':`Scheduled${who.length?' — sent to '+who.map(u=>pnm(u)).join(', '):''}`);
   if(ok){CAL.sel=start;CAL.m=ymOf(start);closeLayer();render();const n=await calSyncTasks({...old,...rec,id,by:old.by||ME.id});if(n)toast(`Scheduled — ${n} task${n>1?'s':''} created / updated for ${who.map(u=>pnm(u)).join(', ')}`);}});
@@ -7241,8 +7243,9 @@ const calLinked=cid=>[...(D.tasks||[]).map(t=>['tasks',t]),...(D.dtasks||[]).map
 function calTaskRec(c,u,old){const rep=c.repeat?((CAL_REP.find(r=>r[0]===c.repeat)||[])[1]||''):'';
   return {...(old||{}),project:c.project||'',title:c.title+(rep?' ('+rep.toLowerCase()+')':''),start:c.start,due:c.repeat?(c.until||''):(c.end&&c.end>c.start?c.end:c.start),
     who:u,status:(old&&old.status)||'Not started',progress:(old&&old.progress)||0,calId:c.id,kind:c.kind||'',notes:c.notes||'',files:c.files||[],by:(old&&old.by)||c.by||ME.id,...(old?{}:{disc:'Calendar work'})};}
-const calTasksOn=()=>orgMain().calTasks!==false;   // Settings: does calendar work create tasks?
-async function calSyncTasks(c){if(!c||!c.id||!calTasksOn())return 0;const col=calTaskCol(c.kind);const have=calLinked(c.id),out=[],del=[];
+const calTasksOn=()=>orgMain().calTasks!==false;   // Settings: does calendar work create tasks (for work that did not choose)?
+const calWantsTask=c=>c&&c.mkTask!==undefined?!!c.mkTask:calTasksOn();
+async function calSyncTasks(c){if(!c||!c.id)return 0;if(!calWantsTask(c)){if(c.mkTask===false&&calLinked(c.id).length)await calDropTasks(c.id);return 0;}const col=calTaskCol(c.kind);const have=calLinked(c.id),out=[],del=[];
   (c.who||[]).forEach(u=>{const ex=have.find(([,t])=>t.who===u);if(ex&&ex[0]!==col&&col){del.push(ex);}
     const k=col||(ex&&ex[0]);if(!k||!(CANW0&&canEditView(k)))return;const old=ex&&ex[0]===k?ex[1]:null;
     const rec=calTaskRec(c,u,old);if(old&&['project','title','start','due','who','notes','kind'].every(f=>String(old[f]||'')===String(rec[f]||''))&&JSON.stringify(old.files||[])===JSON.stringify(rec.files||[]))return;out.push([k,old?old.id:calTid(c.id,u),rec]);});
@@ -7255,8 +7258,8 @@ async function calTaskDone(cid,uid,on){const c=(D.cal||[]).find(x=>x.id===cid);i
   try{await db.doc(ex[0]+'/'+ex[1].id).update(on?{status:'Completed',progress:100}:{status:'In progress',progress:0});}catch(_){}}
 /* work scheduled before this existed: create the missing tasks once (admin / project manager / the person who scheduled it) */
 let CT_BACK=false;
-function calBackfill(){if(!calTasksOn())return;if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=true;const d0=today(),old=(()=>{const d=dOf(d0);d.setDate(d.getDate()-30);return isoD(d);})();
-  (D.cal||[]).filter(c=>(c.who||[]).length&&(actBoss()||c.by===ME.id)&&(c.repeat?(!c.until||c.until>=d0):(c.end||c.start)>=old)&&(c.who||[]).some(u=>!calLinked(c.id).some(([,t])=>t.who===u)))
+function calBackfill(){if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=true;const d0=today(),old=(()=>{const d=dOf(d0);d.setDate(d.getDate()-30);return isoD(d);})();
+  (D.cal||[]).filter(c=>calWantsTask(c)&&(c.who||[]).length&&(actBoss()||c.by===ME.id)&&(c.repeat?(!c.until||c.until>=d0):(c.end||c.start)>=old)&&(c.who||[]).some(u=>!calLinked(c.id).some(([,t])=>t.who===u)))
     .forEach(c=>calSyncTasks(c));}
 
 /* ================= Finish a task by uploading the work into the Drawings library =================
@@ -7522,18 +7525,19 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='stdPjFo
 function ctBox(){const on=calTasksOn(),all=[...(D.tasks||[]).map(t=>['tasks',t]),...(D.dtasks||[]).map(t=>['dtasks',t])].filter(([,t])=>t.calId);
   const pj=[...new Set(all.map(([,t])=>t.project||''))];
   return `<div class="box"><div class="box-h">${ico('calendar')}<h2>Calendar tasks</h2></div>
-  <div class="srow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:220px">Work scheduled on the Calendar also creates a task for each person it is given to.</span>
+  <div class="srow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:220px">Older calendar work (scheduled before each work had its own “Also add to Tasks” tick) creates a task for each person it is given to.</span>
     <span class="pill ${on?'p-green':'p-grey'}">${on?'On':'Off'}</span><button type="button" class="btn sm" id="ctToggle">${on?'Turn off':'Turn on'}</button></div>
   <div class="srow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:220px">${all.length?`${all.length} task${all.length>1?'s were':' was'} created from calendar work. Removing them keeps the calendar work on the Calendar and in My day.`:'No tasks from calendar work right now.'}</span>
     ${all.length?`<select id="ctProj" aria-label="Project"><option value="*">All projects (${all.length})</option>${pj.map(p=>`<option value="${esc(p)}">${esc(p?pname(p):'Office / no project')} (${all.filter(([,t])=>(t.project||'')===p).length})</option>`).join('')}</select>
     <button type="button" class="btn sm danger" id="ctRemove">${ico('trash-2')}<span>Remove calendar tasks</span></button>`:''}</div>
-  ${on&&all.length?'<div class="srow"><span class="code">Turn this off first — while it is on, removed tasks are made again the next time the Dashboard or Calendar opens.</span></div>':''}</div>`;}
+  <div class="srow"><span class="code">This switch is the default for work that has no choice of its own. Each calendar work also has its own tick “Also add to Tasks” (ticked for New task). Removed tasks are not made again.</span></div></div>`;}
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#ctToggle,#ctRemove');if(!b)return;
   if(b.id==='ctToggle'){const on=!calTasksOn();if(await write(()=>db.doc('org/main').update({calTasks:on}),on?'Calendar work will create tasks again':'Calendar work no longer creates tasks')){if(on){CT_BACK=false;calBackfill();}render();}return;}
   const pj=(document.getElementById('ctProj')||{}).value||'*';
   const list=[...(D.tasks||[]).map(t=>['tasks',t]),...(D.dtasks||[]).map(t=>['dtasks',t])].filter(([,t])=>t.calId&&(pj==='*'||(t.project||'')===pj));if(!list.length)return;
   if(b.dataset.sure!=='1'){b.dataset.sure='1';b.querySelector('span').textContent=`Tap again to remove ${list.length}`;return;}
-  b.disabled=true;let n=0;const ok=await write(async()=>{for(const [c,t] of list){await db.doc(c+'/'+t.id).delete();n++;}},`${list.length} calendar task${list.length>1?'s':''} removed — the calendar work stays`);render();});
+  b.disabled=true;let n=0;const cids=[...new Set(list.map(([,t])=>t.calId))];
+  const ok=await write(async()=>{for(const cid of cids){if((D.cal||[]).some(x=>x.id===cid))await db.doc('cal/'+cid).update({mkTask:false});}for(const [c,t] of list){await db.doc(c+'/'+t.id).delete();n++;}},`${list.length} calendar task${list.length>1?'s':''} removed — the calendar work stays`);render();});
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
