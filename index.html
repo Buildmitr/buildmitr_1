@@ -203,6 +203,12 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 @media (max-width:700px){.qt-f>select,.qt-f>input[type=date]{flex:1 1 45%}.qt-i{display:none}}
 .qa-sec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:12px 16px 0}
 .qa-cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 12px;padding:8px 16px}.qa-ck{display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:10px}.qa-ck input{width:18px;height:18px}
+.std-w{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}.std-tree{padding:6px 0}.std-s{padding:8px 12px}
+.std-f{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:8px;align-items:center;width:100%;padding:8px 12px;border-radius:8px}.std-f span:first-of-type{flex:1;min-width:0}
+.std-f:hover,.std-f:focus-visible{background:color-mix(in srgb,var(--accent) 8%,transparent)}.std-f.on{background:color-mix(in srgb,var(--accent) 14%,transparent);font-weight:600}
+.std-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line)}
+.std-acc{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}.std-fe{padding:10px 14px}.std-fe summary{cursor:pointer;display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+@media (max-width:800px){.std-w{grid-template-columns:1fr}}
 .fold-b{padding:4px}.fold-b[aria-expanded=false] svg{transform:rotate(-90deg)}
 .wf-t td{vertical-align:middle}.wf-star{all:unset;cursor:pointer;font-size:18px;line-height:1;filter:grayscale(1);opacity:.35}.wf-star.on{filter:none;opacity:1}.wf-star:focus-visible{outline:2px solid var(--accent)}
 .wf-t select{max-width:150px}.late-t{color:var(--red-ink);font-weight:600}
@@ -7203,6 +7209,8 @@ function actLog(c,id,prev,next){
       const ch=DOC_FLDS.filter(k=>JSON.stringify(prev[k])!==JSON.stringify(next[k]));if(!ch.length)return;
       const what=(prev.rev!==next.rev||JSON.stringify(prev.revs)!==JSON.stringify(next.revs)||prev.file!==next.file||prev.url!==next.url)?`new revision${next.rev?' '+next.rev:''}`:prev.status!==next.status?(next.status||'status changed'):prev.rel!==next.rel?(next.rel?'released to client / site':'withdrawn'):'details changed';
       return add('updated',`Drawing updated: ${next.title||id} — ${what}${tk&&prev.task!==next.task?' (task done: '+tk+')':''}`,[],next.project);}
+    if(c==='stdlib'){const ch=!prev||JSON.stringify(prev.files)!==JSON.stringify(next.files);if(!ch)return;const fo=(stdFolders().find(f=>f.id===next.folder)||{}).name||'';
+      return add(prev?'updated':'uploaded',`Common library${fo?' › '+fo:''}: ${next.title}${prev?' — new version':' added'}`,[],'' ,'stdlib');}
     if(c==='tasks'||c==='dtasks'){const w=next.who||'',pw=prev?prev.who||'':'';if(!w||w===pw||next.calId)return;
       return add('assigned',`${c==='dtasks'?'Design task':'Task'} given to ${pnm(w)}: ${next.title||''}${next.due?' (due '+fd(next.due)+')':''}`,[w],next.project);}
     if(c==='cal'){const nw=(next.who||[]).filter(u=>!(prev&&prev.who||[]).includes(u));if(!nw.length)return;
@@ -7214,7 +7222,7 @@ function bellActs(){const me=ME&&ME.id;if(!me)return [];const boss=actBoss(),wk=
     .sort((a,b)=>b.at-a.at).slice(0,60);}
 const bellUnread=()=>{const s=actSeen();return bellActs().filter(a=>a.at>s).length;};
 function bellBox(){const xs=bellActs();if(!xs.length)return '';const s=actSeen();
-  const go=a=>a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
+  const go=a=>a.col==='stdlib'?'stdlib':a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
   const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':fd(new Date(t).toISOString().slice(0,10));};
   const html=`<div class="box"><div class="box-h">${ico('bell')}<h2>Recent updates</h2><span class="code">${xs.filter(a=>a.at>s).length} new</span></div>
     ${xs.map(a=>`<div class="siteloc bell-r ${a.at>s?'new':''}" style="border-bottom:1px solid var(--line)">${a.at>s?'<i class="bell-dot" aria-label="New"></i>':''}<span style="flex:1;min-width:200px">${a.action==='updated'||a.action==='uploaded'?'📐 ':a.action==='scheduled'?'📅 ':'✅ '}${esc(a.summary)}<span class="code"> · ${esc(pnm(a.by))} · ${ago(a.at)}${a.project?' · '+esc(pname(a.project)):''}</span></span>${canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${a.project||''}">Open</button>`:''}</div>`).join('')}</div>`;
@@ -7350,7 +7358,7 @@ const QA_ALL=[
   ['g:schedule','gantt-chart','Construction schedule','g',()=>canView('schedule'),null],['g:drawlib','library','Drawings library','g',()=>canView('drawlib'),null],
   ['g:messages','message-circle','Messages','g',()=>canView('messages'),null],['g:alerts','bell','Alerts & updates','g',()=>canView('alerts'),null],
   ['g:dashboard','layout-dashboard','Dashboard','g',()=>canView('dashboard')&&!['site','design'].includes(uiOf()),null],['g:attend','calendar-check','Attendance & leave','g',()=>canView('attend'),null],
-  ['g:projects','building-2','All projects','g',()=>canView('projects'),null],['g:pipeline','kanban','Sales pipeline','g',()=>canView('pipeline'),null],
+  ['g:projects','building-2','All projects','g',()=>canView('projects'),null],['g:stdlib','archive','Common library','g',()=>canView('stdlib'),null],['g:pipeline','kanban','Sales pipeline','g',()=>canView('pipeline'),null],
 ];
 const QA_DEF={owner:['newtask','addproj','upload','dprauto','payments','g:calendar','g:tasks','g:alerts'],site:['dprauto','newtask','issues','requests','received','attbulk','g:calendar','g:tasks'],
   design:['newtask','upload','g:calendar','g:designsched','g:drawlib','g:messages'],client:['g:messages'],marketing:['leads','newtask','g:pipeline','g:calendar']};
@@ -7383,6 +7391,131 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(b.id==='qaSave'){const L=document.querySelector('.qa-drawer');const keys=[...L.querySelectorAll('input[name=qak]:checked')].map(i=>i.value),projs=[...L.querySelectorAll('input[name=qap]:checked')].map(i=>i.value);
     try{localStorage.setItem(qaK(),JSON.stringify({keys,projs}));}catch(_){}QA_EDIT=false;toast('Your + menu is saved');openQuick();return;}});
 
+/* ================= Common library (company standard files) =================
+   Folders and sub-folders of standard files for every project: standard details, typical drawings, specifications,
+   BOQ / estimate formats, company forms, agreements, catalogues, checklists, codes. Each folder says who can see it
+   and who can upload (everyone, roles, chosen people, clients). Kept in org main `stdFolders`; files in `stdlib`.
+   A file can be copied into a project's Drawings library in one tap. */
+COLS.push('stdlib');if(!D.stdlib)D.stdlib=[];
+{const g=NAV[0].items;if(!g.some(x=>x[0]==='stdlib')){const i=g.findIndex(x=>x[0]==='drawlib');g.splice(i>=0?i+1:g.length,0,['stdlib','archive','Common library','సాధారణ లైబ్రరీ']);}}
+Object.keys(ROLE_VIEWS).forEach(r=>{const a=ROLE_VIEWS[r];if(Array.isArray(a)&&r!=='none'&&!a.includes('stdlib'))a.push('stdlib');});
+EDIT_TIE.stdlib='stdlib';
+const STD_UP0=['Admin','Project manager'];
+const STD_DEF=[['Standard details',['Footing & column details','Beam & slab details','Staircase details','Sump & septic tank','Waterproofing']],['Typical drawings',[]],['Specifications',[]],
+  ['BOQ & estimate formats',[]],['Company forms & templates',[]],['Agreements & letters',[]],['Product catalogues & brochures',[]],['Site checklists',[]],['Codes & references (IS codes)',[]]];
+function stdFolders(){const l=orgMain().stdFolders;if(Array.isArray(l)&&l.length)return l;
+  const out=[];STD_DEF.forEach(([n,subs],i)=>{const id='f'+i;out.push({id,name:n,parent:'',view:['all'],up:STD_UP0.slice()});subs.forEach((sn,j)=>out.push({id:id+'_'+j,name:sn,parent:id,view:['all'],up:STD_UP0.slice()}));});return out;}
+const stdOk=(list)=>{if(isAdmin()||curRole()==='Project manager')return true;list=list||[];return list.includes(ME.id)||list.includes(curRole())||(list.includes('all')&&curRole()!=='Client');};
+const stdF=id=>stdFolders().find(f=>f.id===id);
+const stdCanSee=f=>!!f&&(stdOk(f.view)||stdOk(f.up));
+const stdCanUp=f=>!!f&&CANW0&&stdOk(f.up)&&!!A;
+const STD={f:'',q:''};
+function stdAccTxt(list){list=(list||[]).filter(x=>x!=='Admin'&&x!=='Project manager');if(!list.length)return 'Admin & project manager only';const ppl=list.filter(x=>D.team.some(t=>t.account===x));
+  return 'Admin, project manager, '+[list.includes('all')?'everyone in the team':'',...list.filter(x=>x!=='all'&&!ppl.includes(x)),...ppl.map(u=>pnm(u))].filter(Boolean).join(', ');}
+function vStdLib(){
+  const fs=stdFolders().filter(stdCanSee),boss=isAdmin()||curRole()==='Project manager';
+  if(STD.f&&!fs.some(f=>f.id===STD.f))STD.f='';
+  const top=fs.filter(f=>!f.parent||!fs.some(p=>p.id===f.parent)),kids=id=>fs.filter(f=>f.parent===id);
+  const files=(D.stdlib||[]).filter(x=>stdCanSee(stdF(x.folder)));
+  const inF=id=>{const ids=[id,...kids(id).map(k=>k.id)];return files.filter(x=>ids.includes(x.folder));};
+  const q=STD.q.trim().toLowerCase(),cur=stdF(STD.f);
+  let list=q?files.filter(x=>(x.title+' '+(x.notes||'')+' '+(x.tags||'')+' '+(x.files||[]).map(f=>f.name).join(' ')).toLowerCase().includes(q)):STD.f?files.filter(x=>x.folder===STD.f):[];
+  list=list.sort((a,b)=>String(a.title).localeCompare(String(b.title)));
+  const fbtn=(f,lvl)=>`<button type="button" class="std-f ${STD.f===f.id?'on':''}" data-stdf="${esc(f.id)}" style="padding-left:${12+lvl*16}px">${ico(lvl?'folder':'folder')}<span>${esc(f.name)}</span><span class="code">${inF(f.id).length||''}</span></button>`;
+  const tree=top.map(f=>fbtn(f,0)+kids(f.id).map(k=>fbtn(k,1)).join('')).join('');
+  const row=x=>{const f=stdF(x.folder),mine=x.by===ME.id,canEd=boss||(mine&&stdCanUp(f));
+    return `<div class="std-r"><div style="flex:1;min-width:0"><b>${esc(x.title)}</b>${x.rev?` <span class="pill p-grey">${esc(x.rev)}</span>`:''}
+      <div class="dl-files">${(x.files||[]).map(fl=>`<span class="dl-f"><a href="/_blob/${esc(fl.id)}" target="_blank" rel="noopener">${ico(fileIco(fl))}${esc(fl.name)}</a></span>`).join('')}</div>
+      <div class="code">${[q&&f?esc(f.name):'',x.by&&pnm(x.by)!=='—'?esc(pnm(x.by)):'',x.at?fd(new Date(x.at).toISOString().slice(0,10)):''].filter(Boolean).join(' · ')}${x.notes?' · '+esc(x.notes):''}</div>${(x.old||[]).length?`<details class="std-old"><summary class="code">${x.old.length} older version${x.old.length>1?'s':''}</summary>${x.old.map(o=>`<div class="code">${esc(o.rev||'—')}${o.at?' · '+fd(new Date(o.at).toISOString().slice(0,10)):''}: ${(o.files||[]).map(fl=>`<a href="/_blob/${esc(fl.id)}" target="_blank" rel="noopener">${esc(fl.name)}</a>`).join(', ')}</div>`).join('')}</details>`:''}</div>
+      <div class="cal-act">${PJ().length&&CANW0&&canEditView('documents')?`<button type="button" class="btn sm" data-stdproj="${esc(x.id)}" title="Copy into a project's Drawings library">${ico('files')}<span>To project</span></button>`:''}
+      ${stdCanUp(f)?`<button type="button" class="btn sm" data-stdup="${esc(x.folder)}|${esc(x.id)}">${ico('upload')}<span>New version</span></button>`:''}
+      ${canEd?`<button type="button" class="btn sm ghost" data-stddel="${esc(x.id)}" aria-label="Delete">${ico('trash-2')}</button>`:''}</div></div>`;};
+  const head=header(label('stdlib'),`${boss?`<button type="button" class="btn" id="stdFolders">${ico('settings')}<span>Folders & access</span></button>`:''}${cur&&stdCanUp(cur)?`<button type="button" class="btn pri" data-stdup="${esc(cur.id)}|">${ico('upload')}<span>Upload to ${esc(cur.name)}</span></button>`:''}`);
+  return head+`<div class="note">${ico('archive')}<span>Company standard files for every project. Each folder shows who can see it and who can upload.</span></div>
+  <div class="std-w"><div class="box std-tree"><div class="std-s"><input type="search" id="stdQ" placeholder="Search all standard files" value="${esc(STD.q)}" aria-label="Search the Common library"></div>${tree||'<div class="empty">No folders are shared with you yet.</div>'}</div>
+  <div class="box">${cur&&!q?`<div class="box-h">${ico('folder')}<h2>${esc(cur.name)}</h2><span class="code">${list.length} file${list.length===1?'':'s'}</span></div>
+    <div class="srow"><span class="code">👁 Can see: ${esc(stdAccTxt(cur.view))} · ⬆ Can upload: ${esc(stdAccTxt(cur.up))}</span></div>`:q?`<div class="box-h">${ico('search')}<h2>Search: ${esc(STD.q)}</h2><span class="code">${list.length} found</span></div>`:''}
+    ${cur||q?(list.length?list.map(row).join(''):`<div class="empty">${q?'Nothing found.':'No files in this folder yet.'+(stdCanUp(cur)?' Press Upload to add the first one.':'')}</div>`):
+      `<div class="empty">Pick a folder on the left${files.length?` — ${files.length} standard file${files.length>1?'s':''} in the library`:''}.</div>`}</div></div>`;}
+/* upload / new version */
+function stdUpForm(fid,id){const f=stdF(fid),x=id?(D.stdlib||[]).find(r=>r.id===id):null;if(!f)return;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="stdUpForm" data-f="${esc(fid)}" data-id="${esc(id||'')}"><div class="pane-h"><h2>${x?'New version: '+esc(x.title):'Upload to '+esc(f.name)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" style="display:grid;gap:12px">
+    <label>Title<input name="title" required maxlength="140" value="${esc(x?x.title:'')}" placeholder="e.g. Isolated footing typical detail"></label>
+    <label>Folder<select name="folder">${stdFolders().filter(stdCanUp).map(o=>`<option value="${esc(o.id)}" ${o.id===(x?x.folder:fid)?'selected':''}>${esc((o.parent&&stdF(o.parent)?stdF(o.parent).name+' › ':'')+o.name)}</option>`).join('')}</select></label>
+    <label>Version / revision (optional)<input name="rev" maxlength="20" value="${esc(x&&x.rev?'':'')}" placeholder="${x&&x.rev?'was '+esc(x.rev):'e.g. R0, 2026'}"></label>
+    <label>Files (DWG, PDF, Excel, Word, images…)<input type="file" name="files" multiple required></label>
+    <label>Notes / tags (optional)<input name="notes" maxlength="300" value="${esc(x&&x.notes||'')}"></label>
+    <p class="code">Will be visible to: ${esc(stdAccTxt(f.view))}</p>
+  </div><div class="pane-f"><button class="btn pri">${ico('upload')}<span>Upload</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;}
+/* folders & access (admin / PM) */
+function stdFolderForm(){const fs=stdFolders(),ppl=schPeople(),roles=Object.keys(ROLE_VIEWS).filter(r=>r!=='none'&&r!=='Admin');
+  const chips=(name,list,i)=>`<div class="std-acc"><label class="qa-ck"><input type="checkbox" data-sa="${i}|${name}|all" ${list.includes('all')?'checked':''}> Everyone in the team</label>
+    ${roles.map(r=>`<label class="qa-ck"><input type="checkbox" data-sa="${i}|${name}|${esc(r)}" ${list.includes(r)?'checked':''}> ${esc(r)}</label>`).join('')}
+    ${ppl.map(p=>`<label class="qa-ck"><input type="checkbox" data-sa="${i}|${name}|${esc(p.account)}" ${list.includes(p.account)?'checked':''}> 👤 ${esc(p.name)}</label>`).join('')}</div>`;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="stdFForm"><div class="pane-h"><h2>Common library — folders & access</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" style="display:grid;gap:10px"><p class="code">Rename, add or remove folders and choose who can see and who can upload. The admin and project manager always can. Clients see a folder only if you tick “Client”.</p>
+  ${fs.map((f,i)=>`<details class="box std-fe" data-i="${i}" data-id="${esc(f.id)}" ${i===0?'open':''}><summary><b>${esc(f.parent?'↳ ':'')}${esc(f.name)}</b> <span class="code">👁 ${esc(stdAccTxt(f.view))} · ⬆ ${esc(stdAccTxt(f.up))}</span></summary>
+    <div style="display:grid;gap:8px;padding:10px 0">
+      <label>Name<input data-sn="${i}" value="${esc(f.name)}" maxlength="60"></label>
+      <label>Inside folder<select data-sp="${i}"><option value="">— top level —</option>${fs.filter(o=>!o.parent&&o.id!==f.id).map(o=>`<option value="${esc(o.id)}" ${f.parent===o.id?'selected':''}>${esc(o.name)}</option>`).join('')}</select></label>
+      <b class="code">Who can see</b>${chips('view',f.view||[],i)}
+      <b class="code">Who can upload</b>${chips('up',f.up||[],i)}
+      <button type="button" class="btn sm danger" data-sfdel="${i}">${ico('trash-2')}<span>Remove folder</span></button></div></details>`).join('')}
+  <button type="button" class="btn" id="stdFAdd">${ico('plus')}<span>Add folder</span></button></div>
+  <div class="pane-f"><button class="btn pri">${ico('check')}<span>Save</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;}
+let STD_EDIT=null;
+document.addEventListener('input',e=>{if(e.target.id==='stdQ'){STD.q=e.target.value;clearTimeout(STD.t);STD.t=setTimeout(()=>{render();const i=document.getElementById('stdQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250);}});
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-stdf],[data-stdup],[data-stddel],[data-stdproj],#stdFolders,#stdFAdd,[data-sfdel]');if(!b)return;const ds=b.dataset;
+  if(ds.stdf){STD.f=ds.stdf;STD.q='';render();return;}
+  if(ds.stdup!==undefined){const [f,id]=ds.stdup.split('|');stdUpForm(f,id);return;}
+  if(b.id==='stdFolders'){STD_EDIT=JSON.parse(JSON.stringify(stdFolders()));stdFolderForm2();return;}
+  if(b.id==='stdFAdd'){stdCollect();STD_EDIT.push({id:'f'+Date.now().toString(36),name:'New folder',parent:'',view:['all'],up:STD_UP0.slice()});stdFolderForm2(STD_EDIT.length-1);return;}
+  if(ds.sfdel!==undefined){stdCollect();const f=STD_EDIT[+ds.sfdel];const n=(D.stdlib||[]).filter(x=>x.folder===f.id).length;
+    if(n){toast(`Move or delete the ${n} file${n>1?'s':''} in “${f.name}” first`);return;}STD_EDIT=STD_EDIT.filter((x,i)=>i!==+ds.sfdel).map(x=>x.parent===f.id?{...x,parent:''}:x);stdFolderForm2();return;}
+  if(ds.stddel){const x=(D.stdlib||[]).find(r=>r.id===ds.stddel);if(!x)return;if(b.dataset.sure!=='1'){b.dataset.sure='1';b.innerHTML=ico('trash-2')+'<span>Tap again to delete</span>';return;}
+    await write(()=>db.doc('stdlib/'+x.id).delete(),'Deleted');render();return;}
+  if(ds.stdproj){const x=(D.stdlib||[]).find(r=>r.id===ds.stdproj);if(!x)return;stdToProj(x);return;}});
+/* folder editor keeps its working copy in STD_EDIT */
+function stdFolderForm2(open){const save=stdFolders;stdFolders=()=>STD_EDIT;try{stdFolderForm();}finally{stdFolders=save;}
+  if(open!==undefined){document.querySelectorAll('.std-fe').forEach(d=>d.open=+d.dataset.i===open);}}
+function stdCollect(){const F=document.getElementById('stdFForm');if(!F||!STD_EDIT)return;
+  STD_EDIT=STD_EDIT.map((f,i)=>{const n=F.querySelector(`[data-sn="${i}"]`),p=F.querySelector(`[data-sp="${i}"]`);
+    const pick=k=>[...F.querySelectorAll(`[data-sa^="${i}|${k}|"]:checked`)].map(c=>c.dataset.sa.split('|').slice(2).join('|'));
+    return {...f,name:n?n.value.trim()||f.name:f.name,parent:p?p.value:f.parent,view:pick('view'),up:pick('up')};});}
+document.addEventListener('submit',async e=>{const f=e.target;
+  if(f.id==='stdFForm'){e.preventDefault();stdCollect();const list=STD_EDIT;
+    const ok=await write(()=>db.doc('org/main').update({stdFolders:list}),'Folders & access saved');
+    if(ok){   // each file carries its folder's access
+      const out=(D.stdlib||[]).map(x=>{const fo=list.find(o=>o.id===x.folder);if(!fo)return null;const acc={view:fo.view||[],up:fo.up||[]};return JSON.stringify(acc)!==JSON.stringify(x.acc||{})?['stdlib',x.id,{...recOf(x),acc}]:null;}).filter(Boolean);
+      if(out.length)await write(()=>dbBatch(out),null);closeLayer();render();}return;}
+  if(f.id!=='stdUpForm')return;e.preventDefault();
+  const fid=f.elements.folder.value,fo=stdF(fid),id=f.dataset.id,old=id?(D.stdlib||[]).find(r=>r.id===id):null;if(!fo||!stdCanUp(fo))return;
+  const btn=f.querySelector('.btn.pri');btn.disabled=true;btn.querySelector('span').textContent='Uploading…';
+  const up=[];for(const file of [...f.elements.files.files]){if(file.size>25*1048576){toast(file.name+' is over 25 MB');continue;}
+    try{const r=await A.upload(file,{type:fileType(file.name)||file.type||'application/octet-stream'});up.push({id:r.id,name:file.name,type:fileType(file.name)||file.type});}catch(er){toast(file.name+': '+(er.message||'upload failed'));}}
+  if(!up.length){btn.disabled=false;btn.querySelector('span').textContent='Upload';return;}
+  const rec={folder:fid,title:f.elements.title.value.trim(),rev:f.elements.rev.value.trim()||(old&&old.rev?'':''),notes:f.elements.notes.value.trim(),files:up,at:Date.now(),by:ME.id,acc:{view:fo.view||[],up:fo.up||[]},
+    old:old?[{files:old.files||[],rev:old.rev||'',at:old.at||0,by:old.by||''},...(old.old||[])].slice(0,10):[]};
+  const nid=id||`s${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;
+  const ok=await write(()=>db.doc('stdlib/'+nid).set(rec),old?'New version uploaded':'Uploaded to '+fo.name);
+  if(ok){STD.f=fid;closeLayer();render();}else{btn.disabled=false;btn.querySelector('span').textContent='Upload';}});
+/* copy a standard file into a project's Drawings library */
+function stdToProj(x){const pid0=S.proj!=='all'?S.proj:'';
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="stdPjForm" data-id="${esc(x.id)}"><div class="pane-h"><h2>Copy to a project</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+  <div class="pane-b" style="display:grid;gap:12px"><p class="code">“${esc(x.title)}” goes into the project's Drawings library (the same file — nothing is uploaded again).</p>
+    <label>Project<select name="pid" id="stdPj">${PJ().map(p=>`<option value="${esc(p.id)}" ${p.id===pid0?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
+    <label>Library folder<select name="disc" id="stdPjD"></select></label>
+    <label>Drawing name<input name="key" maxlength="120" value="${esc(x.title)}"></label></div>
+  <div class="pane-f"><button class="btn pri">${ico('files')}<span>Copy</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div>`;stdPjDisc();}
+function stdPjDisc(){const p=document.getElementById('stdPj'),d=document.getElementById('stdPjD');if(!p||!d)return;d.innerHTML=dlLib(p.value).map(t=>`<option value="${esc(t.k)}">${esc(t.l||t.k)}</option>`).join('');}
+document.addEventListener('change',e=>{if(e.target.id==='stdPj')stdPjDisc();});
+document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='stdPjForm')return;e.preventDefault();const x=(D.stdlib||[]).find(r=>r.id===f.dataset.id);if(!x)return;
+  const pid=f.elements.pid.value,disc=f.elements.disc.value,key=f.elements.key.value.trim()||x.title;
+  const id=`d${Date.now().toString(36)}${Math.random().toString(36).slice(2,5)}`;
+  const ok=await write(()=>db.doc('documents/'+id).set({project:pid,disc,dkey:key,title:key,cat:dlCat(disc),rev:x.rev||'R0',status:'For checking',files:x.files||[],std:x.id,fu:1,at:Date.now(),by:ME.id,appr:{s1:{by:ME.id,at:Date.now()}},rv:[]}),`Copied to ${pname(pid)} — ${disc}`);
+  if(ok)closeLayer();});
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -7414,7 +7547,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&curRole()!=='none');}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
+    v==='stdlib'?vStdLib():v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
