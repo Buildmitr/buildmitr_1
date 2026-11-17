@@ -1124,7 +1124,7 @@ function vModule(k){
     <span class="code" style="margin-left:auto;align-self:center">${rows.length} ${rows.length===1?'entry':'entries'}</span></div>
   ${rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
   <tbody>${rows.map(r=>`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
-    <td class="acts">${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
+    <td class="acts">${TR_COLS.includes(k)?`<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
   :`<div class="hero-empty">${ico(m.icon)}<h2>No ${esc(m.label.toLowerCase())} yet</h2><p>${S.proj!=='all'&&!m.noProject?'Nothing recorded for this project.':'Add the first entry to start keeping records here.'}</p>${addBtn(k)}</div>`}</div>`;
 }
 
@@ -1189,7 +1189,7 @@ function vDashboard(){
     ${canView('leads')?`<div class="tile"><b>${D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).length}</b><span>Lead follow-ups due</span></div>`:''}
     <div class="tile"><b>${num(f(D.equiplog).filter(x=>x.date===t).reduce((s,x)=>s+(+x.hours||0),0))}</b><span>Equipment hours today</span></div>
   </div>
-  ${qtBox()}${wfBox()}
+  ${qtBox()}${trReviewBox()}${wfBox()}
   ${canView('calendar')?calBox('dash'):''}
   <div class="grid2">
     <div class="box"><div class="box-h">${ico('notebook-pen')}<h2>Latest daily reports</h2>${CANW?`<button class="btn sm pri" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:''}</div>
@@ -1241,7 +1241,7 @@ function vSettings(){
   const admin=ME.isOwner||ME.canEdit;
   return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
   ${myProfileBox(admin)}
-  ${actBoss()?ctBox():''}
+  ${actBoss()?ctBox()+trSetBox():''}
   <div class="box"><div class="box-h">${ico('bell')}<h2>Notifications</h2></div>${ntSettings()}<div class="srow"><span class="code">Shows a Windows / phone notification when someone messages you, gives you a task or drawing, changes it, or schedules work for you — while BuildMitr is open or running in the background (the Windows app keeps running in the tray).</span></div></div>
   ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
@@ -2052,8 +2052,8 @@ function raiseInvoice(mid){
 function computeAlerts(){
   const t=today(),A_=[];const add=(sev,txt,view,pid)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid});};
   const bossA=isAdmin()||curRole()==='Project manager';
-  D.tasks.filter(x=>x.status!=='Completed'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,'tasks',x.project));
-  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project));
+  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,'tasks',x.project));
+  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project));
   D.tasks.filter(x=>x.status!=='Completed'&&n(x.progress)>=100&&gateMissing(x).length).forEach(x=>add('med',`${x.title}: waiting for approved ${gateMissing(x).join(', ')}`,'forms',x.project));
   D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project));
   D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads'));
@@ -2504,7 +2504,7 @@ function vSiteHome(){
   const iss=by('issues').filter(x=>x.status!=='Resolved').sort((a,b)=>(a.who===ME.id?-1:0)-(b.who===ME.id?-1:0)||({High:0,Medium:1,Low:2}[a.severity]-{High:0,Medium:1,Low:2}[b.severity]));
   const acts=[['attbulk','calendar-check','Mark attendance'],['dprauto','notebook-pen',"Today's report"],['received','package-plus','Material received'],['requests','arrow-left-right','Request material'],['issue','package-minus','Material issued'],['issues','alert-triangle','Issue / snag'],['workupd','hammer','Work update'],['equiplog','gauge','Equipment hours'],['forms','clipboard-check','Checklist']]
     .filter(([k])=>k==='dprauto'?canView('dpr')&&canEditView('dpr'):k==='forms'?canView('forms'):k==='attbulk'?canEditView('attendance'):canView(k)&&canEditView(k));
-  return head+qtBox()+`<div class="box site-head"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:160px"><b>${esc(p.name)}</b><div class="code">${esc(p.address||'')}</div></div>
+  return head+qtBox()+trReviewBox()+`<div class="box site-head"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:160px"><b>${esc(p.name)}</b><div class="code">${esc(p.address||'')}</div></div>
     ${p.loc?`<a class="btn sm" href="https://www.google.com/maps/dir/?api=1&destination=${p.loc.lat},${p.loc.lng}" target="_blank" rel="noopener noreferrer">${ico('navigation')}Directions</a>`:''}</div>
     <div class="tiles"><div class="tile"><b>${present}</b><span>Workers today</span></div>
     <div class="tile"><b style="color:${dprToday?'var(--green-ink)':'var(--amber-ink)'}">${dprToday?'Done':'Pending'}</b><span>Today's report</span></div>
@@ -2535,7 +2535,7 @@ function vDesk(){
   const sw=s=>({'For approval':'p-amber','Draft':'p-grey','Approved':'p-green','Superseded':'p-grey'}[s]||'p-grey');
   const docRow=d=>`<div class="srow"><div style="flex:1;min-width:0"><b>${esc(d.title)}</b> <span class="code">${esc(d.rev||'')}</span><div class="code">${esc(pname(d.project))} · ${esc(d.cat||'')}</div></div><span class="pill ${sw(d.status)}">${esc(d.status||'—')}</span>
     ${(d.files||[]).slice(0,1).map(f=>`<a class="btn sm ghost" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener" aria-label="Open">${ico('file-text')}</a>`).join('')}${d.link?`<a class="btn sm ghost" href="${esc(d.link)}" target="_blank" rel="noopener noreferrer" aria-label="Open link">${ico('external-link')}</a>`:''}${CANW&&canEditView('documents')?`<button class="btn sm ghost" data-edit="documents:${d.id}" aria-label="Edit">${ico('pencil')}</button>`:''}</div>`;
-  return header(hello(),CANW&&canEditView('documents')?`<button class="btn pri" data-add="documents">${ico('upload')}Upload drawing / revision</button>`:'')+qtBox()+
+  return header(hello(),CANW&&canEditView('documents')?`<button class="btn pri" data-add="documents">${ico('upload')}Upload drawing / revision</button>`:'')+qtBox()+trReviewBox()+
   `<div class="box tiles"><div class="tile"><b style="color:${forA.length?'var(--amber-ink)':'inherit'}">${forA.length}</b><span>Waiting for approval</span></div><div class="tile"><b>${draft.length}</b><span>Drafts</span></div>
    <div class="tile"><b>${appr.length}</b><span>Approved drawings</span></div><div class="tile"><b>${iss.length}</b><span>Open site questions</span></div><div class="tile"><b>${cos.length}</b><span>Change orders open</span></div><div class="tile"><b>${upcoming.length}</b><span>Work starting in 3 weeks</span></div></div>
   <div class="grid2">
@@ -4732,7 +4732,7 @@ document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};if(S.vie
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-pldel]');if(b){PL.floors.splice(+b.dataset.pldel,1);render();return;}}
   {const b=e.target.closest('[data-plcdel]');if(b){PL.custom=plCus().filter(x=>x.key!==b.dataset.plcdel);delete PL.scope[b.dataset.plcdel];render();return;}}
-  {const b=e.target.closest('[data-tcm]');if(b){e.stopPropagation();taskComments(b.dataset.tcm);return;}}
+  {const b=e.target.closest('[data-tcm]');if(b){e.stopPropagation();trOpen(TC(),b.dataset.tcm);return;}}
   const id=(e.target.closest('button')||{}).id;if(!id)return;
   if(id==='plAdd'){const nm_=['Ground floor','First floor','Second floor','Third floor','Fourth floor','Fifth floor','Sixth floor'];PL.floors.push({n:nm_[PL.floors.length]||`Floor ${PL.floors.length}`,a:(PL.floors[PL.floors.length-1]||{}).a||''});render();return;}
   if(id==='plHolBtn'){PL.showHol=!PL.showHol;render();return;}
@@ -5074,7 +5074,7 @@ function schedFollowers(t,mode){
   return [...out.values()];
 }
 const recOf=r=>{const {id,...d}=r;return d;};
-async function schedApply(t,patch,mode){
+async function schedApply(t,patch,mode){if(patch&&patch.status)patch.status=trGate(TC(),t,patch.status);
   const delta=patch.due&&t.due?dDiff(patch.due,t.due):0;const list=[[TC(),t.id,{...recOf(t),...patch}]];
   if(delta&&mode&&mode!=='none')schedFollowers(t,mode).forEach(x=>list.push([TC(),x.id,{...recOf(x),start:addD(x.start,delta),due:addD(x.due,delta)}]));
   const ok=await write(()=>dbBatch(list),list.length>1?`Saved · ${list.length-1} following ${list.length-1===1?'activity':'activities'} moved ${delta>0?'+':''}${delta} days`:'Saved');
@@ -5145,7 +5145,7 @@ function schedTable(ts,DS){
     <td class="num"><input data-st="${t.id}:progress" value="${esc(t.status==='Completed'?100:(t.progress??''))}" inputmode="numeric" style="width:58px;text-align:right" aria-label="Progress"></td>
     <td><select data-st="${t.id}:status" aria-label="Status">${SO.map(o=>`<option ${t.status===o?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><input data-st="${t.id}:pred" value="${esc(t.pred||'')}" style="width:80px" placeholder="e.g. 2.1" aria-label="After (numbers)"></td>
-    <td class="acts"><button type="button" class="btn sm ghost" data-sedit="${t.id}" aria-label="More">${ico('pencil')}</button><button type="button" class="btn sm ghost" data-tcm="${t.id}" aria-label="Comments">💬${(t.comments||[]).length||''}</button></td></tr>`).join('')}
+    <td class="acts"><button type="button" class="btn sm ghost" data-sedit="${t.id}" aria-label="More">${ico('pencil')}</button><button type="button" class="btn sm ghost" data-tcm="${t.id}" aria-label="Details, history and comments">💬${((t.comments||[]).length+(t.log||[]).length)||''}</button>${t.status==='For review'||t.status==='Changes requested'?`<span class="pill ${trPill(t.status)}">${t.status==='For review'?'Review':'Corrections'}</span>`:''}</td></tr>`).join('')}
   </tbody></table></div><div class="code" style="padding:10px 16px">Changes save as soon as you leave a box. Changing <b>Days</b> moves the finish date. Edit many rows at once in Excel: <b>Download Excel</b> → change → <b>Upload Excel</b>.</div></div>`;
 }
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='st-sort'){S.stSort=t.value;render();return;}
@@ -5622,10 +5622,10 @@ function vDrawLib(){
     return `${G&&!DL.grp&&(i===0||items[i-1].grp!==x.grp)?`<div class="dl-grp">${esc(x.grp)}</div>`:''}<div class="dl-row ${x.has?'':'dl-miss'}"><div class="dl-main"><div class="dl-t"><span class="dl-chk">${x.has?'✓':''}</span><b>${esc(x.k)}</b>${c&&c.rev?` <span class="code">${esc(c.rev)}</span>`:''} <span class="pill ${apPill(st)}">${esc(st)}</span>${x.has?' '+relBadge(c):''}${x.all.length>1?` <span class="code">${x.all.length} revisions</span>`:''}</div>
       ${f.length||c&&c.link?`<div class="dl-files">${f.map(ff=>`<span class="dl-f"><a href="/_blob/${esc(ff.id)}" target="_blank" rel="noopener" aria-label="${esc(ff.name)}">${ico(fileIco(ff))}${esc(ff.name)}</a><button type="button" class="btn sm ghost" data-fshare="${esc(ff.id)}|${esc(ff.name)}|${esc(ff.type||'')}|${esc(x.k)}" aria-label="Share ${esc(ff.name)}">${ico('share-2')}</button></span>`).join('')}${c&&c.link?`<a class="btn sm ghost" href="${esc(c.link)}" target="_blank" rel="noopener">${ico('external-link')}Link</a>`:''}</div>`:''}
       ${c&&c.fu?`<div class="code">Uploaded ${fd(new Date(c.at).toISOString().slice(0,10))} by ${esc(nm(c.by))}</div>`:''}
-      ${x.has?apChips(c):''}${x.has?apLog(c):''}</div>
+      ${x.has?apChips(c):''}${x.has?apLog(c):''}${x.all.length?trLibLine(pid,x):''}</div>
       <div class="dl-acts">${canUp?`<label class="btn sm pri" title="${x.has?'Uploads as the next revision — earlier revisions are kept':'Upload any file: drawings, PDFs, images, videos, models, Excel, Word, ZIP'}">${ico('upload')}<span>Upload${x.has?' <small style="opacity:.8;font-weight:500">new rev</small>':''}</span><input type="file" hidden multiple data-dlup="${esc(x.k)}"></label>`:''}
         ${x.has?`<button type="button" class="btn sm" data-dlshare="${esc(x.k)}">${ico('message-circle')}<span>Share</span></button>`:''}
-        ${x.has?relBtn(c):''}${x.has&&!relHide()?apButtons(c,x.k):''}${dlDelBtn(c)}
+        ${x.has?relBtn(c):''}${x.has&&!relHide()?apButtons(c,x.k):''}${x.has&&canUp&&qtCols().length?`<button type="button" class="btn sm" data-dlsend="${esc(c.id)}" title="Give this drawing to someone to update, with your corrections">${ico('send')}<span>Send to…</span></button>`:''}${dlDelBtn(c)}
         ${c&&canUp?`<button type="button" class="btn sm ghost" data-edit="documents:${esc(c.id)}" aria-label="Edit">${ico('pencil')}</button>`:''}</div></div>`;}).join('');
   return header('Drawings library',canView('designsched')?`<button class="btn" data-go="designsched">${ico('pen-tool')}Design schedule</button>`:canView('schedule')?`<button class="btn" data-go="schedule">${ico('gantt-chart')}Construction schedule</button>`:'')+
    dlFloorBox(pid)+`<div class="box">${relCan()?`<div class="dl-edit-row"><button type="button" class="btn sm" data-dledit>${ico('pencil')}<span>Edit list</span></button></div>`:''}<div class="srow">${tabs}</div>${grpSel}
@@ -5666,11 +5666,12 @@ async function dlUploadTo(pid,disc,key,files,extra){
   if(!up.length)return false;extra=extra||{};
   const cur=prev&&prev.cur;const revN=prev?prev.all.filter(d=>(d.files||[]).length||d.link).length:0;
   const list=[];
-  if(cur&&!(cur.files||[]).length&&!cur.link)list.push(['documents',cur.id,{...recOf(cur),...extra,files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);
+  let nid='';
+  if(cur&&!(cur.files||[]).length&&!cur.link){nid=cur.id;list.push(['documents',cur.id,{...recOf(cur),...extra,files:up,rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[],fu:1,at:Date.now(),by:ME.id}]);}
   else{if(cur&&cur.status!=='Superseded')list.push(['documents',cur.id,{...recOf(cur),status:'Superseded'}]);
     const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
-    list.push(['documents',id,{project:pid,disc,...extra,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:dlCat(disc),rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
-  const ok=await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();return !!ok;
+    nid=id;list.push(['documents',id,{project:pid,disc,...extra,...(prev&&prev.cur&&prev.cur.grp?{grp:prev.cur.grp}:{}),dkey:key,title:key,cat:dlCat(disc),rev:'R'+revN,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},files:up,fu:1,by:ME.id,at:Date.now()}]);}
+  const ok=await write(()=>dbBatch(list),`${key}: ${up.length} file${up.length>1?'s':''} uploaded (R${revN})`);render();return ok?{id:nid,rev:'R'+revN,files:up}:false;
 }
 /* ---------- share a file ---------- */
 function fileShareText(files,title){const p=S.proj!=='all'?pname(S.proj):'';
@@ -5870,7 +5871,7 @@ function apButtons(d,key){if(!d||!((d.files||[]).length||d.link)||d.status==='Su
 /* comments, send-backs and marked-up copies of one drawing */
 function apLog(d){const L=((d&&d.rv)||[]).slice().sort((a,b)=>(b.at||0)-(a.at||0));if(!L.length)return '';
   const one=x=>`<div class="ap-note ${x.k==='back'?'back':''}">${x.img?`<a href="/_blob/${esc(x.img.id)}" target="_blank" rel="noopener" aria-label="${esc(x.img.name)}" class="ap-thumb"><img src="/_blob/${esc(x.img.id)}" alt="Marked-up drawing" loading="lazy"></a>`:''}
-    <div><b>${esc(nm(x.by))}</b> <span class="code">${esc(x.k==='back'?'sent it back':x.k==='mark'?'marked it up':x.k==='go'?AP_STEPS[(x.st||1)-1].n.toLowerCase():'commented')} · ${esc(fd(new Date(x.at).toISOString().slice(0,10)))}</span>${x.t?`<div>${esc(x.t)}</div>`:''}
+    <div><b>${esc(nm(x.by))}</b> <span class="code">${esc(x.k==='back'?'sent it back':x.k==='mark'?'marked it up':x.k==='go'?AP_STEPS[(x.st||1)-1].n.toLowerCase():'commented')} · ${esc(fd(new Date(x.at).toISOString().slice(0,10)))}</span>${x.t?`<div>${esc(x.t)}</div>`:''}${trFiles(x.files)}
     ${canDelFiles()?`<button type="button" class="btn sm ghost warn" data-rvdel="${esc(d.id)}|${esc(x.at)}">${ico('trash-2')}<span>Remove</span></button>`:''}${x.img?`<button type="button" class="btn sm ghost" data-fshare="${esc(x.img.id)}|${esc(x.img.name)}|image/jpeg|${esc(x.img.name)}">${ico('share-2')}<span>Share</span></button>`:''}</div></div>`;
   return `<details class="ap-log" ${L[0].k==='back'&&d.status==='Sent back'?'open':''}><summary>${ico('message-square')} ${L.length} comment${L.length>1?'s':''} & markup${L[0].t?` — <i>${esc(String(L[0].t).slice(0,60))}</i>`:''}</summary>${L.map(one).join('')}</details>`;}
 
@@ -5881,17 +5882,23 @@ function apDialog(id,kind,st){const d=D.documents.find(x=>x.id===id);if(!d)retur
    <form id="apForm" class="pane-b" data-id="${esc(id)}" data-kind="${kind}" data-st="${st||0}"><div class="code" style="margin-bottom:8px">${esc(t)} · ${esc(pname(d.project))}</div>
     ${apChips(d)}
     <label style="display:block;margin-top:12px">${kind==='back'?'What needs to change (required)':'Comment (optional)'}<textarea name="t" rows="3" ${kind==='back'?'required':''} placeholder="${kind==='back'?'e.g. Staircase width 1.2 m, update the door schedule':'e.g. Checked dimensions and grid lines'}"></textarea></label>
+    ${kind==='back'?`<label style="display:block;margin-top:8px">Corrected / marked-up files (optional — DWG, PDF, photos…)<input type="file" name="files" multiple></label>${(()=>{const tk=trTasksOf(d.project,d.dkey||d.title,[d.id])[0];return tk?`<div class="code" style="margin-top:6px">The task “${esc(tk[1].title)}” goes back to ${esc(pnm(tk[1].who))} with this note.</div>`:'';})()}`:''}
     ${kind!=='back'&&st===3&&relCan()&&isDrawing(d)?`<label class="pl-chk" style="margin-top:8px"><input type="checkbox" name="rel" checked> Also release to site engineers & clients</label>`:''}
     <label class="pl-chk" style="margin-top:8px"><input type="checkbox" name="wa" checked> Tell the team on WhatsApp</label>
     <div class="srow" style="padding:12px 0 0;border:0"><button class="btn ${kind==='back'?'warn':'pri'}">${ico(kind==='back'?'corner-up-left':'check')}<span>${esc(head)}</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div></div>`;
   setTimeout(()=>{const ta=document.querySelector('#apForm textarea');if(ta)ta.focus();},50);}
-async function apSave(id,kind,st,txt,wa,rel){const d=D.documents.find(x=>x.id===id);if(!d)return;const now=Date.now(),t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
-  const a={...(d.appr||{})},rv=[...(d.rv||[])];let status;
-  if(kind==='back'){status='Sent back';rv.push({k:'back',by:ME.id,at:now,t:txt,st:apStage(d)});Object.keys(a).forEach(k=>delete a[k]);}
+async function apSave(id,kind,st,txt,wa,rel,fs){const d=D.documents.find(x=>x.id===id);if(!d)return;const now=Date.now(),t=`${d.dkey||d.title}${d.rev?' '+d.rev:''}`;
+  const a={...(d.appr||{})},rv=[...(d.rv||[])];let status,up=[];
+  if(kind==='back'){up=await trUpload(fs);if(up===null)return;status='Sent back';rv.push({k:'back',by:ME.id,at:now,t:txt,st:apStage(d),...(up.length?{files:up}:{})});Object.keys(a).forEach(k=>delete a[k]);}
   else{a['s'+st]={by:ME.id,at:now};for(let i=1;i<st;i++)if(!a['s'+i])a['s'+i]={by:ME.id,at:now};status=AP_STATUS[st];rv.push({k:'go',by:ME.id,at:now,t:txt,st});}
   const relX=kind==='back'?{rel:null}:(st===3&&rel&&relCan()?{rel:{by:ME.id,at:now}}:{});
   const ok=await write(()=>db.doc('documents/'+id).update({appr:a,status,rv,...relX}),kind==='back'?`${t}: sent back`:`${t}: ${AP_STEPS[st-1].n.toLowerCase()}`);
-  if(!ok)return;closeLayer();render();
+  if(!ok)return;
+  if(kind!=='back'&&st===3){const tk=trTasksOf(d.project,d.dkey||d.title,[d.id]).find(([c,x])=>x.status==='For review');   // approving the drawing approves the task that made it
+    if(tk&&trCanWrite(tk[0],tk[1]))await trPatch(tk[0],tk[1].id,{status:TR_DONE(tk[0]),progress:100,log:[...(tk[1].log||[]),{k:'ok',by:ME.id,at:now,t:'Approved in the Drawings library',key:d.dkey||d.title,rev:d.rev||''}]});}
+  if(kind==='back'){const tk=trTasksOf(d.project,d.dkey||d.title,[d.id])[0];   // the task that made this drawing goes back to its person
+    if(tk&&trCanWrite(tk[0],tk[1]))await trPatch(tk[0],tk[1].id,{status:'Changes requested',progress:Math.min(+tk[1].progress||0,90),log:[...(tk[1].log||[]),{k:'back',by:ME.id,at:now,t:txt,files:up,who:tk[1].who,key:d.dkey||d.title,rev:d.rev||''}]});}
+  closeLayer();render();
   if(wa){const next=kind==='back'?'Please update and upload a new revision.':st===1?`Please check it (${apWho(2).filter(r=>r!=='Admin').join(' / ')}).`:st===2?'Ready for final approval by the senior architect.':'Approved — good for construction.';
     const msg=[`*${t}* — ${pname(d.project)}`,kind==='back'?`↩️ Sent back by ${ME.name||'me'}`:`✅ ${AP_STEPS[st-1].n} by ${ME.name||'me'} (stage ${st} of 3)`,txt?`“${txt}”`:'',next,'',...(d.files||[]).map(f=>`${f.name}: ${fileLink(f)}`),'',`— ${orgName()} (BuildMitr)`].filter((x,i,arr)=>x!==''||arr[i-1]!=='').join('\n');
     const w=window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');if(w)try{w.opener=null;}catch(_){}}}
@@ -5982,7 +5989,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;let b;
   if((b=e.target.closest('[data-mkpg]'))){mkPage(MK.page+ +b.dataset.mkpg);return;}
 },true);
 document.addEventListener('submit',e=>{const f=e.target;
-  if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked,!!(f.elements.rel&&f.elements.rel.checked));return;}
+  if(f.id==='apForm'){e.preventDefault();const t=(f.elements.t.value||'').trim();if(f.dataset.kind==='back'&&!t){toast('Write what needs to change');return;}apSave(f.dataset.id,f.dataset.kind,+f.dataset.st,t,f.elements.wa.checked,!!(f.elements.rel&&f.elements.rel.checked),f.elements.files?f.elements.files.files:null);return;}
   if(f.id==='mkForm'){e.preventDefault();mkSave((e.submitter&&e.submitter.value)==='share',(f.elements.t.value||'').trim());}},true);
 
 /* ================= Staff work time (AutoCAD, SketchUp, Revit…) =================
@@ -6747,16 +6754,17 @@ function vMyDay(){
     ${R.map(x=>`<label class="md-chk"><input type="checkbox" data-mdrt="${esc(x)}" ${done.has(x)?'checked':''}><span>${esc(x)}</span></label>`).join('')}</div>`:'';
   /* today's work: tasks assigned to me + my own tasks */
   const mine=[...(D.tasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'tasks'})),...(D.dtasks||[]).filter(x=>x.who===ME.id).map(x=>({...x,src:'dtasks'})),...(D.ptask||[]).filter(x=>x.user===ME.id).map(x=>({...x,src:'ptask'})),...calMine(d0),...calMissed()].filter(x=>!x.calId)
-    .filter(x=>x.status!=='Completed'&&!x.done);
+    .filter(x=>x.status!=='Completed'&&x.status!=='Resolved'&&x.status!=='For review'&&!x.done);
+  const inRev=[...(D.tasks||[]).filter(x=>x.who===ME.id&&x.status==='For review').map(x=>({...x,src:'tasks'})),...(D.dtasks||[]).filter(x=>x.who===ME.id&&x.status==='For review').map(x=>({...x,src:'dtasks'}))];
   const dueOf=x=>x.due||x.start||'';const ov=mine.filter(x=>dueOf(x)&&dueOf(x)<d0),td=mine.filter(x=>!dueOf(x)||(x.start||d0)<=d0&&dueOf(x)>=d0),up=mine.filter(x=>!ov.includes(x)&&!td.includes(x));
   const doneToday=[...(D.ptask||[]).filter(x=>x.user===ME.id&&x.done&&String(x.doneAt||'').startsWith(d0)),...calMine(d0).filter(x=>x.done)];
-  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b>${(x.chk||[]).length?`<div class="qt-chk">${x.chk.map((c,i)=>`<label><input type="checkbox" data-qtchk="${x.src}|${esc(x.id)}|${i}" ${c.done?'checked':''}> ${esc(c.t)}</label>`).join('')}<span class="code">${x.chk.filter(c=>c.done).length}/${x.chk.length}</span></div>`:''}${(x.files||[]).length&&x.src!=='cal'?`<div class="dl-files">${x.files.map(f=>`<span class="dl-f"><a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></span>`).join('')}</div>`:''}<div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
-    ${x.src!=='ptask'&&(x.project||x.src!=='cal')?`<button type="button" class="btn sm" data-fin="${x.src==='cal'?'cal|'+esc(x.cid)+'|'+esc(x.date):x.src+'|'+esc(x.id)+'|'}" title="Upload the finished file into the Drawings library and mark this done">${ico('upload')}<span>Upload & finish</span></button>`:''}
+  const trow=x=>`<div class="md-task ${dueOf(x)&&dueOf(x)<d0?'ov':''}">${x.src==='ptask'?`<input type="checkbox" data-mdpt="${esc(x.id)}" aria-label="Done">`:x.src==='cal'?`<input type="checkbox" data-mdcal="${esc(x.id)}" aria-label="Done">`:`<span class="pill p-grey">${x.src==='dtasks'?'Design':'Site'}</span>`}<div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${esc(x.title)}</b>${trBadge(x)}${(x.chk||[]).length?`<div class="qt-chk">${x.chk.map((c,i)=>`<label><input type="checkbox" data-qtchk="${x.src}|${esc(x.id)}|${i}" ${c.done?'checked':''}> ${esc(c.t)}</label>`).join('')}<span class="code">${x.chk.filter(c=>c.done).length}/${x.chk.length}</span></div>`:''}${(x.files||[]).length&&x.src!=='cal'?`<div class="dl-files">${x.files.map(f=>`<span class="dl-f"><a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></span>`).join('')}</div>`:''}<div class="code">${x.src==='tasks'||x.src==='dtasks'?(x.src==='dtasks'&&x.disc?esc(secOf(x))+' · ':'')+(x.by&&x.by!==ME.id?'Assigned by '+esc(pnm(x.by))+' · ':''):''}${x.src==='cal'?(calPn(x)?esc(calPn(x))+' · ':'')+esc(x.kind||'')+' · ':x.project?esc(pname(x.project))+' · ':''}${dueOf(x)?(dueOf(x)<d0?'Overdue · ':'Due ')+fd(dueOf(x)):'No date'}${x.src!=='ptask'&&x.progress?' · '+x.progress+'%':''}</div></div>
+    ${x.src!=='ptask'&&(x.project||x.src!=='cal')?`<button type="button" class="btn sm" data-fin="${x.src==='cal'?'cal|'+esc(x.cid)+'|'+esc(x.date):x.src+'|'+esc(x.id)+'|'}" title="Upload the finished file into the Drawings library and mark this done">${ico('upload')}<span>${x.status==='Changes requested'?'Upload corrected file':'Upload & finish'}</span></button>`:''}${x.src==='tasks'||x.src==='dtasks'?`<button type="button" class="btn sm ghost" data-tropen="${x.src}|${esc(x.id)}" title="Details, history and comments">${ico('message-square')}<span>Details</span></button>`:''}
     ${x.src==='cal'?`<button type="button" class="btn sm" data-go="calendar" data-calday="${esc(x.date)}">${x.time?esc(x.time):'Calendar'}</button>`:x.src==='ptask'?`<button type="button" class="btn sm ghost" data-mdptdel="${esc(x.id)}" aria-label="Remove">${ico('x')}</button>`:`<button type="button" class="btn sm" data-go="${x.src==='dtasks'?'designsched':'schedule'}" ${x.project?`data-pid="${esc(x.project)}"`:''}>Open</button>`}</div>`;
-  const srt=xs=>[...xs].sort((a,b)=>(b.first?1:0)-(a.first?1:0)||String(dueOf(a)||'9999').localeCompare(String(dueOf(b)||'9999')));
+  const srt=xs=>[...xs].sort((a,b)=>(b.status==='Changes requested'?1:0)-(a.status==='Changes requested'?1:0)||(b.first?1:0)-(a.first?1:0)||String(dueOf(a)||'9999').localeCompare(String(dueOf(b)||'9999')));
   const grp=(n,xs)=>xs.length?`<div class="md-g">${n} · ${xs.length}</div>${srt(xs).map(trow).join('')}`:'';
   const work=`<div class="box"><div class="box-h">${ico('list-checks')}<h2>Today's work</h2><span class="code">${doneToday.length}/${doneToday.length+td.length+ov.length} done</span></div>
-    ${grp('Overdue',ov)}${grp('Today',td)}${grp('Coming up',up.slice(0,6))}${!mine.length?'<div class="empty">Nothing assigned to you. Add your own tasks below.</div>':''}
+    ${grp('Overdue',ov)}${grp('Today',td)}${grp('Coming up',up.slice(0,6))}${inRev.length?`<div class="md-g">Sent for review · ${inRev.length}</div>${inRev.map(x=>`<div class="md-task"><div style="flex:1;min-width:0"><b>${esc(x.title)}</b>${trBadge(x)}<div class="code">${x.project?esc(pname(x.project))+' · ':''}${x.doneFile?esc(x.doneFile):''}</div></div><button type="button" class="btn sm ghost" data-tropen="${x.src}|${esc(x.id)}">Details</button></div>`).join('')}`:''}${!mine.length&&!inRev.length?'<div class="empty">Nothing assigned to you. Add your own tasks below.</div>':''}
     ${MD.add?`<form id="mdAddForm" class="md-add"><input name="t" required placeholder="What do you need to do?" autofocus><input name="d" type="date" value="${d0}"><select name="p"><option value="">No project</option>${PJ().map(p=>`<option value="${p.id}">${esc(pname(p.id))}</option>`).join('')}</select><button class="btn sm pri">Add</button><button type="button" class="btn sm ghost" data-mdadd="0">Cancel</button></form>`
      :`<div class="srow"><button type="button" class="btn sm" data-mdadd="1">${ico('plus')}<span>Add a task</span></button></div>`}</div>`;
   /* my projects with stage strip */
@@ -6769,7 +6777,7 @@ function vMyDay(){
   const leave=`<div class="box"><div class="box-h">${ico('calendar')}<h2>Attendance & leave</h2><button type="button" class="btn sm pri" data-mdleave="1">${ico('plus')}<span>Request leave</span></button></div>
     <div class="tiles"><div class="tile"><b>${ms.pct}%</b><span>Attendance this month</span></div><div class="tile"><b>${ms.late}</b><span>Late days</span></div>${Object.entries(q).map(([k,v])=>`<div class="tile"><b>${Math.max(0,v-used(k))}/${v}</b><span>${esc(k)} left</span></div>`).join('')}</div>
     ${myL.length?myL.map(l=>`<div class="srow"><span style="flex:1">${esc(l.type)} · ${fd(l.from)}${l.to&&l.to!==l.from?' → '+fd(l.to):''}${l.half?' (half day)':''}</span><span class="pill ${l.status==='Approved'?'p-green':l.status==='Rejected'?'p-red':l.status==='Cancelled'?'p-grey':'p-amber'}">${esc(l.status)}</span>${l.status==='Pending'?`<button type="button" class="btn sm ghost" data-mdlcancel="${esc(l.id)}">Cancel</button>`:''}</div>`).join(''):''}</div>`;
-  return header('My day')+ntBox()+qtBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
+  return header('My day')+ntBox()+qtBox()+trReviewBox()+top+intern+`<div class="grid2"><div>${routine}${work}</div><div>${leave}</div></div>`+(canView('calendar')?calBox('md'):'');
 }
 async function mdTick(item,on){const d0=today(),id=`${ME.id}_${d0}`,t=myTick(),done=new Set((t&&t.done)||[]);on?done.add(item):done.delete(item);
   await write(()=>db.doc('rtick/'+id).set({user:ME.id,name:ME.name||'',date:d0,role:meRole(),done:[...done],of:routineFor(meRole()).length,mgr:(myTeamRec()||{}).mgr||''}),null);render();}
@@ -7163,9 +7171,10 @@ window.bmIncoming=function(list){
   const out=[];
   list.forEach(([c,id,d,old])=>{if(!d||mine(c+'|'+id))return;
     if(c==='chats'){if(old||d.by===me||(typeof myChatId==='function'&&d.from===myChatId()))return;out.push(['chat',d]);return;}
-    if(c==='tasks'||c==='dtasks'){if(d.who!==me)return;const lab=c==='dtasks'?'Design task':'Site task',pn=d.project?pname(d.project):'';
+    if(TR_COLS.includes(c)&&old&&d.by===me&&d.who!==me&&old.status!==d.status&&d.status==='For review'){out.push(['task',`Ready for your review: ${d.title}`,`${pnm(d.who)} finished it${d.doneFile?' · '+d.doneFile:''}`,'myday']);return;}
+    if(TR_COLS.includes(c)){if(d.who!==me)return;const lab=c==='dtasks'?'Design task':c==='issues'?'Issue':'Site task',pn=d.project?pname(d.project):'';
       if(!old||old.who!==me){out.push(['task',`New ${lab.toLowerCase()} for you`,`${d.title}${pn?' · '+pn:''}${d.due?' · due '+fd(d.due):''}`,c==='dtasks'?'designsched':'schedule']);return;}
-      const ch=[];if(old.status!==d.status)ch.push(d.status);if(old.due!==d.due&&d.due)ch.push('due '+fd(d.due));if(!!old.first!==!!d.first&&d.first)ch.push('⭐ do first');
+      const ch=[];if(old.status!==d.status)ch.push(d.status==='Changes requested'?'corrections: '+String((trLast(d,'back')||{}).t||'').slice(0,90):d.status);if(old.due!==d.due&&d.due)ch.push('due '+fd(d.due));if(!!old.first!==!!d.first&&d.first)ch.push('⭐ do first');
       if((d.comments||[]).length>(old.comments||[]).length){const k=d.comments[d.comments.length-1]||{};if(k.by!==me)ch.push('comment: '+String(k.t||k.text||'').slice(0,80));}
       if(ch.length)out.push(['task',`${lab} updated: ${d.title}`,ch.join(' · '),c==='dtasks'?'designsched':'schedule']);return;}
     if(c==='cal'){if(!(d.who||[]).includes(me))return;if(old&&(old.who||[]).includes(me)&&old.start===d.start&&old.title===d.title)return;
@@ -7211,9 +7220,15 @@ function actLog(c,id,prev,next){
       if(!prev)return add('uploaded',`Drawing added: ${next.title||id}${next.rev?' '+next.rev:''}${tk?' — task done: '+tk:''}`,[],next.project);
       const ch=DOC_FLDS.filter(k=>JSON.stringify(prev[k])!==JSON.stringify(next[k]));if(!ch.length)return;
       const what=(prev.rev!==next.rev||JSON.stringify(prev.revs)!==JSON.stringify(next.revs)||prev.file!==next.file||prev.url!==next.url)?`new revision${next.rev?' '+next.rev:''}`:prev.status!==next.status?(next.status||'status changed'):prev.rel!==next.rel?(next.rel?'released to client / site':'withdrawn'):'details changed';
-      return add('updated',`Drawing updated: ${next.title||id} — ${what}${tk&&prev.task!==next.task?' (task done: '+tk+')':''}`,[],next.project);}
+      const toU=prev.status!==next.status&&['Sent back','Approved'].includes(next.status)&&next.by&&next.by!==ME.id?[next.by]:[];   // the person who drew it hears about it
+      return add('updated',`Drawing updated: ${next.title||id} — ${what}${tk&&prev.task!==next.task?' (task done: '+tk+')':''}`,toU,next.project);}
     if(c==='stdlib'){const ch=!prev||JSON.stringify(prev.files)!==JSON.stringify(next.files);if(!ch)return;const fo=(stdFolders().find(f=>f.id===next.folder)||{}).name||'';
       return add(prev?'updated':'uploaded',`Common library${fo?' › '+fo:''}: ${next.title}${prev?' — new version':' added'}`,[],'' ,'stdlib');}
+    if(TR_COLS.includes(c)&&prev){const ps=prev.status,ns=next.status,L=next.log||[],last=L.length>(prev.log||[]).length?L[L.length-1]:null,tt=next.title||'';
+      if(ns!==ps&&ns==='For review'&&next.by&&next.by!==ME.id)return add('review',`${pnm(next.who)} finished “${tt}” — please check${next.doneFile?' ('+next.doneFile+')':''}`,[next.by],next.project);
+      if(ns==='Changes requested'&&(ns!==ps||(last&&last.k==='back'))&&next.who&&next.who!==ME.id)return add('returned',`Corrections for you: “${tt}”${last&&last.t?' — '+String(last.t).slice(0,160):''}`,[next.who],next.project);
+      if(ns!==ps&&ns===TR_DONE(c)&&ps==='For review'&&next.who&&next.who!==ME.id)return add('approved',`Approved: “${tt}”`,[next.who],next.project);
+      if(last&&last.k==='note'){const to=[next.who,next.by].filter((u,i,a)=>u&&u!==ME.id&&a.indexOf(u)===i);if(to.length)return add('comment',`${tt}: “${String(last.t||'file added').slice(0,160)}”`,to,next.project);}}
     if(c==='tasks'||c==='dtasks'){const w=next.who||'',pw=prev?prev.who||'':'';if(!w||w===pw||next.calId)return;
       return add('assigned',`${c==='dtasks'?'Design task':'Task'} given to ${pnm(w)}: ${next.title||''}${next.due?' (due '+fd(next.due)+')':''}`,[w],next.project);}
     if(c==='cal'){const nw=(next.who||[]).filter(u=>!(prev&&prev.who||[]).includes(u));if(!nw.length)return;
@@ -7221,14 +7236,14 @@ function actLog(c,id,prev,next){
   }catch(_){}}
 /* what this person should see in the bell */
 function bellActs(){const me=ME&&ME.id;if(!me)return [];const boss=actBoss(),wk=Date.now()-14*864e5;
-  return (D.audit||[]).filter(a=>a.at>wk&&a.by!==me&&['uploaded','updated','assigned','scheduled'].includes(a.action)&&(boss?(!a.project||projOK(a.project)):(a.to||[]).includes(me)))
+  return (D.audit||[]).filter(a=>a.at>wk&&a.by!==me&&['uploaded','updated','assigned','scheduled','review','returned','approved','comment'].includes(a.action)&&(boss?(!a.project||projOK(a.project)):(a.to||[]).includes(me)))
     .sort((a,b)=>b.at-a.at).slice(0,60);}
 const bellUnread=()=>{const s=actSeen();return bellActs().filter(a=>a.at>s).length;};
 function bellBox(){const xs=bellActs();if(!xs.length)return '';const s=actSeen();
   const go=a=>a.col==='stdlib'?'stdlib':a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
   const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':fd(new Date(t).toISOString().slice(0,10));};
   const html=`<div class="box"><div class="box-h">${ico('bell')}<h2>Recent updates</h2><span class="code">${xs.filter(a=>a.at>s).length} new</span></div>
-    ${xs.map(a=>`<div class="siteloc bell-r ${a.at>s?'new':''}" style="border-bottom:1px solid var(--line)">${a.at>s?'<i class="bell-dot" aria-label="New"></i>':''}<span style="flex:1;min-width:200px">${a.action==='updated'||a.action==='uploaded'?'📐 ':a.action==='scheduled'?'📅 ':'✅ '}${esc(a.summary)}<span class="code"> · ${esc(pnm(a.by))} · ${ago(a.at)}${a.project?' · '+esc(pname(a.project)):''}</span></span>${canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${a.project||''}">Open</button>`:''}</div>`).join('')}</div>`;
+    ${xs.map(a=>`<div class="siteloc bell-r ${a.at>s?'new':''}" style="border-bottom:1px solid var(--line)">${a.at>s?'<i class="bell-dot" aria-label="New"></i>':''}<span style="flex:1;min-width:200px">${a.action==='updated'||a.action==='uploaded'?'📐 ':a.action==='scheduled'?'📅 ':a.action==='review'?'👀 ':a.action==='returned'?'↩️ ':a.action==='comment'?'💬 ':'✅ '}${esc(a.summary)}<span class="code"> · ${esc(pnm(a.by))} · ${ago(a.at)}${a.project?' · '+esc(pname(a.project)):''}</span></span>${TR_COLS.includes(a.col)&&a.ref&&trRec(a.col,a.ref)?`<button class="btn sm" data-tropen="${a.col}|${esc(a.ref)}">Open</button>`:canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${a.project||''}">Open</button>`:''}</div>`).join('')}</div>`;
   setTimeout(()=>{try{localStorage.setItem(ACT_SEEN_K(),String(Date.now()));}catch(_){}},1500);   // opened → read
   return html;}
 
@@ -7267,13 +7282,14 @@ function calBackfill(){if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=
    the drawing is filed in the library (linked to the task), the task is marked done, and the admin's bell shows it. */
 function finForm(src,id,date){
   const t=src==='cal'?(D.cal||[]).find(x=>x.id===id):(D[src]||[]).find(x=>x.id===id);if(!t)return;
-  const pid=t.project||(S.proj!=='all'?S.proj:'');const tabs=pid?dlLib(pid):[];const disc0=t.disc&&tabs.some(x=>x.k===t.disc)?t.disc:(src==='tasks'?'Structure':'Architecture');
+  const pid=t.project||(S.proj!=='all'?S.proj:'');const tabs=pid?dlLib(pid):[];const dd=t.doneDisc||t.disc;const disc0=dd&&tabs.some(x=>x.k===dd)?dd:(src==='tasks'?'Structure':'Architecture');const dk=t.doneFile||t.dkey||'';const back=t.status==='Changes requested'?trLast(t,'back'):null;
   const items=d=>pid?dlItems(pid,d).map(x=>x.k):[];
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="finForm" data-src="${src}" data-id="${esc(id)}" data-date="${esc(date||'')}" data-pid="${esc(pid)}"><div class="pane-h"><h2>Finish: ${esc(t.title)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
   <div class="pane-b" style="display:grid;gap:12px">
-    ${pid?`<p class="code">The file goes into the Drawings library of ${esc(pname(pid))} and the admin is told. The task is marked done.</p>
+    ${back?`<div class="note warn">${ico('corner-up-left')}<span><b>Corrections from ${esc(pnm(back.by))}:</b> ${esc(back.t||'')}${trFiles(back.files)}</span></div>`:''}
+    ${pid?`<p class="code">The file goes into the Drawings library of ${esc(pname(pid))}${dk?' as the next revision of '+esc(dk):''}. ${src!=='cal'&&trNeeds(t)?`It then goes to ${esc(pnm(t.by))} for review.`:'The task is marked done and the admin is told.'}</p>
     <label>Library folder<select name="disc" id="finDisc">${tabs.map(x=>`<option value="${esc(x.k)}" ${x.k===disc0?'selected':''}>${esc(x.l||x.k)}</option>`).join('')}</select></label>
-    <label>Drawing<select name="key" id="finKey"><option value="__new">+ New drawing (name below)</option>${items(disc0).map(k=>`<option ${k.toLowerCase()===String(t.title).toLowerCase()?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
+    <label>Drawing<select name="key" id="finKey"><option value="__new">+ New drawing (name below)</option>${items(disc0).map(k=>`<option ${(dk?k===dk:k.toLowerCase()===String(t.title).toLowerCase())?'selected':''}>${esc(k)}</option>`).join('')}</select></label>
     <label id="finNewL">New drawing name<input name="newk" maxlength="120" value="${esc(String(t.title).replace(/\s*\((every|daily).*\)$/i,''))}"></label>`:`<p class="note">This work has no project, so it cannot go into a project library. Pick a project on the work first, or just tick it done.</p>`}
     <label>Files (drawing, PDF, image, model…)<input type="file" name="files" multiple ${pid?'required':''}></label>
     <label>Note (optional)<textarea name="note" rows="2" maxlength="500"></textarea></label>
@@ -7292,7 +7308,12 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='finForm
   const ok=await dlUploadTo(pid,disc,key,fs,{task:task&&task[1]?task[1].id:'',taskCol:task?task[0]:'',cal:src==='cal'?id:'',note:f.elements.note.value.trim()});
   if(!ok){btn.disabled=false;btn.querySelector('span').textContent='Upload & mark done';return;}
   if(src==='cal')await calTick(id,date,true);
-  else if(CANW0&&canEditView(src)){try{await db.doc(src+'/'+id).update({status:'Completed',progress:100,doneFile:key});}catch(_){}}
+  else{const t0=(D[src]||[]).find(x=>x.id===id);
+    if(t0&&trCanWrite(src,t0)){const rv=trNeeds(t0),now=Date.now();NTF.mine[src+'|'+id]=now;
+      try{await db.doc(src+'/'+id).update({status:rv?'For review':'Completed',progress:100,doneFile:key,doneDisc:disc,doneDoc:ok.id||'',doneAt:now,log:[...(t0.log||[]),{k:'done',by:ME.id,at:now,t:f.elements.note.value.trim(),key,rev:ok.rev||'',files:ok.files||[]}]});
+        closeLayer();toast(rv?`${key} filed — sent to ${pnm(t0.by)} for review ✓`:`${key} filed in the library — task done ✓`);render();return;}
+      catch(e2){closeLayer();toast(`${key} is filed in the library, but the task could not be updated (${(e2&&e2.message)||'no connection'}) — open the task and tap Done`);render();return;}}
+    closeLayer();toast(`${key} is filed in the library. You cannot change this task — tell ${t0&&t0.by?pnm(t0.by):'the admin'} it is done`);render();return;}
   closeLayer();toast(`${key} filed in the library — task done ✓`);render();});
 
 /* ================= Create task (quick box on every home screen) =================
@@ -7538,6 +7559,177 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
   if(b.dataset.sure!=='1'){b.dataset.sure='1';b.querySelector('span').textContent=`Tap again to remove ${list.length}`;return;}
   b.disabled=true;let n=0;const cids=[...new Set(list.map(([,t])=>t.calId))];
   const ok=await write(async()=>{for(const cid of cids){if((D.cal||[]).some(x=>x.id===cid))await db.doc('cal/'+cid).update({mkTask:false});}for(const [c,t] of list){await db.doc(c+'/'+t.id).delete();n++;}},`${list.length} calendar task${list.length>1?'s':''} removed — the calendar work stays`);render();});
+/* ================= Task review: finish → check → approve, or send the SAME task back with corrections =================
+   Like Fieldwire (Completed → Verified) and Procore submittals (Revise and resubmit): when someone finishes work another
+   person gave them, it goes to that person "For review". The reviewer approves it, or sends the same task back with what
+   to change and their corrected / marked-up files (any type: DWG, PDF, photo…), a new due date and, if needed, to someone
+   else. Every step is kept on the task as its history, shows in the bell and as a phone / PC notification.
+   From the Drawings library, "Send to…" gives a drawing back to a person (reopening the task it came from, or a new one). */
+const TR_COLS=['tasks','dtasks','issues'];
+const TR_DONE=c=>c==='issues'?'Resolved':'Completed';
+['tasks','dtasks','issues'].forEach(k=>{const f=MOD[k]&&MOD[k].fields.find(x=>x.k==='status');if(f&&!f.o.includes('For review'))f.o.splice(Math.max(1,f.o.indexOf(TR_DONE(k))),0,'Changes requested','For review');});
+const trOn=()=>orgMain().taskReview!==false;
+const trRec=(c,id)=>(D[c]||[]).find(x=>x.id===id);
+const trNeeds=t=>trOn()&&!!t&&!!t.who&&!!t.by&&t.by!==t.who&&!t.calId;   // given by someone else → they check it
+const trCanReview=t=>!!t&&ME&&(t.by===ME.id||actBoss());
+const trIsDone=(c,t)=>!!t&&t.status===TR_DONE(c);
+const trGate=(c,t,st)=>t&&st===TR_DONE(c)&&t.status!==st&&t.who===ME.id&&!actBoss()&&trNeeds(t)?'For review':st;
+const trRel=()=>['Client','Site engineer','Supervisor'].includes(curRole());
+const trWhen=at=>{if(!at)return '';const d=new Date(at);return fd(new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))+' '+d.toLocaleTimeString(LOC(),{hour:'numeric',minute:'2-digit'});};
+const trPill=s=>s==='For review'?'p-amber':s==='Changes requested'?'p-red':s==='Completed'||s==='Resolved'?'p-green':'p-grey';
+const trFiles=fs=>(fs||[]).length?`<div class="dl-files">${fs.map(f=>`<span class="dl-f"><a href="/_blob/${esc(f.id)}" target="_blank" rel="noopener">${ico(fileIco(f))}${esc(f.name)}</a></span>`).join('')}</div>`:'';
+const trLast=(t,k)=>{const L=(t&&t.log)||[];for(let i=L.length-1;i>=0;i--)if(!k||L[i].k===k)return L[i];return null;};
+/* the drawing this task produced / is about */
+function trDoc(t){if(!t)return null;const ds=D.documents||[];const d=t.doneDoc&&ds.find(x=>x.id===t.doneDoc);
+  const key=(d&&(d.dkey||d.title))||t.doneFile||t.dkey;if(!key)return d||null;
+  const all=ds.filter(x=>x.project===t.project&&(x.dkey||x.title)===key).sort((a,b)=>(b.at||0)-(a.at||0));return all.find(x=>x.status!=='Superseded')||all[0]||d||null;}
+/* tasks linked to a drawing (made by Upload & finish, or sent from the library) */
+function trTasksOf(pid,key,ids){const out=[];['tasks','dtasks'].forEach(c=>(D[c]||[]).forEach(t=>{if(t.project===pid&&((t.doneDoc&&(ids||[]).includes(t.doneDoc))||t.doneFile===key||t.dkey===key))out.push([c,t]);}));
+  return out.sort((a,b)=>((b[1].log||[]).slice(-1)[0]||{at:0}).at-((a[1].log||[]).slice(-1)[0]||{at:0}).at);}
+async function trUpload(fs){const up=[];if(!fs||!fs.length)return up;if(!A){toast('File upload needs Contributor access.');return null;}
+  for(const file of [...fs]){const type=fileType(file.name)||file.type||'application/octet-stream';
+    if(file.size>10*1048576){toast(`${file.name} is over 10 MB — nothing was sent. Zip it, or put it on Google Drive and paste the link in the note.`);return null;}
+    toast(`Uploading ${file.name}…`);try{const r=await A.upload(file,{type});up.push({id:r.id,name:file.name,type});}catch(e){toast(`${file.name}: ${e.message||'upload failed'} — nothing was sent, try again`);return null;}}
+  return up;}
+const trCanWrite=(c,t)=>CANW0&&(canEditView(c)||(t&&(t.who===ME.id||t.by===ME.id)));
+async function trPatch(c,id,patch,msg){NTF.mine[c+'|'+id]=Date.now();return write(()=>db.doc(c+'/'+id).update(patch),msg);}
+
+/* ---------- the task page (history + actions) ---------- */
+const TRK={done:'finished it',back:'sent it back',ok:'approved it',note:'commented',reopen:'reopened it'};
+function trOpen(c,id,mode){const t=trRec(c,id);if(!t){toast('This task is no longer there');return;}
+  const st=t.status||'Not started',done=trIsDone(c,t),rv=trCanReview(t),wk=t.who===ME.id,L=[...(t.log||[]),...(t.comments||[]).map(x=>({k:'note',byName:x.by,at:x.at,t:x.t}))].sort((a,b)=>(a.at||0)-(b.at||0));
+  const doc=trDoc(t),canW=trCanWrite(c,t),hideF=trRel()&&t.who!==ME.id&&t.by!==ME.id;
+  const ent=x=>`<div class="ap-note ${x.k==='back'?'back':''}"><div><b>${esc(x.byName||pnm(x.by))}</b> <span class="code">${esc(TRK[x.k]||'')} · ${esc(trWhen(x.at))}${x.k==='back'&&x.who?' → '+esc(pnm(x.who)):''}${x.due?' · due '+esc(fd(x.due)):''}</span>${x.t?`<div>${esc(x.t)}</div>`:''}${x.key?`<div class="code">${ico('file')} ${esc(x.key)}${x.rev?' '+esc(x.rev):''}</div>`:''}${hideF?'':trFiles(x.files)}</div></div>`;
+  const ppl=schPeople();
+  const backF=`<form id="trBackForm" class="tr-f" data-c="${c}" data-id="${esc(id)}"><b>${done?'Reopen with corrections':'Send back with corrections'}</b>
+    <label>What needs to change (required)<textarea name="t" rows="3" required maxlength="1500" placeholder="e.g. Staircase width 1.2 m, dimension the toilet, update the door schedule"></textarea></label>
+    <label>Corrected / marked-up files (optional — DWG, PDF, photos…)<input type="file" name="files" multiple></label>
+    <div class="e2form" style="padding:0"><label>Give it to<select name="who">${ppl.map(p=>`<option value="${esc(p.account)}" ${p.account===t.who?'selected':''}>${esc(p.name)}${p.account===t.who?' (did this)':''}</option>`).join('')}</select></label>
+    <label>New due date<input type="date" name="due" value="${esc(t.due&&t.due>=today()?t.due:new Date(Date.now()+2*864e5).toISOString().slice(0,10))}"></label></div>
+    ${doc&&CANW&&canEditView('documents')&&doc.status!=='Sent back'?`<label class="pl-chk"><input type="checkbox" name="doc" checked> Also mark the drawing <b>${esc(doc.dkey||doc.title)}${doc.rev?' '+esc(doc.rev):''}</b> as “Sent back” in the library</label>`:''}
+    <div class="srow" style="padding:0;border:0"><button class="btn warn">${ico('corner-up-left')}<span>${done?'Reopen & send':'Send back'}</span></button><button type="button" class="btn ghost" data-tropen="${c}|${esc(id)}">Cancel</button></div></form>`;
+  const noteF=`<form id="trNoteForm" class="tr-f" data-c="${c}" data-id="${esc(id)}"><label>Comment${wk?' / question':''}<textarea name="t" rows="2" maxlength="1500" placeholder="${wk?'e.g. Done the plan, need the door sizes':'e.g. Also check the lintel levels'}"></textarea></label>
+    <label>Files (optional)<input type="file" name="files" multiple></label><div class="srow" style="padding:0;border:0"><button class="btn">${ico('message-square')}<span>Add comment</span></button></div></form>`;
+  const acts=[];
+  if(wk&&!done&&st!=='For review'){if(c!=='issues'&&t.project)acts.push(`<button type="button" class="btn pri" data-fin="${c}|${esc(id)}|">${ico('upload')}<span>${st==='Changes requested'?'Upload corrected file':'Upload & finish'}</span></button>`);
+    acts.push(`<button type="button" class="btn" data-trdone="${c}|${esc(id)}">${ico('check')}<span>${c==='issues'?'Mark fixed':'Done (no file)'}</span></button>`);}
+  if(rv&&st==='For review')acts.push(`<button type="button" class="btn pri" data-trok="${c}|${esc(id)}">${ico('check-check')}<span>Approve</span></button><button type="button" class="btn warn" data-trback="${c}|${esc(id)}">${ico('corner-up-left')}<span>Send back with corrections</span></button>${(doc||t.doneFile)&&t.project&&CANW&&canEditView('documents')?`<label class="btn" title="You fixed it yourself: your file becomes the next revision in the library and the task is approved">${ico('upload')}<span>Upload my corrected version & approve</span><input type="file" hidden multiple data-trfix="${c}|${esc(id)}"></label>`:''}`);
+  else if(rv&&canW&&mode!=='back')acts.push(`<button type="button" class="btn ${done?'':'ghost'}" data-trback="${c}|${esc(id)}">${ico('corner-up-left')}<span>${done?'Reopen with corrections':'Send corrections'}</span></button>`);
+  const lastBack=st==='Changes requested'?trLast(t,'back'):null;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>${esc(t.title||'Task')}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b" style="display:grid;gap:12px">
+    <div class="srow" style="padding:0;border:0;flex-wrap:wrap;gap:6px"><span class="pill ${trPill(st)}">${esc(st)}</span>${t.project?`<span class="code">${esc(pname(t.project))}</span>`:''}${c==='dtasks'&&t.disc?`<span class="code">· ${esc(secOf(t))}</span>`:''}
+      <span class="code">· ${esc(c==='issues'?'Issue':c==='dtasks'?'Design task':'Site task')} · given to <b>${esc(pnm(t.who))}</b>${t.by?' by <b>'+esc(pnm(t.by))+'</b>':''}${t.due?' · due '+esc(fd(t.due)):''}</span></div>
+    ${lastBack?`<div class="note warn">${ico('corner-up-left')}<span><b>Corrections from ${esc(pnm(lastBack.by))}:</b> ${esc(lastBack.t||'')}${trFiles(lastBack.files)}</span></div>`:''}
+    ${t.notes||t.details?`<div>${esc(t.notes||t.details)}</div>`:''}${trFiles(t.files)}
+    ${doc?`<div class="tr-doc">${ico('library')}<span style="flex:1"><b>${esc(doc.dkey||doc.title)}</b>${doc.rev?' '+esc(doc.rev):''} <span class="pill ${apPill(apStatus(doc))}">${esc(apStatus(doc))}</span>${trFiles(doc.files)}</span>${canView('drawlib')?`<button type="button" class="btn sm" data-trlib="${esc(doc.project)}|${esc(doc.disc||'')}">Library</button>`:''}</div>`:''}
+    ${acts.length&&canW?`<div class="srow" style="padding:0;border:0;flex-wrap:wrap;gap:8px">${acts.join('')}</div>`:''}
+    ${mode==='back'&&rv&&canW?backF:''}
+    <div><div class="md-g">History · ${L.length}</div>${L.length?L.map(ent).join(''):`<div class="code">Nothing yet. Finishing, comments and corrections are kept here.</div>`}</div>
+    ${(rv||wk)&&canW?noteF:''}
+   </div></div></div>`;
+  if(mode==='back')setTimeout(()=>{const a=document.querySelector('#trBackForm textarea');if(a)a.focus();},50);}
+
+async function trApprove(c,id,fs){const t=trRec(c,id);if(!t)return;if(t.status!=='For review'){toast(`This is now “${t.status||'Not started'}” — nothing to approve`);render();return;}
+  let doc=trDoc(t),fixed=null;
+  if(fs&&fs.length){const pid=t.project||(doc&&doc.project),key=(doc&&(doc.dkey||doc.title))||t.doneFile;if(!pid||!key){toast('No drawing to file this under');return;}
+    fixed=await dlUploadTo(pid,(doc&&doc.disc)||t.doneDisc||'Architecture',key,fs,{task:t.id,taskCol:c});if(!fixed)return;
+    doc=(D.documents||[]).find(x=>x.id===fixed.id)||{id:fixed.id,project:pid,dkey:key,title:key,rev:fixed.rev,files:fixed.files,status:'For checking',appr:{s1:{by:ME.id,at:Date.now()}},rv:[]};}
+  const now=Date.now();
+  if(!await trPatch(c,id,{status:TR_DONE(c),progress:100,log:[...(t.log||[]),{k:'ok',by:ME.id,at:now,...(fixed?{t:'Approved with my corrected file',key:doc&&(doc.dkey||doc.title),rev:fixed.rev,files:fixed.files}:{})}]},`Approved: ${t.title}`))return;
+  if(doc&&apCan(3)&&(fixed||(doc.status!=='Superseded'&&apStage(doc)<3&&doc.status!=='Sent back'))){NTF.mine['documents|'+doc.id]=now;const a={...(doc.appr||{})};for(let i=1;i<=3;i++)if(!a['s'+i])a['s'+i]={by:ME.id,at:now};
+    if(await write(()=>db.doc('documents/'+doc.id).update({appr:a,status:'Approved',rv:[...(doc.rv||[]),{k:'go',by:ME.id,at:now,st:3,t:'Approved with the task'}]})))toast(`Approved: ${t.title} — and ${doc.dkey||doc.title}${doc.rev?' '+doc.rev:''} in the library`);}
+  closeLayer();render();}
+async function trBack(c,id,f){const t=trRec(c,id);if(!t)return false;const txt=f.elements.t.value.trim();if(!txt){toast('Write what needs to change');return false;}
+  const btn=f.querySelector('.btn.warn');if(btn)btn.disabled=true;
+  const up=await trUpload(f.elements.files.files);if(up===null){if(btn)btn.disabled=false;return false;}
+  const who=f.elements.who?f.elements.who.value||t.who:t.who,due=f.elements.due?f.elements.due.value:'';const now=Date.now();
+  const ok=await trPatch(c,id,{status:'Changes requested',progress:Math.min(+t.progress||0,90),who,...(due?{due}:{}),log:[...(t.log||[]),{k:'back',by:ME.id,at:now,t:txt,files:up,who,...(due?{due}:{})}]},`Sent back to ${pnm(who)}`);
+  if(!ok){if(btn)btn.disabled=false;return false;}
+  const doc=trDoc(t);
+  if(doc&&f.elements.doc&&f.elements.doc.checked&&CANW&&canEditView('documents')){NTF.mine['documents|'+doc.id]=now;
+    await write(()=>db.doc('documents/'+doc.id).update({appr:{},status:'Sent back',rel:null,rv:[...(doc.rv||[]),{k:'back',by:ME.id,at:now,t:txt,files:up,st:apStage(doc)}]}));}
+  closeLayer();render();return true;}
+async function trNote(c,id,f){const t=trRec(c,id);if(!t)return;const txt=f.elements.t.value.trim();const fs=f.elements.files.files;
+  if(!txt&&!fs.length){toast('Write a comment or add a file');return;}const btn=f.querySelector('.btn');btn.disabled=true;
+  const up=await trUpload(fs);if(up===null){btn.disabled=false;return;}
+  if(await trPatch(c,id,{log:[...(t.log||[]),{k:'note',by:ME.id,at:Date.now(),t:txt,files:up}]},'Comment added'))trOpen(c,id);else btn.disabled=false;}
+async function trDoneNoFile(c,id){const t=trRec(c,id);if(!t)return;const rv=trNeeds(t);
+  const n=prompt(rv?`Note for ${pnm(t.by)} (optional)`:'Note (optional)','');if(n===null)return;
+  if(await trPatch(c,id,{status:rv?'For review':TR_DONE(c),progress:100,doneAt:Date.now(),log:[...(t.log||[]),{k:'done',by:ME.id,at:Date.now(),t:n.trim()}]},rv?`Sent to ${pnm(t.by)} for review`:'Marked done ✓')){closeLayer();render();}}
+
+/* ---------- "Waiting for your review" box (home screens) ---------- */
+function trWaiting(){const out=[];if(!ME||!ME.id)return out;TR_COLS.forEach(c=>(D[c]||[]).forEach(t=>{if(t.status==='For review'&&trCanReview(t)&&t.who!==ME.id)out.push([c,t]);}));
+  return out.sort((a,b)=>(b[1].doneAt||0)-(a[1].doneAt||0));}
+function trReviewBox(){if(!S.ready||curRole()==='Client')return '';const xs=trWaiting();if(!xs.length)return '';
+  return `<div class="box tr-box"><div class="box-h">${ico('check-check')}<h2>Waiting for your review</h2><span class="pill p-amber">${xs.length}</span></div>
+  ${xs.slice(0,8).map(([c,t])=>{const d=trLast(t,'done')||{},doc=trDoc(t);return `<div class="md-task"><div style="flex:1;min-width:0"><b>${esc(t.title)}</b>
+     <div class="code">${esc(pnm(t.who))} finished it${d.at?' · '+esc(trWhen(d.at)):''}${t.project?' · '+esc(pname(t.project)):''}</div>${d.t?`<div>${esc(d.t)}</div>`:''}${trFiles(d.files&&d.files.length?d.files:doc&&doc.files)}</div>
+     <div class="srow" style="padding:0;border:0;gap:6px;flex-wrap:wrap">${trCanWrite(c,t)?`<button type="button" class="btn sm pri" data-trok="${c}|${esc(t.id)}">${ico('check')}<span>Approve</span></button><button type="button" class="btn sm warn" data-trback="${c}|${esc(t.id)}">${ico('corner-up-left')}<span>Send back</span></button>`:''}<button type="button" class="btn sm ghost" data-tropen="${c}|${esc(t.id)}">Details</button></div></div>`;}).join('')}
+  ${xs.length>8?`<div class="code" style="padding:8px 16px">+${xs.length-8} more in Tasks</div>`:''}</div>`;}
+/* a small status note for a task row */
+function trBadge(t){if(!t)return '';if(t.status==='Changes requested'){const b=trLast(t,'back');return ` <span class="pill p-red">Corrections</span>${b&&b.t?`<div class="tr-back">↩ ${esc(pnm(b.by))}: ${esc(String(b.t).slice(0,140))}</div>`:''}`;}
+  if(t.status==='For review')return ` <span class="pill p-amber">With ${esc(pnm(t.by))} for review</span>`;return '';}
+
+/* ---------- Drawings library: send a drawing to someone (reopens its task, or makes one) ---------- */
+function trSendForm(docId){const d=(D.documents||[]).find(x=>x.id===docId);if(!d)return;const key=d.dkey||d.title;
+  const all=(D.documents||[]).filter(x=>x.project===d.project&&(x.dkey||x.title)===key);const linked=trTasksOf(d.project,key,all.map(x=>x.id));
+  const last=linked[0],ppl=schPeople().filter(p=>p.account!==ME.id);
+  const prevBy=(all.slice().sort((a,b)=>(b.at||0)-(a.at||0)).find(x=>x.by&&x.by!==ME.id)||{}).by;const def=(last&&last[1].who!==ME.id&&last[1].who)||prevBy||'';
+  document.getElementById('layer').innerHTML=`<div class="drawer qa-drawer"><div class="pane" style="height:auto;max-height:100%"><div class="pane-h"><h2>Send ${esc(key)} to…</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <form id="trSendForm" class="pane-b" data-doc="${esc(docId)}" style="display:grid;gap:10px"><div class="code">${esc(pname(d.project))}${d.rev?' · current '+esc(d.rev):''}</div>
+    <label>Person<select name="who" required><option value="">Choose…</option>${ppl.map(p=>`<option value="${esc(p.account)}" ${p.account===def?'selected':''}>${esc(p.name)} — ${esc(p.role||'')}</option>`).join('')}</select></label>
+    <label>What to do (required)<textarea name="t" rows="3" required maxlength="1500">${esc(`Please update ${key} as per the attached corrections and upload the new revision.`)}</textarea></label>
+    <label>Corrected / marked-up files (optional — DWG, PDF, photos…)<input type="file" name="files" multiple></label>
+    <label>Due date<input type="date" name="due" value="${new Date(Date.now()+2*864e5).toISOString().slice(0,10)}"></label>
+    <div class="code" id="trSendHow">${last?`Reopens the task “${esc(last[1].title)}” (${esc(last[1].status||'')}, with ${esc(pnm(last[1].who))})${trIsDone(last[0],last[1])?` if you pick ${esc(pnm(last[1].who))}; anyone else gets a new task`:' — for whoever you pick'}.`:'A new task is made for this drawing.'} They see it in My day, the bell and as a notification, and finish it with <b>Upload corrected file</b> — it becomes the next revision.</div>
+    <div class="srow" style="padding:0;border:0"><button class="btn pri">${ico('send')}<span>Send</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div></form></div></div>`;}
+async function trSend(f){const d=(D.documents||[]).find(x=>x.id===f.dataset.doc);if(!d)return;const key=d.dkey||d.title,who=f.elements.who.value,txt=f.elements.t.value.trim(),due=f.elements.due.value;
+  if(!who){toast('Choose the person');return;}if(!txt){toast('Write what to do');return;}const btn=f.querySelector('.btn.pri');btn.disabled=true;
+  const up=await trUpload(f.elements.files.files);if(up===null){btn.disabled=false;return;}const now=Date.now();
+  const all=(D.documents||[]).filter(x=>x.project===d.project&&(x.dkey||x.title)===key);const lk=trTasksOf(d.project,key,all.map(x=>x.id)).filter(([c,t])=>trCanWrite(c,t));
+  const ex=lk.find(([c,t])=>t.who===who)||lk.find(([c,t])=>!trIsDone(c,t));   // the same person's task, or the open one (moved to the new person)
+  const ent={k:'back',by:ME.id,at:now,t:txt,files:up,who,...(due?{due}:{}),key,rev:d.rev||''};let ok;
+  if(ex){const [c,t]=ex;ok=await trPatch(c,t.id,{status:'Changes requested',progress:Math.min(+t.progress||0,90),who,...(due?{due}:{}),log:[...(t.log||[]),ent]},`Sent back to ${pnm(who)} — task reopened`);}
+  else{const c=['dtasks','tasks'].find(k=>CANW0&&canEditView(k));if(!c){toast('You cannot give tasks. Ask the admin.');btn.disabled=false;return;}
+    const id=(crypto.randomUUID?crypto.randomUUID():now.toString(36)+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+    const disc=c==='dtasks'&&MOD.dtasks.fields.find(x=>x.k==='disc').o.includes(d.disc)?d.disc:'';NTF.mine[c+'|'+id]=now;
+    ok=await write(()=>db.doc(c+'/'+id).set({project:d.project,title:`Update ${key}`,...(disc?{disc}:{}),who,by:ME.id,start:today(),...(due?{due}:{}),status:'Changes requested',progress:0,dkey:key,doneDisc:d.disc||'',files:up,notes:txt,log:[ent]}),`Sent to ${pnm(who)} — new task`);}
+  if(ok){closeLayer();render();}else btn.disabled=false;}
+/* a line on a library row: who has this drawing now */
+function trLibLine(pid,x){const t=trTasksOf(pid,x.k,x.all.map(d=>d.id)).find(([c,t])=>!trIsDone(c,t));if(!t)return '';
+  return `<div class="code"><button type="button" class="btn sm ghost" data-tropen="${t[0]}|${esc(t[1].id)}">${ico('list-checks')}<span>Task: ${esc(pnm(t[1].who))} · ${esc(t[1].status||'Not started')}</span></button></div>`;}
+
+/* ---------- Settings switch ---------- */
+function trSetBox(){const on=trOn();return `<div class="box"><div class="box-h">${ico('check-check')}<h2>Review finished work</h2></div>
+  <div class="srow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:220px">When someone finishes work another person gave them, it goes to that person “For review” to approve or send back with corrections. Turn off to mark such work Completed straight away.</span>
+  <span class="pill ${on?'p-green':'p-grey'}">${on?'On':'Off'}</span><button type="button" class="btn sm" id="trToggle">${on?'Turn off':'Turn on'}</button></div></div>`;}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{if(!e.target.closest)return;let b;
+  if((b=e.target.closest('[data-tropen]'))){const [c,id]=b.dataset.tropen.split('|');trOpen(c,id);return;}
+  if((b=e.target.closest('[data-trback]'))){const [c,id]=b.dataset.trback.split('|');trOpen(c,id,'back');return;}
+  if((b=e.target.closest('[data-trok]'))){const [c,id]=b.dataset.trok.split('|');b.disabled=true;await trApprove(c,id);return;}
+  if((b=e.target.closest('[data-trdone]'))){const [c,id]=b.dataset.trdone.split('|');trDoneNoFile(c,id);return;}
+  if((b=e.target.closest('[data-dlsend]'))){trSendForm(b.dataset.dlsend);return;}
+  if((b=e.target.closest('[data-trlib]'))){const [p,d]=b.dataset.trlib.split('|');closeLayer();if(p&&projOK(p))S.proj=p;if(d)DL.disc=d;S.view='drawlib';render();return;}
+  if((b=e.target.closest('#trToggle'))){const on=!trOn();if(await write(()=>db.doc('org/main').update({taskReview:on}),on?'Finished work now goes for review':'Finished work is marked Completed straight away'))render();return;}});
+document.addEventListener('change',e=>{const i=e.target;if(!i.dataset||!i.dataset.trfix||!i.files.length)return;const [c,id]=i.dataset.trfix.split('|');trApprove(c,id,i.files);});
+document.addEventListener('submit',e=>{const f=e.target;
+  if(f.id==='trBackForm'){e.preventDefault();trBack(f.dataset.c,f.dataset.id,f);}
+  else if(f.id==='trNoteForm'){e.preventDefault();trNote(f.dataset.c,f.dataset.id,f);}
+  else if(f.id==='trSendForm'){e.preventDefault();trSend(f);}});
+document.head.insertAdjacentHTML('beforeend',`<style>
+.tr-f{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel,#fff)}
+.tr-f textarea,.tr-f input[type=file]{width:100%}
+.tr-f .pl-chk{display:flex;gap:8px;align-items:flex-start;text-align:left}.tr-f .pl-chk input{margin-top:3px}
+.tr-doc{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.tr-back{font-size:12.5px;color:var(--red-ink,#b42318);margin-top:2px}
+.note.warn{border-color:#f3c0b9;background:#fff4f2}
+.tr-box .md-task{align-items:flex-start;flex-wrap:wrap}
+@media (max-width:700px){.md-task{flex-wrap:wrap}.md-task>div[style*="flex:1"]{flex-basis:calc(100% - 52px)!important}}
+</style>`);
+
 /* ================= CSV export ================= */
 async function exportCsv(k){
   let headers,rows;
@@ -7816,6 +8008,7 @@ document.addEventListener('submit',async e=>{
   if(body.link&&!/^https:\/\//i.test(body.link)){toast('Link must start with https://');return;}
   const k=DRAFT.k,id=DRAFT.id;
   if(body.gstin){body.gstin=body.gstin.toUpperCase().replace(/\s/g,'');if(!GSTIN_RE.test(body.gstin)){toast('GSTIN format looks wrong — it has 15 characters, like 36ABCDE1234F1Z5.');return;}}
+  if(TR_COLS.includes(k)&&id&&body.status)body.status=trGate(k,(D[k]||[]).find(x=>x.id===id),body.status);
   if(k==='tasks'&&body.status==='Completed'){const miss=gateMissing({...body,id});if(miss.length){toast(`Can't mark Completed yet — first get these checklists approved: ${miss.join(', ')}. (Reports & export → Checklists & sheets)`);return;}}
   const tplPick=k==='projects'&&!id?body.tpl:null;if(k==='projects')delete body.tpl;
   let newId=null;
