@@ -306,6 +306,7 @@ body[data-ui="client"] .tiles .tile b{font-size:24px}
   .drawer .pane{width:100%}
   .pane-f{position:sticky;bottom:0;background:var(--panel)}.pane-f .btn{flex:1;justify-content:center}
   .mtbl thead{display:none}
+  .mtbl tr.lgrp{padding:0}.mtbl tr.lgrp td{display:block;text-align:left}.mtbl tr.lgrp td::before{content:none}
   .mtbl table,.mtbl tbody,.mtbl tr,.mtbl td{display:block;width:100%}
   .mtbl tr{border-bottom:1px solid var(--line);padding:8px 0}
   .mtbl td{border:0;padding:3px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;text-align:right;overflow-wrap:anywhere}
@@ -851,7 +852,7 @@ let db=null,U=null,A=null,ME={id:null,name:'',isOwner:false,canEdit:false},CANW=
 const COLS=['projects','members','org','joinreq','templates','forms','formAccess','audit','roleaccess','chats','chatseen','chatgroups','chatprefs','worklog',...Object.keys(MOD)];
 const D={};COLS.forEach(c=>D[c]=[]);
 let P={};
-const S={view:'dashboard',proj:'all',q:'',fstat:'',confirm:null,ready:false,stale:false};
+const S={view:'dashboard',proj:'all',q:'',fstat:'',fwho:'',lsort:(()=>{try{return localStorage.getItem('bm-lsort')||'';}catch(_){return '';}})(),confirm:null,ready:false,stale:false};
 try{const p=localStorage.getItem('bm-proj');if(p)S.proj=p;}catch(e){}
 const nm=id=>!id?'—':DEMO_NAMES[id]?DEMO_NAMES[id]:id===ME.id?(ME.name||'You'):((P[id]&&P[id].name)||'Someone');
 const proj=id=>D.projects.find(p=>p.id===id);
@@ -1079,7 +1080,7 @@ function cell(f,r){
   const v=r[f.k];
   switch(f.t){
     case 'project':return esc(pname(v));
-    case 'member':return esc(nm(v));
+    case 'member':return esc(pnm(v));
     case 'lead':{const l=D.leads.find(x=>x.id===v);return l?esc(l.name):'—';}
     case 'campaign':{const c=D.campaigns.find(x=>x.id===v);return c?esc(c.name):'—';}
     case 'vendor':return esc(vname(v));
@@ -1103,6 +1104,7 @@ function cell(f,r){
 const isNum=f=>f.t==='number'&&f.k!=='progress'||f.t==='money';
 
 /* ================= Generic module list ================= */
+const teamRole=id=>{const t=(D.team||[]).find(x=>x.account===id);return t&&t.role||'';};
 function vModule(k){
   const m=MOD[k];
   let rows=D[k].filter(r=>m.noProject&&S.proj!=='all'?(k!=='labour'||r.project===S.proj):inProj(r));if(k==='documents')rows=rows.filter(relOK);
@@ -1112,6 +1114,21 @@ function vModule(k){
   const stF=m.fields.find(f=>f.k==='status');
   if(S.fstat&&stF)rows=rows.filter(r=>r.status===S.fstat);
   rows.sort((a,b)=>(b.date||b.due||'').localeCompare(a.date||a.due||'')||(b.at||0)-(a.at||0));
+  /* person / team: filter + sort + group (lists with an "Assigned to" person) */
+  const whoF=m.fields.find(f=>f.k==='who'&&f.t==='member');let gKey=null,gHead=null;
+  const pplOpts=whoF?(()=>{const ids=[...new Set(D[k].filter(r=>m.noProject&&S.proj!=='all'?(k!=='labour'||r.project===S.proj):inProj(r)).map(r=>r.who).filter(Boolean))];return ids.map(id=>[id,pnm(id)]).sort((a,b)=>a[1].localeCompare(b[1]));})():[];
+  const lsort=whoF&&['person','team','due','status'].includes(S.lsort)?S.lsort:'';
+  if(whoF){const fw=pplOpts.some(o=>o[0]===S.fwho)||S.fwho==='_none'?S.fwho:'';if(fw)rows=rows.filter(r=>fw==='_none'?!r.who:r.who===fw);
+    const done=r=>['Completed','Resolved','Closed','Won','Lost','Done','No-show','Cancelled'].includes(r.status)?1:0,due=r=>r.due||r.follow||r.date||'9999',t0=today();
+    const byDue=(a,b)=>done(a)-done(b)||due(a).localeCompare(due(b));
+    if(lsort==='due')rows.sort(byDue);
+    else if(lsort==='status')rows.sort((a,b)=>(a.status||'').localeCompare(b.status||'')||byDue(a,b));
+    else if(lsort==='person'||lsort==='team'){
+      gKey=r=>!r.who?'~':lsort==='person'?pnm(r.who)+'\u0001'+r.who:(teamRole(r.who)||'Other');
+      rows.sort((a,b)=>(gKey(a)==='~')-(gKey(b)==='~')||gKey(a).localeCompare(gKey(b))||pnm(a.who||'').localeCompare(pnm(b.who||''))||byDue(a,b));
+      gHead=(key,xs)=>{const open=xs.filter(r=>!done(r)).length,late=xs.filter(r=>!done(r)&&due(r)<t0&&due(r)!=='9999').length,ppl=new Set(xs.map(r=>r.who).filter(Boolean)).size;
+        const gn=key==='~'?'Not assigned':key.split('\u0001')[0],sub=lsort==='person'&&key!=='~'?teamRole(xs[0].who):lsort==='team'&&key!=='~'?ppl+(ppl===1?' person':' people'):'';
+        return `${esc(gn)}${sub?` <span class="code">· ${esc(sub)}</span>`:''}<span class="lg-n">${open} open${late?` · <b style="color:var(--red-ink)">${late} late</b>`:''}${xs.length-open?` · ${xs.length-open} done`:''}</span>`;};}}
   const cols=m.fields.filter(f=>f.list&&!(f.t==='project'&&S.proj!=='all'));
   let foot='';
   const sumF=cols.filter(f=>['qty','amount','count'].includes(f.k));
@@ -1121,9 +1138,11 @@ function vModule(k){
   return header(esc(label(k)),(k==='dpr'&&CANW?`<button class="btn" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:'')+(k==='attendance'&&CANW?`<button class="btn" data-go="attbulk">${ico('calendar-plus')}Mark for whole gang</button>`:'')+(k==='tasks'&&CANW?`<button class="btn" data-import="1">${ico('file-up')}Import schedule</button>`:'')+(k==='team'&&canView('roleaccess')?`<button class="btn" data-go="roleaccess">${ico('shield')}Role access</button>`:'')+(k==='leads'?`<button class="btn" data-go="pipeline">${ico('kanban')}Pipeline board</button>`:'')+addBtn(k))+intro+
   `<div class="box"><div class="filters"><input id="q" placeholder="Search" value="${esc(S.q)}" aria-label="Search">
     ${stF?`<select id="fstat" aria-label="Status"><option value="">All statuses</option>${stF.o.map(o=>`<option ${S.fstat===o?'selected':''}>${o}</option>`).join('')}</select>`:''}
+    ${whoF?`<select id="fwho" aria-label="${esc(whoF.l)}"><option value="">Everyone</option>${pplOpts.map(([id,nm])=>`<option value="${esc(id)}" ${S.fwho===id?'selected':''}>${esc(nm)}</option>`).join('')}<option value="_none" ${S.fwho==='_none'?'selected':''}>Not assigned</option></select>
+    <select id="lsort" aria-label="Sort by"><option value="">Sort: newest</option><option value="due" ${lsort==='due'?'selected':''}>Sort: due date</option><option value="person" ${lsort==='person'?'selected':''}>Group: by person</option><option value="team" ${lsort==='team'?'selected':''}>Group: by team / role</option>${stF?`<option value="status" ${lsort==='status'?'selected':''}>Sort: status</option>`:''}</select>`:''}
     <span class="code" style="margin-left:auto;align-self:center">${rows.length} ${rows.length===1?'entry':'entries'}</span></div>
   ${rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
-  <tbody>${rows.map(r=>`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
+  <tbody>${rows.map((r,i)=>(gKey&&(i===0||gKey(rows[i-1])!==gKey(r))?`<tr class="lgrp"><td colspan="${cols.length+(m.extra||[]).length+1}">${gHead(gKey(r),rows.filter(x=>gKey(x)===gKey(r)))}</td></tr>`:'')+`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
     <td class="acts">${TR_COLS.includes(k)?`<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
   :`<div class="hero-empty">${ico(m.icon)}<h2>No ${esc(m.label.toLowerCase())} yet</h2><p>${S.proj!=='all'&&!m.noProject?'Nothing recorded for this project.':'Add the first entry to start keeping records here.'}</p>${addBtn(k)}</div>`}</div>`;
 }
@@ -3679,7 +3698,7 @@ const AI={sample:null,turns:[],busy:false,ctl:null};
 const AI_COLS=['projects','team','clients','vendors','leads',...Object.keys(MOD).filter(k=>!['team','clients','vendors','leads'].includes(k))];
 function colFields(c){return c==='projects'?[{k:'prefix',l:'Project code',t:'text'},{k:'name',l:'Project name',t:'text',req:1},{k:'description',l:'Description',t:'textarea'},{k:'start',l:'Start date',t:'date'},{k:'end',l:'End date',t:'date'},{k:'client',l:'Client',t:'client'},{k:'address',l:'Site address',t:'textarea'}]:(MOD[c]||{}).fields||[];}
 function readable(c,r){const o={id:r.id};colFields(c).forEach(f=>{const v=r[f.k];if(v===undefined||v===''||v===null)return;
-  o[f.k]=f.t==='project'?pname(v):f.t==='client'?cname(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='equipment'?ename(v):f.t==='member'?nm(v):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname)):f.t==='photos'?`${v.length} photo(s)`:f.t==='files'?v.map(x=>x.name):f.t==='location'?(v?`${v.lat},${v.lng}`:''):(typeof v==='string'&&v.length>200?v.slice(0,200)+'…':v);});
+  o[f.k]=f.t==='project'?pname(v):f.t==='client'?cname(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='equipment'?ename(v):f.t==='member'?pnm(v):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname)):f.t==='photos'?`${v.length} photo(s)`:f.t==='files'?v.map(x=>x.name):f.t==='location'?(v?`${v.lat},${v.lng}`:''):(typeof v==='string'&&v.length>200?v.slice(0,200)+'…':v);});
   if(c==='projects'&&r.loc)o.map=gmaps(r.loc);if(MOD[c]&&MOD[c].extra)MOD[c].extra.forEach(x=>o[x.l]=String(x.f(r)).replace(/<[^>]+>/g,''));return o;}
 function findByName(list,val,what,key='name'){
   const v=String(val||'').trim().toLowerCase();if(!v)return '';
@@ -3836,7 +3855,7 @@ function aiOpenRecord(a){
   const key=c==='projects'?'name':(colFields(c).find(f=>f.k==='name'||f.k==='title')||{k:'name'}).k;
   const id=findByName(list,a.name||'',c==='projects'?'project':'record',key);
   if(c==='projects'){S.proj=id;S.view='project';render();return {opened:pname(id),record:readable(c,proj(id))};}
-  const r=D[c].find(x=>x.id===id);S.view=c;S.q=String(r[key]||'');render();
+  const r=D[c].find(x=>x.id===id);S.view=c;S.q=String(r[key]||'');S.fwho='';render();
   return {opened:String(r[key]||''),record:readable(c,r)};
 }
 /* keep the last part of the conversation, always starting with a question */
@@ -5495,7 +5514,7 @@ function navTrack(){
 window.addEventListener('scroll',()=>{if(LASTV)LASTV.y=window.scrollY;},{passive:true});
 function goBack(fromPop){
   const l=document.getElementById('layer');if(l&&l.innerHTML.trim()){if(typeof qrStop==='function')qrStop();closeLayer();if(fromPop)try{history.pushState({bm:HIST.length},'');}catch(_){}return true;}
-  const p=HIST.pop();if(!p)return false;NAVBACK=true;S.view=p.view;S.proj=p.proj;LASTV={...p};render();setTimeout(()=>scrollTo(0,p.y||0),0);return true;
+  const p=HIST.pop();if(!p)return false;NAVBACK=true;if(S.view!==p.view)S.fwho='';S.view=p.view;S.proj=p.proj;LASTV={...p};render();setTimeout(()=>scrollTo(0,p.y||0),0);return true;
 }
 window.addEventListener('popstate',()=>{goBack(true);});
 const backBtn=()=>HIST.length&&!HOME_VIEWS.includes(S.view)?`<button type="button" class="btn ghost back-btn" data-back aria-label="Back">${ico('arrow-left')}<span>Back</span></button>`:'';
@@ -7792,6 +7811,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .tr-back{font-size:12.5px;color:var(--red-ink,#b42318);margin-top:2px}
 .note.warn{border-color:#f3c0b9;background:#fff4f2}
 .tr-box .md-task{align-items:flex-start;flex-wrap:wrap}
+.lgrp td{background:var(--grey);font-weight:700;padding:8px 14px!important;border-top:1px solid var(--line)}.lgrp .lg-n{margin-left:12px;font-weight:500;font-size:13px;color:var(--muted)}.lgrp td{position:sticky;left:0}
 .al-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 12px}
 .al-t{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:inherit;font:inherit;cursor:pointer}
 .al-t.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}.al-t span{display:flex;flex-wrap:wrap;gap:6px}.al-t i.pill{font-style:normal}
@@ -7821,7 +7841,7 @@ async function exportCsv(k){
   else if(k==='wages'){headers=['Worker','Trade','Daily wage','Days','OT hours','Earned','Advances','To pay'];rows=wagesRows().map(r=>[r.name,r.trade,r.wage,r.days,r.ot,Math.round(r.gross),r.advance,Math.round(r.net)]);}
   else if(k==='balances'){const b=balanceRows();headers=['Type','Name','Billed','Paid / received','Balance'];rows=[...b.cli,...b.vend].map(r=>[r.kind,r.name,Math.round(r.billed),Math.round(r.paid),Math.round(r.bal)]);}
   else{const m=MOD[k];const fs=m.fields.filter(f=>f.t!=='photos');headers=[...fs.map(f=>f.l),'Added by'];
-    rows=D[k].filter(r=>(m.noProject?true:inProj(r))&&(k!=='documents'||relOK(r))).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?nm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
+    rows=D[k].filter(r=>(m.noProject?true:inProj(r))&&(k!=='documents'||relOK(r))).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?pnm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
   const csv='﻿'+[headers,...rows].map(r=>r.map(v=>{const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
   const pn=S.proj==='all'?'all-projects':(proj(S.proj)?.prefix||proj(S.proj)?.name||'project').replace(/[^\w-]+/g,'-');
   await saveFile(`BuildMitr-${k}-${pn}-${today()}.csv`,new Blob([csv],{type:'text/csv'}));
@@ -7913,7 +7933,7 @@ document.addEventListener('click',e=>{
   if(d.fback){S.leaveOk=false;FORM=null;S.view='forms';render();scrollTo(0,0);return;}
   if(d.fproj){S.proj=d.fproj;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}S.view='forms';render();scrollTo(0,0);return;}
   if(d.fpick){S.proj='all';S.view='forms';render();scrollTo(0,0);return;}
-  if(d.go){S.leaveOk=false;S.view=d.go;S.q='';S.fstat='';if(typeof matchMedia!=='undefined'&&matchMedia(SMALL_MQ).matches)COLLAPSED=true;render();scrollTo(0,0);return;}
+  if(d.go){S.leaveOk=false;S.view=d.go;S.q='';S.fstat='';S.fwho='';if(typeof matchMedia!=='undefined'&&matchMedia(SMALL_MQ).matches)COLLAPSED=true;render();scrollTo(0,0);return;}
   if(d.proj){S.proj=d.proj;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}S.view='project';render();scrollTo(0,0);return;}
   if(d.add){openForm(d.add);return;}
   if(d.edit){const[k,id]=d.edit.split(':');openForm(k,id);return;}
@@ -8006,6 +8026,8 @@ document.addEventListener('change',e=>{
   if(e.target&&e.target.dataset&&e.target.dataset.adrole){adminSetRole(e.target.dataset.adrole,e.target.value);return;}
   if(e.target.id==='projSel'){S.proj=e.target.value;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}render();return;}
   if(e.target.id==='fstat'){S.fstat=e.target.value;render();return;}
+  if(e.target.id==='fwho'){S.fwho=e.target.value;render();return;}
+  if(e.target.id==='lsort'){S.lsort=e.target.value;try{localStorage.setItem('bm-lsort',S.lsort);}catch(_){}render();return;}
   if(e.target.id==='fbranch'){S.fbranch=e.target.value;render();return;}
   if(e.target.id==='chatWho'){S.chatWho=e.target.value;render();return;}
   if(e.target.id==='pg-proj'){const p=e.target.value;document.querySelectorAll('#pg-list .pg-row').forEach(r=>{r.hidden=!(r.dataset.elig||'').split(' ').includes(p);});return;}
