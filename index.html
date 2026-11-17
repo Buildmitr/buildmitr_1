@@ -1242,6 +1242,7 @@ function vSettings(){
   return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
   ${myProfileBox(admin)}
   ${actBoss()?ctBox()+trSetBox():''}
+  ${bmUpdBox()}
   <div class="box"><div class="box-h">${ico('bell')}<h2>Notifications</h2></div>${ntSettings()}<div class="srow"><span class="code">Shows a Windows / phone notification when someone messages you, gives you a task or drawing, changes it, or schedules work for you — while BuildMitr is open or running in the background (the Windows app keeps running in the tray).</span></div></div>
   ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
@@ -2050,34 +2051,83 @@ function raiseInvoice(mid){
 
 /* ================= Alerts ================= */
 function computeAlerts(){
-  const t=today(),A_=[];const add=(sev,txt,view,pid)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid});};
+  const t=today(),A_=[];const add=(sev,txt,view,pid,d)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid,d:d||''});};
   const bossA=isAdmin()||curRole()==='Project manager';
-  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,'tasks',x.project));
-  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project));
+  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,canView('tasks')?'tasks':'myday',x.project,x.due));
+  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project,x.due));
   D.tasks.filter(x=>x.status!=='Completed'&&n(x.progress)>=100&&gateMissing(x).length).forEach(x=>add('med',`${x.title}: waiting for approved ${gateMissing(x).join(', ')}`,'forms',x.project));
-  D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project));
-  D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads'));
+  D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project,x.due));
+  D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads','',l.follow));
   stock().filter(s=>s.received>0&&s.store<=s.received*0.1).forEach(s=>add('med',`Low stock: ${s.material} — ${num(s.store)} ${s.unit} left`,'inventory',s.project));
   if(isAdmin())pendingJoins().forEach(r=>A_.push({sev:'high',txt:`Login code sent to a new person: ${r.name||r.email}${r.role?' — '+r.role:''} (${r.email}${r.phone?', '+r.phone:''})`,view:'team'}));
-  D.requests.filter(r=>r.status==='Pending').forEach(r=>add('med',`Material request pending: ${r.material} ${num(r.qty)} ${r.unit||''}${r.needBy?` by ${fd(r.needBy)}`:''}`,'requests',r.project));
+  D.requests.filter(r=>r.status==='Pending').forEach(r=>add('med',`Material request pending: ${r.material} ${num(r.qty)} ${r.unit||''}${r.needBy?` by ${fd(r.needBy)}`:''}`,'requests',r.project,r.needBy));
   D.forms.filter(f=>f.status==='Submitted').forEach(f=>{if(isAdmin())add('med',`Checklist waiting for your approval: ${f.title}`,'forms',f.project);});
   D.documents.filter(d=>d.status==='For approval').forEach(d=>add('med',`Drawing for approval: ${d.title} ${d.rev||''}`,'documents',d.project));
   D.changes.filter(c=>c.status==='Requested').forEach(c=>add('med',`Change order ${c.no} waiting for approval (${inr(c.amount)})`,'changes',c.project));
-  D.invoices.filter(i=>(i.kind==='Tax invoice'||i.kind==='RA bill')&&i.status!=='Paid'&&i.date&&(Date.now()-new Date(i.date+'T00:00'))>15*864e5).forEach(i=>add('high',`Payment overdue: ${i.no} — ${inr(invTotal(i)-n(i.got))} from ${cname(i.client)}`,'invoices',i.project));
+  D.invoices.filter(i=>(i.kind==='Tax invoice'||i.kind==='RA bill')&&i.status!=='Paid'&&i.date&&(Date.now()-new Date(i.date+'T00:00'))>15*864e5).forEach(i=>add('high',`Payment overdue: ${i.no} — ${inr(invTotal(i)-n(i.got))} from ${cname(i.client)}`,'invoices',i.project,i.date));
   D.milestones.filter(m=>msStatus(m)==='Due').forEach(m=>add('high',`Stage reached — raise invoice: ${m.stage} (${inr(msAmount(m))})`,'milestones',m.project));
   D.cameras.filter(c=>c.status==='Offline'&&camAllowed(c)).forEach(c=>add('low',`Camera offline: ${c.name}`,'cctv',c.project));
   rateHistory().filter(r=>r.jump>=10).forEach(r=>add('low',`Price up ${r.jump}%: ${r.material} now ${inr(r.last)}/${r.unit} (avg ${inr(r.avg)})`,'reports'));
   const o={high:0,med:1,low:2};return A_.sort((a,b)=>o[a.sev]-o[b.sev]);
 }
+/* ================= Alerts: two tabs (Needs action / Updates), type chips, search, sort ================= */
+const AL={tab:'act',cat:'',sort:'urgent',q:'',unread:false,snap:0};
+const AL_CAT={tasks:'Tasks',designsched:'Tasks',myday:'Tasks',issues:'Site',inventory:'Site',requests:'Site',cctv:'Site',forms:'Approvals',documents:'Approvals',changes:'Approvals',invoices:'Money',milestones:'Money',reports:'Money',leads:'Sales',team:'Team'};
+const AL_ICO={Tasks:'list-checks',Site:'hard-hat',Approvals:'clipboard-check',Money:'indian-rupee',Sales:'target',Team:'users',Reviews:'eye',Drawings:'pencil-ruler',Assigned:'calendar-check',Other:'bell'};
+const alUpdCat=a=>['review','returned','approved','comment'].includes(a.action)?'Reviews':['uploaded','updated'].includes(a.action)?'Drawings':['assigned','scheduled'].includes(a.action)?'Assigned':'Other';
+const alAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':m<2880?'yesterday':fd(new Date(t).toISOString().slice(0,10));};
+function alItems(){const t=today();
+  const act=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj).map((a,i)=>({k:'a'+i,sev:a.sev,txt:a.txt,pid:a.pid||'',cat:AL_CAT[a.view]||'Other',when:a.d||'',
+    meta:a.d?(a.d<t?'Since '+fd(a.d):fd(a.d)):'',btn:`<button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button>`}));
+  const go=a=>a.col==='stdlib'?'stdlib':a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
+  const upd=bellActs().filter(a=>S.proj==='all'||!a.project||a.project===S.proj).map(a=>({k:'u'+a.at,sev:a.action==='returned'?'high':a.action==='review'?'med':'low',txt:a.summary,pid:a.project||'',cat:alUpdCat(a),at:a.at,isNew:a.at>AL.snap,
+    meta:pnm(a.by)+' · '+alAgo(a.at),btn:TR_COLS.includes(a.col)&&a.ref&&trRec(a.col,a.ref)?`<button class="btn sm" data-tropen="${a.col}|${esc(a.ref)}">Open</button>`:canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${esc(a.project||'')}">Open</button>`:''}));
+  return {act,upd};}
+function alRow(x){return `<div class="al-row sev-${x.sev} ${x.isNew?'new':''}">${x.isNew?'<i class="bell-dot" aria-label="New"></i>':''}<span class="al-ic">${ico(AL_ICO[x.cat]||'bell')}</span>
+  <div class="al-tx"><div>${esc(x.txt)}</div><div class="code">${x.cat}${x.pid?' · '+esc(pname(x.pid)):''}${x.meta?' · '+esc(x.meta):''}</div></div>${x.btn}</div>`;}
 function vAlerts(){
-  const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
-  const txt=`*${orgName()} — daily summary ${fd(today())}*\n\n`+(al.length?al.slice(0,25).map(a=>`${a.sev==='high'?'🔴':a.sev==='med'?'🟠':'⚪'} ${a.txt}${a.pid?` [${(proj(a.pid)||{}).prefix||''}]`:''}`).join('\n'):'All clear — nothing pending.');
-  const bb=bellBox();
-  return header(label('alerts'),`<a class="btn pri" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener noreferrer">${ico('message-circle')}Send summary on WhatsApp</a><button type="button" class="btn" data-sharesum="${esc(txt)}">${ico('share-2')}<span>Share or save</span></button>${isAdmin()?`<button type="button" class="btn" data-shareupd>${ico('notebook-pen')}<span>Today's site update</span></button>`:''}`)+
-  bb+(al.length?`<div class="box">${['high','med','low'].map(sv=>{const xs=al.filter(a=>a.sev===sv);if(!xs.length)return '';return `<div class="box-h"><span class="pill ${sv==='high'?'p-red':sv==='med'?'p-amber':'p-grey'}">${sv==='high'?'Urgent':sv==='med'?'Needs attention':'For information'}</span><span class="code">${xs.length}</span></div>
-    ${xs.map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line)"><span style="flex:1;min-width:200px">${esc(a.txt)}${a.pid?` <span class="code">· ${esc(pname(a.pid))}</span>`:''}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}`;}).join('')}</div>`
-  :`<div class="box hero-empty">${ico('check')}<h2>All clear</h2><p>No late tasks, pending approvals, dues or low stock right now.</p></div>`);
+  const {act,upd}=alItems(),tab=AL.tab==='upd'?'upd':'act',all=tab==='act'?act:upd,nNew=upd.filter(x=>x.isNew).length;
+  const q=(AL.q||'').trim().toLowerCase();
+  const base=all.filter(x=>(!AL.unread||tab!=='upd'||x.isNew)&&(!q||(x.txt+' '+pname(x.pid)+' '+x.meta).toLowerCase().includes(q)));
+  const cats=[...new Set(base.map(x=>x.cat))];const cat=cats.includes(AL.cat)?AL.cat:'';
+  const xs=base.filter(x=>!cat||x.cat===cat);
+  const so={high:0,med:1,low:2},sort=AL.sort||'urgent';
+  const byWhen=(a,b)=>tab==='upd'?b.at-a.at:(a.when||'9999').localeCompare(b.when||'9999');
+  let groups;
+  if(sort==='project'){const m={};xs.forEach(x=>(m[x.pid||'']=m[x.pid||'']||[]).push(x));groups=Object.keys(m).sort((a,b)=>(a?pname(a):'~').localeCompare(b?pname(b):'~')).map(k=>[k?pname(k):'General',m[k].sort((a,b)=>so[a.sev]-so[b.sev]||byWhen(a,b))]);}
+  else if(sort==='type'){const m={};xs.forEach(x=>(m[x.cat]=m[x.cat]||[]).push(x));groups=Object.keys(m).sort().map(k=>[k,m[k].sort((a,b)=>so[a.sev]-so[b.sev]||byWhen(a,b))]);}
+  else if(sort==='newest'||tab==='upd'&&sort==='urgent'){const ys=[...xs].sort((a,b)=>tab==='upd'?b.at-a.at:(b.when||'').localeCompare(a.when||''));
+    if(tab==='upd'){const d0=new Date();d0.setHours(0,0,0,0);const t0=d0.getTime(),y0=t0-864e5;groups=[['Today',ys.filter(x=>x.at>=t0)],['Yesterday',ys.filter(x=>x.at<t0&&x.at>=y0)],['Earlier',ys.filter(x=>x.at<y0)]];}
+    else groups=[['Newest first',ys]];}
+  else groups=[['Urgent',xs.filter(x=>x.sev==='high')],['Needs attention',xs.filter(x=>x.sev==='med')],['For information',xs.filter(x=>x.sev==='low')]].map(([g,a])=>[g,a.sort(byWhen)]);
+  groups=groups.filter(g=>g[1].length);
+  const cnt=sv=>act.filter(a=>a.sev===sv).length;
+  const txt=`*${orgName()} — daily summary ${fd(today())}*\n\n`+(act.length?act.slice(0,25).map(a=>`${a.sev==='high'?'🔴':a.sev==='med'?'🟠':'⚪'} ${a.txt}${a.pid?` [${(proj(a.pid)||{}).prefix||''}]`:''}`).join('\n'):'All clear — nothing pending.');
+  const sorts=tab==='act'?[['urgent','Most urgent'],['newest','Latest date'],['project','By project'],['type','By type']]:[['urgent','Newest'],['project','By project'],['type','By type']];
+  const empty=tab==='act'?`<div class="box hero-empty">${ico('check')}<h2>${q||cat?'Nothing matches':'All clear'}</h2><p>${q||cat?'Try another word or type.':'No late tasks, pending approvals, dues or low stock right now.'}</p></div>`
+    :`<div class="box hero-empty">${ico('bell')}<h2>${AL.unread?'No new updates':'No updates yet'}</h2><p>Drawings, reviews and work given to you in the last 14 days show here.</p></div>`;
+  if(tab==='upd')setTimeout(()=>{if(S.view!=='alerts'||AL.tab!=='upd')return;try{localStorage.setItem(ACT_SEEN_K(),String(Date.now()));}catch(_){}},1500);   // opened → read (the dots stay until you leave)
+  return header(label('alerts'))+
+  `<div class="al-sum">
+    <button type="button" class="al-t ${tab==='act'?'on':''}" data-altab="act"><b>Needs action</b><span>${cnt('high')?`<i class="pill p-red">${cnt('high')} urgent</i>`:''}${cnt('med')?`<i class="pill p-amber">${cnt('med')} soon</i>`:''}${!act.length?'<i class="pill p-green">All clear</i>':''}${cnt('low')?`<i class="pill p-grey">${cnt('low')} info</i>`:''}</span></button>
+    <button type="button" class="al-t ${tab==='upd'?'on':''}" data-altab="upd"><b>Recent updates</b><span>${nNew?`<i class="pill p-blue">${nNew} new</i>`:''}<i class="pill p-grey">${upd.length>=60?'latest 60':upd.length+' in 14 days'}</i></span></button>
+  </div>
+  <div class="box"><div class="al-bar">
+    <label class="al-q">${ico('search')}<input type="search" id="alQ" placeholder="Search alerts, people, projects" value="${esc(AL.q||'')}" aria-label="Search alerts"></label>
+    <label class="al-s">Sort <select id="alSort" aria-label="Sort by">${sorts.map(([v,l])=>`<option value="${v}" ${sort===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    ${tab==='upd'?`<label class="al-u"><input type="checkbox" id="alUnread" ${AL.unread?'checked':''}> New only</label><button type="button" class="btn sm ghost" data-alread>${ico('check')}Mark all read</button>`:''}
+  </div>
+  ${cats.length>1?`<div class="al-chips"><button type="button" class="chip ${!cat?'on':''}" data-alcat="">All · ${base.length}</button>${cats.sort().map(c=>`<button type="button" class="chip ${cat===c?'on':''}" data-alcat="${c}">${ico(AL_ICO[c]||'bell')}${c} · ${base.filter(x=>x.cat===c).length}</button>`).join('')}</div>`:''}
+  ${groups.length?groups.map(([g,a])=>`<div class="al-g">${esc(g)}<span class="code">${a.length}</span></div>${a.map(alRow).join('')}`).join(''):''}</div>
+  ${groups.length?'':empty}
+  ${tab==='act'?`<div class="al-share"><span class="code">Share today's list</span><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener noreferrer">${ico('message-circle')}WhatsApp</a><button type="button" class="btn sm" data-sharesum="${esc(txt)}">${ico('share-2')}<span>Share or save</span></button>${isAdmin()?`<button type="button" class="btn sm" data-shareupd>${ico('notebook-pen')}<span>Today's site update</span></button>`:''}</div>`:''}`;
 }
+let alQT=0;function alQRender(){if(S.view!=='alerts')return;const i0=document.getElementById('alQ'),had=document.activeElement===i0,pos=i0?i0.selectionStart:null;render();const i=document.getElementById('alQ');if(i&&had){i.focus();try{i.setSelectionRange(pos,pos);}catch(_){}}}
+document.addEventListener('input',e=>{if(S.view!=='alerts'||!e.target||e.target.id!=='alQ')return;AL.q=e.target.value;if(e.isComposing)return;clearTimeout(alQT);alQT=setTimeout(alQRender,250);});   // waits for the word (phone/Telugu keyboards)
+document.addEventListener('compositionend',e=>{if(S.view!=='alerts'||!e.target||e.target.id!=='alQ')return;AL.q=e.target.value;clearTimeout(alQT);alQT=setTimeout(alQRender,250);});
+document.addEventListener('change',e=>{if(S.view!=='alerts'||!e.target)return;if(e.target.id==='alSort'){AL.sort=e.target.value;render();}else if(e.target.id==='alUnread'){AL.unread=e.target.checked;render();}});
+document.addEventListener('click',e=>{if(S.view!=='alerts')return;const b=e.target.closest&&e.target.closest('[data-altab],[data-alcat],[data-alread]');if(!b)return;
+  if(b.dataset.altab){AL.tab=b.dataset.altab;AL.cat='';AL.sort='urgent';}else if(b.hasAttribute('data-alread')){AL.snap=Date.now();try{localStorage.setItem(ACT_SEEN_K(),String(AL.snap));}catch(_){}}else AL.cat=b.dataset.alcat;render();});
 
 /* ================= Material rate history ================= */
 function rateHistory(){
@@ -6524,9 +6574,30 @@ function bmSwReg(){try{if(!('serviceWorker' in navigator)||location.protocol!=='
 function bmBusy(){const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&a.value)||!!document.querySelector('#layer .drawer,#layer .modal,#layer [role=dialog]');}
 function bmUpdNow(quiet){if(quiet&&!bmBusy()){location.reload();return;}
   if(document.getElementById('bmUpd'))return;const d=document.createElement('div');d.id='bmUpd';d.className='note';d.setAttribute('role','status');
-  d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;max-width:min(92vw,460px);box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--card,#fff)';
+  d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));z-index:60;max-width:min(92vw,460px);box-shadow:0 8px 24px rgba(0,0,0,.18);background:var(--panel)';
   d.innerHTML=`${ico('sparkles')}<span style="flex:1">A new version of BuildMitr is ready.</span><button type="button" class="btn sm pri" id="bmUpdGo">Refresh</button><button type="button" class="btn sm ghost" id="bmUpdX" aria-label="Later">${ico('x')}</button>`;
   document.body.appendChild(d);d.querySelector('#bmUpdGo').onclick=()=>location.reload();d.querySelector('#bmUpdX').onclick=()=>d.remove();}
+
+/* Settings → App updates: shows the version on this device, checks the website for a newer one, and reloads cleanly */
+const bmVer=()=>{try{return caches.keys().then(ks=>Math.max(0,...ks.map(k=>+((k.match(/^buildmitr-v(\d+)$/)||[])[1]||0))));}catch(_){return Promise.resolve(0);}};
+function bmUpdBox(){setTimeout(()=>{bmVer().then(v=>{const e=document.getElementById('bmVerTxt');if(e)e.textContent=v?'Version '+v:'';}).catch(()=>{});},0);
+  return `<div class="box"><div class="box-h">${ico('download')}<h2>App updates</h2><span class="code" id="bmVerTxt"></span></div>
+  <div class="srow" style="flex-wrap:wrap;gap:10px"><span class="code" style="flex:1 1 260px">New versions usually load by themselves. If the app looks old or stuck, tap <b>Check for update</b> — no need to close and reopen it.</span>
+  <button type="button" class="btn pri" id="bmChk">${ico('download')}<span>Check for update</span></button><button type="button" class="btn" id="bmReload">${ico('history')}<span>Reload app</span></button></div></div>`;}
+async function bmHardReload(msg){if(!navigator.onLine){toast('No internet — connect and try again');return;}
+  try{const r=await fetch('sw.js',{cache:'no-store'}),d=Date.parse(r.headers.get('date')||'');if(!r.ok||(d&&Date.now()-d>10*60e3))throw 0;}catch(_){toast('Could not reach BuildMitr — try again in a minute');return;}   // only clear the saved copy when a fresh one can load
+  toast(msg);
+  try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)await r.update().catch(()=>{});}catch(_){}
+  try{const ks=await caches.keys();await Promise.all(ks.filter(k=>/^buildmitr-/.test(k)).map(k=>caches.delete(k)));}catch(_){}   // only the saved app files — your data stays on the server
+  setTimeout(()=>location.reload(),600);}
+async function bmCheckUpd(){if(!navigator.onLine){toast('No internet — connect and try again');return;}toast('Checking for a new version…');
+  const cur=await bmVer().catch(()=>0);let lat=0;
+  try{const t=await (await fetch('sw.js',{cache:'no-store'})).text();lat=+((t.match(/buildmitr-v(\d+)/)||[])[1]||0);}catch(_){toast('Could not reach BuildMitr — try again in a minute');return;}
+  if(lat&&cur&&lat<=cur){toast(`You have the latest version (${cur})`);return;}
+  bmHardReload(lat?`Updating to version ${lat}…`:'Reloading the app…');}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#bmChk,#bmReload');if(!b)return;
+  if(b.id==='bmChk'){bmCheckUpd();return;}
+  bmHardReload('Reloading the app…');});
 
 /* ================= Design schedule generator =================
    Lays out the design work of a project by its type: [key, section, activity, working days, after keys, options]
@@ -7239,14 +7310,6 @@ function bellActs(){const me=ME&&ME.id;if(!me)return [];const boss=actBoss(),wk=
   return (D.audit||[]).filter(a=>a.at>wk&&a.by!==me&&['uploaded','updated','assigned','scheduled','review','returned','approved','comment'].includes(a.action)&&(boss?(!a.project||projOK(a.project)):(a.to||[]).includes(me)))
     .sort((a,b)=>b.at-a.at).slice(0,60);}
 const bellUnread=()=>{const s=actSeen();return bellActs().filter(a=>a.at>s).length;};
-function bellBox(){const xs=bellActs();if(!xs.length)return '';const s=actSeen();
-  const go=a=>a.col==='stdlib'?'stdlib':a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
-  const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':fd(new Date(t).toISOString().slice(0,10));};
-  const html=`<div class="box"><div class="box-h">${ico('bell')}<h2>Recent updates</h2><span class="code">${xs.filter(a=>a.at>s).length} new</span></div>
-    ${xs.map(a=>`<div class="siteloc bell-r ${a.at>s?'new':''}" style="border-bottom:1px solid var(--line)">${a.at>s?'<i class="bell-dot" aria-label="New"></i>':''}<span style="flex:1;min-width:200px">${a.action==='updated'||a.action==='uploaded'?'📐 ':a.action==='scheduled'?'📅 ':a.action==='review'?'👀 ':a.action==='returned'?'↩️ ':a.action==='comment'?'💬 ':'✅ '}${esc(a.summary)}<span class="code"> · ${esc(pnm(a.by))} · ${ago(a.at)}${a.project?' · '+esc(pname(a.project)):''}</span></span>${TR_COLS.includes(a.col)&&a.ref&&trRec(a.col,a.ref)?`<button class="btn sm" data-tropen="${a.col}|${esc(a.ref)}">Open</button>`:canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${a.project||''}">Open</button>`:''}</div>`).join('')}</div>`;
-  setTimeout(()=>{try{localStorage.setItem(ACT_SEEN_K(),String(Date.now()));}catch(_){}},1500);   // opened → read
-  return html;}
-
 /* ================= Calendar work → tasks =================
    Each person a calendar work is given to also gets a task (design kinds → design schedule tasks, others → site tasks),
    kept in step when the work is changed, moved, re-assigned, ticked done or deleted. Task id: cal_<work>_<person>. */
@@ -7592,7 +7655,9 @@ async function trUpload(fs){const up=[];if(!fs||!fs.length)return up;if(!A){toas
     toast(`Uploading ${file.name}…`);try{const r=await A.upload(file,{type});up.push({id:r.id,name:file.name,type});}catch(e){toast(`${file.name}: ${e.message||'upload failed'} — nothing was sent, try again`);return null;}}
   return up;}
 const trCanWrite=(c,t)=>CANW0&&(canEditView(c)||(t&&(t.who===ME.id||t.by===ME.id)));
-async function trPatch(c,id,patch,msg){NTF.mine[c+'|'+id]=Date.now();return write(()=>db.doc(c+'/'+id).update(patch),msg);}
+async function trPatch(c,id,patch,msg){NTF.mine[c+'|'+id]=Date.now();const ok=await write(()=>db.doc(c+'/'+id).update(patch),msg);
+  if(ok){const r=trRec(c,id);if(r)Object.assign(r,patch);}   /* show the change at once, before the next sync */
+  return ok;}
 
 /* ---------- the task page (history + actions) ---------- */
 const TRK={done:'finished it',back:'sent it back',ok:'approved it',note:'commented',reopen:'reopened it'};
@@ -7727,6 +7792,24 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .tr-back{font-size:12.5px;color:var(--red-ink,#b42318);margin-top:2px}
 .note.warn{border-color:#f3c0b9;background:#fff4f2}
 .tr-box .md-task{align-items:flex-start;flex-wrap:wrap}
+.al-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 12px}
+.al-t{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:inherit;font:inherit;cursor:pointer}
+.al-t.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}.al-t span{display:flex;flex-wrap:wrap;gap:6px}.al-t i.pill{font-style:normal}
+.al-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.al-q{flex:1 1 220px;display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:0 10px}.al-q input{border:0;outline:0;flex:1;min-width:0;padding:8px 0;background:transparent;color:inherit;font:inherit}
+.al-s,.al-u{display:flex;align-items:center;gap:6px;font-size:14px;white-space:nowrap}
+.al-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.al-chips .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+.al-chips .chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.al-chips .chip .i{width:14px;height:14px}
+.al-g{display:flex;justify-content:space-between;padding:8px 16px;background:var(--grey);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--grey-ink)}
+.al-row{display:flex;gap:10px;align-items:center;padding:10px 16px 10px 13px;border-bottom:1px solid var(--line);border-left:3px solid transparent}
+.al-row.sev-high{border-left-color:var(--red-ink)}.al-row.sev-med{border-left-color:var(--amber-ink)}.al-row.new{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.al-ic{flex:0 0 30px;height:30px;border-radius:8px;background:var(--grey);color:var(--grey-ink);display:grid;place-items:center}.al-ic .i{width:16px;height:16px}
+.al-row.sev-high .al-ic{background:var(--red);color:var(--red-ink)}.al-row.sev-med .al-ic{background:var(--amber);color:var(--amber-ink)}
+.al-tx{flex:1;min-width:0;overflow-wrap:anywhere}
+.al-share{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 16px}
+@media (max-width:600px){.al-row{flex-wrap:wrap}.al-tx{flex-basis:calc(100% - 44px)}.al-row .btn{margin-left:40px}}
+.md-task{flex-wrap:wrap}.md-task>div[style*="flex:1"]{flex:1 1 220px!important}
 @media (max-width:700px){.md-task{flex-wrap:wrap}.md-task>div[style*="flex:1"]{flex-basis:calc(100% - 52px)!important}}
 </style>`);
 
@@ -7754,6 +7837,7 @@ function render(){
   if(!db){document.getElementById('side').innerHTML=`<div class="brand">BuildMitr</div>`;
     document.getElementById('view').innerHTML=`<div class="box hero-empty">${ico('log-in')}<h2>Sign in to use BuildMitr</h2><p>Open this page signed in to claude.ai with the account it was shared with. All project data is saved there for the whole team.</p></div>`;draw();return;}
   if(S.proj!=='all'&&!proj(S.proj)&&S.ready)S.proj='all';
+  if(S.ready&&S.view!==S._lastView){if(S.view==='alerts'){try{AL.snap=actSeen();AL.tab=bellUnread()&&!computeAlerts().some(a=>a.sev==='high')?'upd':AL.tab||'act';}catch(_){}}S._lastView=S.view;}
   if(S.ready&&!['noaccess'].includes(S.view)&&!(UI_ONLY[S.view]?uiOf()===UI_ONLY[S.view]&&canView(S.view):canView(S.view))){S.view=homeView();}
   navTrack();
   if(S.ready&&curRole()==='none')S.view='noaccess';
