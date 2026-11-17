@@ -2070,13 +2070,13 @@ function raiseInvoice(mid){
 
 /* ================= Alerts ================= */
 function computeAlerts(){
-  const t=today(),A_=[];const add=(sev,txt,view,pid,d)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid,d:d||''});};
+  const t=today(),A_=[];const add=(sev,txt,view,pid,d,who)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid,d:d||'',who:who||''});};
   const bossA=isAdmin()||curRole()==='Project manager';
-  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,canView('tasks')?'tasks':'myday',x.project,x.due));
-  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project,x.due));
+  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,canView('tasks')?'tasks':'myday',x.project,x.due,x.who));
+  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project,x.due,x.who));
   D.tasks.filter(x=>x.status!=='Completed'&&n(x.progress)>=100&&gateMissing(x).length).forEach(x=>add('med',`${x.title}: waiting for approved ${gateMissing(x).join(', ')}`,'forms',x.project));
-  D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project,x.due));
-  D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads','',l.follow));
+  D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project,x.due,x.who));
+  D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads','',l.follow,l.who));
   stock().filter(s=>s.received>0&&s.store<=s.received*0.1).forEach(s=>add('med',`Low stock: ${s.material} — ${num(s.store)} ${s.unit} left`,'inventory',s.project));
   if(isAdmin())pendingJoins().forEach(r=>A_.push({sev:'high',txt:`Login code sent to a new person: ${r.name||r.email}${r.role?' — '+r.role:''} (${r.email}${r.phone?', '+r.phone:''})`,view:'team'}));
   D.requests.filter(r=>r.status==='Pending').forEach(r=>add('med',`Material request pending: ${r.material} ${num(r.qty)} ${r.unit||''}${r.needBy?` by ${fd(r.needBy)}`:''}`,'requests',r.project,r.needBy));
@@ -2096,10 +2096,10 @@ const AL_ICO={Tasks:'list-checks',Site:'hard-hat',Approvals:'clipboard-check',Mo
 const alUpdCat=a=>['review','returned','approved','comment'].includes(a.action)?'Reviews':['uploaded','updated'].includes(a.action)?'Drawings':['assigned','scheduled'].includes(a.action)?'Assigned':'Other';
 const alAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':m<2880?'yesterday':fd(new Date(t).toISOString().slice(0,10));};
 function alItems(){const t=today();
-  const act=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj).map((a,i)=>({k:'a'+i,sev:a.sev,txt:a.txt,pid:a.pid||'',cat:AL_CAT[a.view]||'Other',when:a.d||'',
+  const act=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj).map((a,i)=>({k:'a'+i,sev:a.sev,txt:a.txt,pid:a.pid||'',cat:AL_CAT[a.view]||'Other',when:a.d||'',who:a.who||'',
     meta:a.d?(a.d<t?'Since '+fd(a.d):fd(a.d)):'',btn:`<button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button>`}));
   const go=a=>a.col==='stdlib'?'stdlib':a.col==='documents'?'documents':a.col==='dtasks'?'designsched':a.col==='tasks'?'tasks':a.col==='cal'?'calendar':'dashboard';
-  const upd=bellActs().filter(a=>S.proj==='all'||!a.project||a.project===S.proj).map(a=>({k:'u'+a.at,sev:a.action==='returned'?'high':a.action==='review'?'med':'low',txt:a.summary,pid:a.project||'',cat:alUpdCat(a),at:a.at,isNew:a.at>AL.snap,
+  const upd=bellActs().filter(a=>S.proj==='all'||!a.project||a.project===S.proj).map(a=>({k:'u'+a.at,sev:a.action==='returned'?'high':a.action==='review'?'med':'low',txt:a.summary,pid:a.project||'',cat:alUpdCat(a),at:a.at,isNew:a.at>AL.snap,who:a.by||'',
     meta:pnm(a.by)+' · '+alAgo(a.at),btn:TR_COLS.includes(a.col)&&a.ref&&trRec(a.col,a.ref)?`<button class="btn sm" data-tropen="${a.col}|${esc(a.ref)}">Open</button>`:canView(go(a))?`<button class="btn sm" data-alertgo="${go(a)}|${esc(a.project||'')}">Open</button>`:''}));
   return {act,upd};}
 function alRow(x){return `<div class="al-row sev-${x.sev} ${x.isNew?'new':''}">${x.isNew?'<i class="bell-dot" aria-label="New"></i>':''}<span class="al-ic">${ico(AL_ICO[x.cat]||'bell')}</span>
@@ -2107,13 +2107,16 @@ function alRow(x){return `<div class="al-row sev-${x.sev} ${x.isNew?'new':''}">$
 function vAlerts(){
   const {act,upd}=alItems(),tab=AL.tab==='upd'?'upd':'act',all=tab==='act'?act:upd,nNew=upd.filter(x=>x.isNew).length;
   const q=(AL.q||'').trim().toLowerCase();
-  const base=all.filter(x=>(!AL.unread||tab!=='upd'||x.isNew)&&(!q||(x.txt+' '+pname(x.pid)+' '+x.meta).toLowerCase().includes(q)));
+  const base=all.filter(x=>(!AL.unread||tab!=='upd'||x.isNew)&&(!q||(x.txt+' '+pname(x.pid)+' '+x.meta+' '+(x.who?pnm(x.who)+' '+teamRole(x.who):'')).toLowerCase().includes(q)));
   const cats=[...new Set(base.map(x=>x.cat))];const cat=cats.includes(AL.cat)?AL.cat:'';
   const xs=base.filter(x=>!cat||x.cat===cat);
   const so={high:0,med:1,low:2},sort=AL.sort||'urgent';
   const byWhen=(a,b)=>tab==='upd'?b.at-a.at:(a.when||'9999').localeCompare(b.when||'9999');
   let groups;
   if(sort==='project'){const m={};xs.forEach(x=>(m[x.pid||'']=m[x.pid||'']||[]).push(x));groups=Object.keys(m).sort((a,b)=>(a?pname(a):'~').localeCompare(b?pname(b):'~')).map(k=>[k?pname(k):'General',m[k].sort((a,b)=>so[a.sev]-so[b.sev]||byWhen(a,b))]);}
+  else if(sort==='person'||sort==='team'){const none=tab==='act'?'Not assigned to anyone':'System',key=x=>!x.who?'~':sort==='person'?pnm(x.who)+'\u0001'+x.who:(teamRole(x.who)||'Other');const m={};xs.forEach(x=>(m[key(x)]=m[key(x)]||[]).push(x));
+    groups=Object.keys(m).sort((a,b)=>(a==='~')-(b==='~')||a.localeCompare(b)).map(k=>{const xs2=m[k].sort((a,b)=>so[a.sev]-so[b.sev]||byWhen(a,b)),nm0=k==='~'?none:k.split('\u0001')[0];
+      const sub=k==='~'?'':sort==='person'?teamRole(xs2[0].who):(n=>n+(n===1?' person':' people'))(new Set(xs2.map(x=>x.who)).size);return [nm0+(sub?' · '+sub:''),xs2];});}
   else if(sort==='type'){const m={};xs.forEach(x=>(m[x.cat]=m[x.cat]||[]).push(x));groups=Object.keys(m).sort().map(k=>[k,m[k].sort((a,b)=>so[a.sev]-so[b.sev]||byWhen(a,b))]);}
   else if(sort==='newest'||tab==='upd'&&sort==='urgent'){const ys=[...xs].sort((a,b)=>tab==='upd'?b.at-a.at:(b.when||'').localeCompare(a.when||''));
     if(tab==='upd'){const d0=new Date();d0.setHours(0,0,0,0);const t0=d0.getTime(),y0=t0-864e5;groups=[['Today',ys.filter(x=>x.at>=t0)],['Yesterday',ys.filter(x=>x.at<t0&&x.at>=y0)],['Earlier',ys.filter(x=>x.at<y0)]];}
@@ -2122,7 +2125,7 @@ function vAlerts(){
   groups=groups.filter(g=>g[1].length);
   const cnt=sv=>act.filter(a=>a.sev===sv).length;
   const txt=`*${orgName()} — daily summary ${fd(today())}*\n\n`+(act.length?act.slice(0,25).map(a=>`${a.sev==='high'?'🔴':a.sev==='med'?'🟠':'⚪'} ${a.txt}${a.pid?` [${(proj(a.pid)||{}).prefix||''}]`:''}`).join('\n'):'All clear — nothing pending.');
-  const sorts=tab==='act'?[['urgent','Most urgent'],['newest','Latest date'],['project','By project'],['type','By type']]:[['urgent','Newest'],['project','By project'],['type','By type']];
+  const sorts=tab==='act'?[['urgent','Most urgent'],['newest','Latest date'],['person','By person'],['team','By team / role'],['project','By project'],['type','By type']]:[['urgent','Newest'],['person','By person (who did it)'],['team','By team / role'],['project','By project'],['type','By type']];
   const empty=tab==='act'?`<div class="box hero-empty">${ico('check')}<h2>${q||cat?'Nothing matches':'All clear'}</h2><p>${q||cat?'Try another word or type.':'No late tasks, pending approvals, dues or low stock right now.'}</p></div>`
     :`<div class="box hero-empty">${ico('bell')}<h2>${AL.unread?'No new updates':'No updates yet'}</h2><p>Drawings, reviews and work given to you in the last 14 days show here.</p></div>`;
   if(tab==='upd')setTimeout(()=>{if(S.view!=='alerts'||AL.tab!=='upd')return;try{localStorage.setItem(ACT_SEEN_K(),String(Date.now()));}catch(_){}},1500);   // opened → read (the dots stay until you leave)
