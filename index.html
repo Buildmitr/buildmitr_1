@@ -7515,6 +7515,7 @@ document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='qtForm'
    (remembered for their login on this device). */
 const QA_ALL=[
   // [key, icon, label, group, allowed, run]
+  ['sitepay','wallet','Site payment','c',()=>typeof spCan==='function'&&spCan()&&canView('sitepay'),()=>{SP.kind='';spForm('');}],
   ['snap','camera','Site photo','c',()=>CANW0&&!!A&&!['Client','none'].includes(curRole()),()=>snapOpen()],
   ['mom','message-square-text','New MOM','c',()=>CANW0&&canView('meetings'),()=>momForm('')],
   ['newtask','list-checks','New task','c',()=>calCanEdit(null)||qtCols().length,()=>calForm(null,today(),true)],
@@ -7537,7 +7538,7 @@ const QA_ALL=[
   ['g:dashboard','layout-dashboard','Dashboard','g',()=>canView('dashboard')&&!['site','design'].includes(uiOf()),null],['g:attend','calendar-check','Attendance & leave','g',()=>canView('attend'),null],
   ['g:projects','building-2','All projects','g',()=>canView('projects'),null],['g:meetings','message-square-text','Meetings & notes','g',()=>canView('meetings'),null],['g:stdlib','archive','Common library','g',()=>canView('stdlib'),null],['g:pipeline','kanban','Sales pipeline','g',()=>canView('pipeline'),null],
 ];
-const QA_DEF={owner:['snap','newtask','addproj','upload','dprauto','payments','mom','g:calendar','g:tasks','g:alerts'],site:['snap','dprauto','newtask','issues','requests','received','attbulk','mom','g:calendar','g:tasks'],
+const QA_DEF={owner:['snap','newtask','addproj','upload','dprauto','payments','mom','g:calendar','g:tasks','g:alerts'],site:['snap','sitepay','dprauto','newtask','issues','requests','received','attbulk','mom','g:calendar','g:tasks'],
   design:['snap','newtask','upload','mom','g:calendar','g:designsched','g:drawlib','g:messages'],client:['g:messages'],marketing:['leads','newtask','g:pipeline','g:calendar']};
 const qaK=()=>'bm-qa-'+(ME&&ME.id||'');
 function qaPrefs(){try{const j=JSON.parse(localStorage.getItem(qaK())||'null');if(j&&Array.isArray(j.keys))return j;}catch(_){}return null;}
@@ -7907,6 +7908,11 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .tr-back{font-size:12.5px;color:var(--red-ink,#b42318);margin-top:2px}
 .note.warn{border-color:#f3c0b9;background:#fff4f2}
 .tr-box .md-task{align-items:flex-start;flex-wrap:wrap}
+.sp-kinds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.sp-k{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border:1px solid var(--line);border-radius:12px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;min-height:72px;text-align:center}
+.sp-k.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);font-weight:700}.sp-k .i{width:22px;height:22px}
+.sp-modes{display:flex;flex-wrap:wrap;gap:8px}.sp-modes .chip{border:1px solid var(--line);border-radius:18px;padding:8px 14px;background:transparent;color:inherit;font:inherit;cursor:pointer;min-height:40px}.sp-modes .chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sp-amt{font-size:24px!important;font-weight:700}.sp-ph{justify-content:center}
+@media (max-width:420px){.sp-kinds{grid-template-columns:repeat(2,1fr)}}
 .m-only{display:none!important}
 .tile[data-go]{cursor:pointer;text-align:left;font:inherit;color:inherit;background:transparent;border-top:0;border-left:0}
 .m-link{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}.m-link>span{flex:1;display:flex;flex-direction:column}.m-link small{color:var(--muted);font-size:13px}
@@ -8208,6 +8214,74 @@ document.addEventListener('change',e=>{const i=e.target;if(!i)return;if(i.id==='
     const fm=document.getElementById('momForm');MR.formId=fm?(fm.dataset.id||'new'):'new';mrReset();MR.parts=[fl];MR.msg=`“${fl.name}” added (${(fl.size/1048576).toFixed(1)} MB). Tap “Write MOM from recording”.`;mrPanelRefresh();}});
 window.addEventListener('beforeunload',e=>{if(MR.rec){e.preventDefault();e.returnValue='';}});
 
+/* ================= Site payments (site engineer / supervisor) =================
+   Money paid out at site in one simple screen: what for → who → amount → cash/UPI → bill photo.
+   It is saved straight into Payments (project costs); the site team sees only the entries they made. */
+const SP_KINDS=[['Labour wages','hard-hat','Paid to labour','Labour'],['Labour contractor','users','Paid to vendor','Labour'],['Material','package','Paid to vendor','Material'],['Transport','truck','Site expense','Site expense'],['Machine hire','hammer','Paid to vendor','Equipment'],['Other expense','receipt','Site expense','Site expense']];
+const SP_VT={'Labour contractor':['Labour contractor','Sub-contractor'],'Material':['Material supplier'],'Transport':['Other','Equipment hire'],'Machine hire':['Equipment hire'],'Other expense':[]};
+const SP={kind:'',mode:'Cash'};
+{const g=NAV.find(x=>x.g==='Manpower');if(g&&!g.items.some(x=>x[0]==='sitepay'))g.items.unshift(['sitepay','wallet','Site payments','సైట్ చెల్లింపులు']);}
+['Site engineer','Supervisor'].forEach(r=>{const a=ROLE_VIEWS[r];if(Array.isArray(a)&&!a.includes('sitepay'))a.push('sitepay');});
+const spCan=()=>CANW0&&!!A&&(['Site engineer','Supervisor','Admin','Project manager','Accountant'].includes(curRole()));
+const spKindOf=p=>p.spk||(p.dir==='Paid to labour'?'Labour wages':p.cat==='Material'?'Material':p.cat==='Equipment'?'Machine hire':p.dir==='Paid to vendor'?'Labour contractor':'Other expense');
+const spTo=p=>p.vendor?((D.vendors.find(v=>v.id===p.vendor)||{}).name||p.party||'—'):(p.party||'—');
+function vSitePay(){const mine=D.payments.filter(p=>p.by===ME.id&&p.src==='site'&&p.dir!=='Received from client'&&(S.proj==='all'||p.project===S.proj)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||(b.at||0)-(a.at||0));
+  const t=today(),mo=t.slice(0,7),sum=a=>a.reduce((s,p)=>s+(+p.amount||0),0);const td=mine.filter(p=>p.date===t),mm=mine.filter(p=>String(p.date||'').slice(0,7)===mo);
+  const byK={};mm.forEach(p=>{const k=spKindOf(p);byK[k]=(byK[k]||0)+(+p.amount||0);});
+  const days={};mine.slice(0,150).forEach(p=>(days[p.date]=days[p.date]||[]).push(p));
+  return header(label('sitepay'),spCan()?`<button type="button" class="btn pri" data-spnew>${ico('plus')}<span>Record payment</span></button>`:'')+
+  `<div class="box tiles"><div class="tile"><b>${inr(sum(td))}</b><span>Paid today · ${td.length} entr${td.length===1?'y':'ies'}</span></div><div class="tile"><b>${inr(sum(mm))}</b><span>This month</span></div></div>
+  ${Object.keys(byK).length?`<div class="box"><div class="box-h">${ico('bar-chart-3')}<h2>This month by type</h2></div>${Object.entries(byK).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="srow"><span style="flex:1">${esc(k)}</span><b>${inr(v)}</b></div>`).join('')}</div>`:''}
+  <div class="box">${mine.length?Object.entries(days).map(([d,xs])=>`<div class="al-g">${esc(d===t?'Today':fd(d))}<span class="code">${inr(sum(xs))}</span></div>${xs.map(p=>`<div class="al-row"><span class="al-ic">${ico((SP_KINDS.find(k=>k[0]===spKindOf(p))||['','receipt'])[1])}</span><div class="al-tx"><div><b>${inr(+p.amount||0)}</b> · ${esc(spKindOf(p))} · ${esc(spTo(p))}</div><div class="code">${esc(pname(p.project))} · ${esc(p.mode||'')}${p.note?' · '+esc(p.note):''}</div>${(p.photos||[]).length?`<div class="thumbs tr-thumbs">${p.photos.slice(0,2).map(id=>`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="Bill" loading="lazy"></a>`).join('')}</div>`:''}</div>${spCan()?`<button type="button" class="btn sm ghost" data-spedit="${esc(p.id)}">Edit</button>`:''}</div>`).join('')}`).join('')
+    :`<div class="hero-empty">${ico('wallet')}<h2>No payments entered yet</h2><p>Record every payment made at site — labour wages, contractors, material, transport, machine hire. Add a photo of the bill.</p>${spCan()?`<button type="button" class="btn pri" data-spnew>${ico('plus')}<span>Record payment</span></button>`:''}</div>`}</div>`;}
+function spWhoField(kind,p){const pid=(document.getElementById('spP')||{}).value||(p&&p.project)||'';
+  if(kind==='Labour wages'){const ls=D.labour.filter(l=>!pid||!l.project||l.project===pid).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    return `<label>Paid to (worker)<select name="who"><option value="">Choose worker…</option>${ls.map(l=>`<option value="L:${esc(l.id)}" ${p&&p.lab===l.id?'selected':''}>${esc(l.name)}${l.trade?' · '+esc(l.trade):''}</option>`).join('')}<option value="other" ${p&&!p.lab&&p.party?'selected':''}>Someone else (type name)</option></select></label>`;}
+  if(kind==='Other expense'||kind==='Transport'&&!D.vendors.length)return '';
+  const pref=SP_VT[kind]||[];const vs=[...D.vendors].sort((a,b)=>(pref.includes(b.type)?1:0)-(pref.includes(a.type)?1:0)||String(a.name).localeCompare(String(b.name)));
+  return `<label>Paid to<select name="who"><option value="">Choose…</option>${vs.map(v=>`<option value="V:${esc(v.id)}" ${p&&p.vendor===v.id?'selected':''}>${esc(v.name)}${v.type?' · '+esc(v.type):''}</option>`).join('')}<option value="other" ${p&&!p.vendor&&p.party?'selected':''}>Someone else (type name)</option></select></label>`;}
+function spForm(id){const p=id?D.payments.find(x=>x.id===id):null;if(id&&(!p||p.src!=='site'||p.by!==ME.id&&!['Admin','Project manager','Accountant'].includes(curRole())))return;
+  const ps=D.projects.filter(x=>projOK(x.id)&&!x.archived);if(!ps.length){toast('Add a project first');return;}
+  SP.kind=p?spKindOf(p):(SP.kind||'');SP.mode=p?(p.mode||'Cash'):'Cash';const pid=p?p.project:(S.proj!=='all'?S.proj:(ps.length===1?ps[0].id:''));
+  const showOther=p&&!p.vendor&&!p.lab&&p.party;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>${ico('wallet')} ${p?'Edit payment':'Record payment'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <form id="spForm" class="pane-b tr-f" data-id="${esc(id||'')}" style="display:grid;gap:12px">
+    <div class="e2form" style="padding:0"><label>Project<select name="project" id="spP" required>${pid?'':'<option value="">Choose…</option>'}${ps.map(x=>`<option value="${esc(x.id)}" ${x.id===pid?'selected':''}>${esc(pname(x.id))}</option>`).join('')}</select></label><label>Date<input type="date" name="date" required value="${esc(p?p.date:today())}" max="${today()}"></label></div>
+    <div><div class="md-g">What was it for?</div><div class="sp-kinds">${SP_KINDS.map(([k,i])=>`<button type="button" class="sp-k ${SP.kind===k?'on':''}" data-spk="${k}" aria-pressed="${SP.kind===k}">${ico(i)}<span>${k}</span></button>`).join('')}</div></div>
+    <div id="spWho">${SP.kind?spWhoField(SP.kind,p):''}</div>
+    <label id="spOther" style="${showOther||SP.kind==='Other expense'||(SP.kind==='Transport'&&!D.vendors.length)?'':'display:none'}">${SP.kind==='Other expense'?'Paid to / for what':'Name'}<input name="party" maxlength="120" value="${esc(p&&!p.vendor&&!p.lab?p.party||'':'')}" placeholder="e.g. Tea & snacks, Auto charges, Ramesh (helper)"></label>
+    <label>Amount (₹)<input name="amount" type="number" inputmode="decimal" min="1" step="any" required class="sp-amt" value="${esc(p?p.amount:'')}" placeholder="0"></label>
+    <div><div class="md-g">Paid by</div><div class="sp-modes">${['Cash','UPI','Bank transfer','Cheque'].map(m=>`<button type="button" class="chip ${SP.mode===m?'on':''}" data-spm="${m}" aria-pressed="${SP.mode===m}">${m}</button>`).join('')}</div></div>
+    <label>Note (optional)<input name="note" maxlength="200" value="${esc(p&&p.note||'')}" placeholder="e.g. 3 days wages, 50 bags cement, UPI ref"></label>
+    ${(p&&(p.photos||[]).length)?`<div class="thumbs tr-thumbs">${p.photos.map(id=>`<img src="/_blob/${esc(id)}" alt="Bill" loading="lazy">`).join('')}</div>`:''}
+    <label class="btn sp-ph">${ico('camera')}<span>Photo of bill / receipt (optional)</span><input type="file" name="files" accept="image/*" capture="environment" multiple hidden></label><div class="code" id="spPhN"></div>
+    <div class="srow" style="padding:0;border:0"><button class="btn pri" id="spSave">${ico('check')}<span>Save payment</span></button><button type="button" class="btn ghost" data-close>Cancel</button></div>
+    <div class="code">This goes straight into the project's payments and costs. You see only the payments you entered.</div></form></div></div>`;
+  setTimeout(()=>{fixBlobs&&fixBlobs(document.getElementById('layer'));},50);}
+function spRefreshWho(){const w=document.getElementById('spWho');const f=document.getElementById('spForm');if(!w||!f)return;const old=f.dataset.id?D.payments.find(x=>x.id===f.dataset.id):null;
+  w.innerHTML=SP.kind?spWhoField(SP.kind,old&&spKindOf(old)===SP.kind?old:null):'';spOtherShow();}
+function spOtherShow(){const o=document.getElementById('spOther');if(!o)return;const sel=document.querySelector('#spWho select');
+  o.style.display=SP.kind==='Other expense'||(sel&&sel.value==='other')||(!sel&&SP.kind)?'':'none';const lb=o.firstChild;if(lb&&lb.nodeType===3)lb.textContent=SP.kind==='Other expense'?'Paid to / for what':'Name';}
+async function spSave(f){const E_=f.elements,id=f.dataset.id,old=id?D.payments.find(x=>x.id===id):null;
+  const project=E_.project.value,amount=+E_.amount.value;if(!project){toast('Choose the project');return;}if(!SP.kind){toast('Choose what it was for');return;}if(!(amount>0)){toast('Enter the amount');return;}
+  const k=SP_KINDS.find(x=>x[0]===SP.kind);const sel=f.querySelector('#spWho select'),wv=sel?sel.value:'';const party=(E_.party.value||'').trim();
+  let vendor='',lab='',pn='';if(wv.startsWith('V:')){vendor=wv.slice(2);pn=(D.vendors.find(v=>v.id===vendor)||{}).name||'';}else if(wv.startsWith('L:')){lab=wv.slice(2);pn=(D.labour.find(l=>l.id===lab)||{}).name||'';}
+  if(!vendor&&!lab&&!party){toast(SP.kind==='Other expense'?'Write what it was for':'Choose who was paid, or type the name');return;}
+  if(amount>500000&&!confirm(`₹${amount.toLocaleString('en-IN')} — is this amount correct?`))return;
+  const btn=document.getElementById('spSave');btn.disabled=true;let up=[];
+  if(E_.files&&E_.files.files.length){const pk=phPick(E_.files.files);if(pk.length){const now=new Date();const st=await phEach(pk,x=>bmStamp(x,[`Bill · ${pname(project)} · ₹${amount.toLocaleString('en-IN')}`,now.toLocaleString('en-IN'),pnm(ME.id)]));up=await trUpload(st);if(up===null){btn.disabled=false;return;}}}
+  const dir=vendor?'Paid to vendor':k[2]==='Paid to vendor'&&!vendor?(SP.kind==='Labour contractor'?'Paid to labour':'Site expense'):k[2];
+  const rec={project,date:E_.date.value||today(),dir,cat:k[3],spk:SP.kind,vendor,lab,party:vendor||lab?pn:party,amount,mode:SP.mode,note:(E_.note.value||'').trim(),photos:[...((old&&old.photos)||[]),...(up||[]).map(x=>x.id)],src:'site'};
+  let ok,nid=id;if(old)ok=await write(()=>db.doc('payments/'+id).update(rec),'Payment saved');else ok=await write(async()=>{const r=await db.collection('payments').add({...rec,by:ME.id,at:Date.now()});nid=r.id;},'Payment saved');
+  btn.disabled=false;if(!ok)return;if(old)Object.assign(old,rec);else if(!D.payments.some(x=>x.id===nid))D.payments.push({id:nid,...rec,by:ME.id,at:Date.now()});
+  try{audit(old?'edited':'added','payments',nid,`₹${amount} ${SP.kind} — ${rec.party}`);}catch(_){}closeLayer();if(S.view!=='sitepay'&&canView('sitepay')){S.view='sitepay';}render();}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-spnew],[data-spedit],[data-spk],[data-spm]');if(!b)return;const d=b.dataset;
+  if(b.hasAttribute('data-spnew')){SP.kind='';spForm('');return;}if(d.spedit){spForm(d.spedit);return;}
+  if(d.spk){SP.kind=d.spk;document.querySelectorAll('[data-spk]').forEach(x=>{x.classList.toggle('on',x.dataset.spk===SP.kind);x.setAttribute('aria-pressed',x.dataset.spk===SP.kind);});spRefreshWho();return;}
+  if(d.spm){SP.mode=d.spm;document.querySelectorAll('[data-spm]').forEach(x=>{x.classList.toggle('on',x.dataset.spm===SP.mode);x.setAttribute('aria-pressed',x.dataset.spm===SP.mode);});}});
+document.addEventListener('change',e=>{const i=e.target;if(!i||!i.closest||!i.closest('#spForm'))return;if(i.id==='spP')spRefreshWho();else if(i.closest('#spWho'))spOtherShow();else if(i.name==='files'){const n=document.getElementById('spPhN');if(n)n.textContent=i.files.length?`${i.files.length} photo${i.files.length>1?'s':''} ready`:'';}});
+document.addEventListener('submit',e=>{if(e.target.id==='spForm'){e.preventDefault();spSave(e.target);}});
+
 function draw(){}
 function toast(m){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
 function render(){
@@ -8225,7 +8299,7 @@ function render(){
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&curRole()!=='none');}
   const v=S.view;
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
-    v==='stdlib'?vStdLib():v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='meetings'?vMeetings():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
+    v==='stdlib'?vStdLib():v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='meetings'?vMeetings():v==='sitepay'?vSitePay():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
   CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
