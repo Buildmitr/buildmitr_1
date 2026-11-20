@@ -1151,7 +1151,8 @@ function teamIntro(){
   const linked=new Set(D.team.map(t=>t.account).filter(Boolean));
   const unlinked=D.members.filter(m=>!linked.has(m.id));
   const roles={};D.team.forEach(t=>roles[t.role]=(roles[t.role]||0)+1);
-  return `<div class="note">${ico('info')}<span><b>How to give access:</b> 1) Add the person here with their role, projects and access. 2) Tap <b>Invite</b> to send them a WhatsApp message. ${S.web?'':'3) Share this app with them from the <b>Share</b> menu at the top of the page — choose <b>Contributor</b> for site staff who add entries, <b>Viewer</b> for clients, <b>Editor</b> for partners or accountants. '}Once they open the app, link their account below.</span></div>
+  const invBtn=S.cloud&&CLOUD.org&&isAdmin()?`<button type="button" class="btn sm pri" data-orglink="${esc(CLOUD.org)}|${esc(orgName())}">${ico('share-2')}<span>Invite people</span></button>`:'';
+  return `<div class="note">${ico('info')}<span><b>How to add people:</b> tap <b>Invite people</b> and send your company's invite link — they create an account with their own password and appear under <b>New account requests</b>, where you approve them and choose their role. Or add someone here yourself with their email and tap <b>Invite</b> on their row.</span>${invBtn}</div>
   ${D.team.length?`<div class="box tiles">${Object.entries(roles).map(([r,n])=>`<div class="tile"><b>${n}</b><span>${esc(r)}</span></div>`).join('')}</div>`:''}
   ${unlinked.length?`<div class="box"><div class="box-h">${ico('user-plus')}<h2>Opened the app, not in the team list yet</h2></div><div class="tbl-wrap"><table><tbody>${unlinked.map(m=>`<tr><td><b>${esc(nm(m.id))}</b><div class="code">Joined ${m.joined?new Date(m.joined).toLocaleDateString(LOC()):'—'}</div></td><td class="acts">${CANW&&isAdmin()?`<button class="btn sm pri" data-addteam="${m.id}">${ico('plus')}Add to team</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`:''}`;
 }
@@ -1413,8 +1414,8 @@ async function convertLead(id){
 }
 function inviteLink(r){
   const ps=(r.projects||[]).includes('all')?'all projects':(r.projects||[]).map(pname).join(', ')||'our projects';
-  const link=S.web?location.href.split('#')[0]:'(I will share the app link with you)';
-  const t=`Hello ${r.name},\n\nYou are added to the ${orgName()} team on *BuildMitr* as *${r.role}* for ${ps}.\nAccess: ${r.access}.\n\nOpen the app here: ${link}\nUse it to add daily reports, attendance, material and photos from site.${(r.projects||[]).filter(id=>proj(id)?.loc).map(id=>`\n📍 ${pname(id)}: ${gdir(proj(id).loc)}`).join('')}\n\n— ${ME.name||orgName()}`;
+  const link=S.web&&CLOUD.org&&typeof orgLink==='function'?orgLink(CLOUD.org,orgName()):S.web?location.href.split('#')[0]:'(I will share the app link with you)';
+  const t=`Hello ${r.name},\n\nYou are added to the ${orgName()} team on *BuildMitr* as *${r.role}* for ${ps}.\nAccess: ${r.access}.\n\nOpen the app here: ${link}\nFirst time: tap “First time or forgot password?”, enter this email (${r.email||''}), enter the code we email you, then set your password.\nUse it to add daily reports, attendance, material and photos from site.${(r.projects||[]).filter(id=>proj(id)?.loc).map(id=>`\n📍 ${pname(id)}: ${gdir(proj(id).loc)}`).join('')}\n\n— ${ME.name||orgName()}`;
   return 'https://wa.me/'+waNum(r.phone)+'?text='+encodeURIComponent(t);
 }
 const waNum=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10)d='91'+d;return d;};
@@ -1769,7 +1770,7 @@ function vProject(){
     <div class="srow" style="flex-wrap:wrap;gap:6px"><span class="code">Services</span>${PSERV.map(x=>(p.services||[]).includes(x)?`<button type="button" class="pill p-blue" ${ed_?`data-pserv="${esc(p.id)}|${esc(x)}"`:'disabled'}>${esc(x)}</button>`:ed_?`<button type="button" class="pill p-grey" data-pserv="${esc(p.id)}|${esc(x)}" style="opacity:.6">+ ${esc(x)}</button>`:'').join('')}</div></div>`+
   `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW&&(isAdmin()||(canEditView('projects')&&p.by===ME.id))?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
   <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>
-  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}</div></div>`+projMeetBox(p);
+  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}${canView('tasks')?(()=>{let n=ts.filter(t=>t.status!=='Completed').length;try{if(canView('calendar'))n+=calOpen(90,365).filter(x=>x.project===p.id).length;}catch(_){}return `<button class="btn" data-go="tasks" data-ptasks="${esc(p.id)}">${ico('list-checks')}Tasks${n?` · ${n} open`:''}</button>`;})():''}</div></div>`+projMeetBox(p);
 }
 const fmtTs=ms=>ms?new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'short'}):'—';
 
@@ -3220,31 +3221,35 @@ function vLogin(){
   const err=LG.err?`<div class="lg-err" role="alert">${esc(LG.err)}</div>`:'';
   let body='';
   if(step==='email'&&LG.fixedOrg)lgLoadOrgs();
-  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in${LG.fixedOrg&&(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName)?` to <span data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName)}</span>`:''}</h2>
+  const lgOrgN=LG.fixedOrg?(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||''):'';
+  const lgOrgFix=LG.fixedOrg?`<div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(lgOrgN||'from your invite link')}</b></span></div>`:'';
+  if(step==='email'&&LG.mode==='pw')body=`<form id="lgPwForm" class="lg-form"><h2>Sign in${lgOrgN?` to <span data-notr>${esc(lgOrgN)}</span>`:''}</h2>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="username" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
     <label>Password<input id="lgPw" type="password" autocomplete="current-password" required placeholder="Your password"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
-    <div class="lg-or"><span>first time, no password yet, or forgot it?</span></div>
-    <button type="button" class="btn" id="lgUseCode">${ico('lock')}<span>Get a login code</span></button>
-    <button type="button" class="btn ghost" id="lgHaveCode">${ico('key-round')}<span>I have an invite code</span></button></form>`;
-  else if(step==='email'){lgLoadOrgs();body=`<form id="lgEmailForm" class="lg-form"><h2>Get a login code</h2><p class="code"><b>First time:</b> the 6-digit code goes to your organisation's admin, who shares it with you. <b>Signed in before:</b> the code comes to your own email.</p>
-    <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
-    <label>Your name (new users)<input id="lgName" autocomplete="name" value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
-    ${LG.fixedOrg?`<input type="hidden" id="lgOrg" value="${esc(LG.fixedOrg)}"><div class="lg-orgfix">${ico('building-2')}<span>Organisation: <b data-notr>${esc(((LG.orgList||[]).find(o=>o.id===LG.fixedOrg)||{}).name||LG.fixedName||'from your invite link')}</b></span></div>`:`<div class="code lg-hint">${ico('link')}<span>New here? Open the sign-in link your company admin sent you.</span></div>`}
-    <label>Your role (new users)<select id="lgRole"><option value="">Choose your role</option>${JOIN_ROLES.map(r=>`<option value="${esc(r)}" ${LG.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
-    <label>Mobile number (new users)<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>${err}
-    <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Request login code'}</button>
-    <div class="lg-or"><span>already set a password?</span></div>
-    <button type="button" class="btn" id="lgUsePw">${ico('lock')}<span>Sign in with password</span></button>
-    <button type="button" class="btn ghost" id="lgHaveCode">${ico('key-round')}<span>I have an invite code</span></button></form>`;}
+    <button type="button" class="btn ghost sm" id="lgUseCode">First time or forgot password?</button>
+    ${LG.fixedOrg?`<div class="lg-or"><span>new to ${esc(lgOrgN||'this company')}?</span></div><button type="button" class="btn" id="lgSignup">${ico('user-plus')}<span>Create account</span></button>`:`<div class="code lg-hint">${ico('link')}<span>New here? Open the invite link your company admin sent you, then tap <b>Create account</b>.</span></div>`}</form>`;
+  else if(step==='email')body=`<form id="lgEmailForm" class="lg-form"><h2>Get a code on your email</h2><p class="code">For people your company admin has already added or approved. We email you a 6-digit code — enter it, then set your password.</p>
+    <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>${err}
+    <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Sending…':'Send code'}</button>
+    <button type="button" class="btn ghost sm" id="lgUsePw">Back to sign in</button></form>`;
+  else if(step==='signup')body=`<form id="lgSignupForm" class="lg-form"><h2>Create account</h2>${lgOrgFix}
+    <label>Your name<input id="lgName" autocomplete="name" required value="${esc(LG.name)}" placeholder="e.g. Ravi Kumar"></label>
+    <label>Mobile number<input id="lgPhone" type="tel" inputmode="tel" autocomplete="tel" required value="${esc(LG.phone)}" placeholder="e.g. 98765 43210"></label>
+    <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="username" required value="${esc(LG.email)}" placeholder="name@example.com"></label>
+    <label>Password (at least 8 characters)<input id="lgPw1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Type the password again<input id="lgPw2" type="password" autocomplete="new-password" minlength="8" required></label>${err}
+    <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Creating…':'Create account'}</button>
+    <p class="code">We email you a code to confirm your email. Then your company admin approves your account and chooses your role.</p>
+    <button type="button" class="btn ghost sm" id="lgUsePw">I already have an account</button></form>`;
   else if(step==='wait')body=`<div class="lg-form"><h2>Waiting for approval</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||LG.email)}</b>.</p>
-    <div class="note">${ico('history')}<span>The BuildMitr admin has your request and will choose your role. This page opens by itself once you are approved — you can keep it open or come back later.</span></div>${err}
+    <div class="note">${ico('history')}<span>Your account is created. Your company admin will approve it and choose your role — this page opens by itself once you are approved. You can keep it open or come back later and sign in with your email and password.</span></div>${err}
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
     <button type="button" class="btn ghost sm" id="lgOut">Sign out</button></div>`;
-  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.invite?`Enter the 6-digit <b>invite code</b> your admin shared with you for <b data-notr>${esc(LG.email)}</b>. It works once.`:LG.toAdmin?`The 6-digit code for <b data-notr>${esc(LG.email)}</b> was sent to your organisation's admin. Call or WhatsApp the admin to get it.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder.`}</p>
+  else if(step==='code')body=`<form id="lgCodeForm" class="lg-form"><h2>Enter the code</h2><p class="code">${LG.invite?`Enter the 6-digit <b>invite code</b> your admin shared with you for <b data-notr>${esc(LG.email)}</b>. It works once.`:`We sent a 6-digit code to <b data-notr>${esc(LG.email)}</b>. Check your inbox and spam folder. ${LG.signup?'Enter it to confirm your email and create your account.':'After you enter it, set your password.'}`}</p>
     <label>6-digit code<input id="lgCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="••••••" class="lg-code"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
-    <div class="lg-row"><button type="button" class="btn ghost sm" id="lgBack">Change email</button>${LG.invite?'':`<button type="button" class="btn ghost sm" id="lgResend" ${Date.now()-LG.sentAt<60000?'disabled':''}>Send the code again</button>`}</div></form>`;
+    <div class="lg-row"><button type="button" class="btn ghost sm" id="lgBack">Change email</button>${LG.invite||LG.signup?'':`<button type="button" class="btn ghost sm" id="lgResend" ${Date.now()-LG.sentAt<60000?'disabled':''}>Send the code again</button>`}</div></form>`;
   else if(step==='org')body=`<form id="lgOrgForm" class="lg-form"><h2>Welcome to BuildMitr</h2><p class="code">You are signed in as <b data-notr>${esc((CLOUD.user||{}).email||'')}</b>, but you are not part of a company yet.</p>
     <div class="note">${ico('info')}<span>Joining your company's team? Ask the admin to add your email on the <b>Team</b> page, then tap <b>Check again</b>.</span></div>
     <button type="button" class="btn" id="lgRecheck">${ico('history')}<span>Check again</span></button>
@@ -3265,23 +3270,38 @@ function lgGetApp(){let inst=false;try{inst=matchMedia('(display-mode: standalon
     <a class="btn sm" href="${R}windows-latest/BuildMitr-Setup.exe" target="_blank" rel="noopener">${ico('monitor')}<span>Windows PC</span></a>
     <button type="button" class="btn sm" id="lgIos">${ico('apple')}<span>iPhone / iPad</span></button></div>`;}
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#lgIos'))toast('On iPhone / iPad: open this page in Safari → Share → Add to Home Screen');},true);
-function lgSet(step,err){S.authStep=step;LG.err=err||'';LG.busy=false;render();setTimeout(()=>{const i=document.querySelector('#lgEmail,#lgCode,#lgOrgName');i&&i.focus&&i.focus();},30);}
+function lgSet(step,err){S.authStep=step;LG.err=err||'';LG.busy=false;render();setTimeout(()=>{const i=document.querySelector('#lgName,#lgEmail,#lgCode,#lgOrgName');i&&i.focus&&i.focus();},30);}
 async function lgSend(){
   const v=(document.getElementById('lgEmail')||{}).value||LG.email;LG.email=v.trim().toLowerCase();
-  const nm=document.getElementById('lgName'),ph=document.getElementById('lgPhone'),rl=document.getElementById('lgRole'),og=document.getElementById('lgOrg');if(nm)LG.name=nm.value.trim();if(ph)LG.phone=ph.value.trim();if(rl)LG.role=rl.value;if(og)LG.org=og.value;
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('email','Please enter a valid email address.');return;}
-  LG.busy=true;LG.invite=false;render();let j;
-  try{j=await gasApi('sendCode',{email:LG.email,name:LG.name,phone:LG.phone,role:LG.role,org:LG.org||''});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.code==='need_org'?'You are not on a company team yet. Open the BuildMitr sign-in link your company admin sent you.':e.message);return;}
-  LG.toAdmin=j.to!=='you';
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet(S.authStep==='code'?'code':'email','Please enter a valid email address.');return;}
+  LG.busy=true;LG.invite=false;LG.signup=false;render();
+  try{await gasApi('resetCode',{email:LG.email});}catch(e){lgSet(S.authStep==='code'?'code':'email',e.message);return;}
+  LG.toAdmin=false;LG.reset=true;
   LG.sentAt=Date.now();lgSet('code');
+}
+async function lgSignup(){
+  const g=id=>((document.getElementById(id)||{}).value||'');
+  LG.name=g('lgName').trim();LG.phone=g('lgPhone').trim();LG.email=g('lgEmail').trim().toLowerCase();const a=g('lgPw1'),b=g('lgPw2');
+  if(!LG.name){lgSet('signup','Please enter your name.');return;}
+  if(LG.phone.replace(/\D/g,'').length<10){lgSet('signup','Please enter your mobile number.');return;}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(LG.email)){lgSet('signup','Please enter a valid email address.');return;}
+  if(a.length<8){lgSet('signup','The password needs at least 8 characters.');return;}
+  if(a!==b){lgSet('signup','The two passwords are not the same.');return;}
+  LG.busy=true;render();let j;
+  let sj;try{sj=await gasApi('signup',{email:LG.email,name:LG.name,phone:LG.phone,password:a,org:LG.fixedOrg||''});}catch(e){lgSet('signup',e.message);return;}
+  LG.snonce=sj.nonce||'';
+  LG.signup=true;LG.reset=false;LG.invite=false;LG.toAdmin=false;LG.sentAt=Date.now();lgSet('code');
 }
 async function lgVerify(){
   const code=((document.getElementById('lgCode')||{}).value||'').replace(/\D/g,'');
   if(code.length!==6){lgSet('code','The code has 6 digits.');return;}
   LG.busy=true;render();
+  if(LG.signup){let j;try{j=await gasApi('signupVerify',{email:LG.email,code,nonce:LG.snonce});}catch(e){lgSet('code',e.message);return;}
+    LG.signup=false;CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);localStorage.setItem('bm-haspw','1');}catch(_){}
+    LG.owner=!!j.owner;LG.hasPw=true;await cloudEnter(j.user,null,j.mems,null);return;}
   let j;const so=(()=>{try{return localStorage.getItem('bm-org')||'';}catch(_){return '';}})();try{j=await gasApi('verify',{email:LG.email,code,org:so});}catch(e){lgSet('code',e.message);return;}
   CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}
-  LG.owner=!!j.owner;LG.hasPw=!!j.hasPw;LG.pwAsked=false;
+  LG.owner=!!j.owner;LG.hasPw=!!j.hasPw;LG.pwAsked=false;if(LG.reset){LG.askPw=true;LG.forcePw=true;}LG.reset=false;
   await cloudEnter(j.user,j.org||null,j.mems,j.data?{rows:j.data.rows,now:j.data.now}:null);
 }
 async function lgPwLogin(){
@@ -3296,9 +3316,9 @@ async function lgPwLogin(){
 function pwDialog(first){
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="pwForm" autocomplete="on">
     <div class="pane-h"><h2>${first?'Set your password':'Change password'}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
-    <div class="pane-b">${first?`<div class="note">${ico('lock')}<span>Set a password now so next time you can sign in with your email and password — no code from the admin needed.</span></div>`:''}
+    <div class="pane-b">${first?`<div class="note">${ico('lock')}<span>Set your password. From now on, sign in with your email and this password.</span></div>`:''}
       <input type="email" autocomplete="username" value="${esc(ME.email||'')}" hidden>
-      ${!first&&LG.hasPw?`<label class="req">Current password<input id="pw0" type="password" autocomplete="current-password" required></label><div class="code">Forgot it? Sign out, sign in with a login code sent to your email, then set a new password here within 15 minutes (no current password needed then).</div>`:''}
+      ${!first&&LG.hasPw?`<label class="req">Current password<input id="pw0" type="password" autocomplete="current-password" required></label><div class="code">Forgot it? Sign out, tap “First time or forgot password?”, enter the code from your email, then set a new password.</div>`:''}
       <label class="req">New password (at least 8 characters, not your email)<input id="pw1" type="password" autocomplete="new-password" minlength="8" required></label>
       <label class="req">Type it again<input id="pw2" type="password" autocomplete="new-password" minlength="8" required></label>
       ${LG.hasPw?`<div class="code">After a change, your other phones and PCs are signed out — sign in there with the new password.</div>`:''}</div>
@@ -3393,7 +3413,7 @@ function gasDb(org,pre){
       if(batch.length>1&&opsOk!==false){   // many changes (e.g. a meeting + its tasks + history) go in one request instead of one by one
         try{const j=await gasApi('ops',{ops:batch.map(o=>({a:o.a,args:o.args}))});opsOk=true;opsFails=0;opsMax=25;out.splice(0,batch.length);saveOut();
           (j.res||[]).forEach(r=>{if(!r||!r.error)return;resync=true;
-            if(r.code==='denied'){CANW=CANW0=false;toast('You can view but not change data. Ask the admin for Contributor access.');}
+            if(r.code==='denied')deniedToast(r.error);   // one change was not allowed — everything else keeps working
             else if(r.code!=='auth'&&r.code!=='no_access')toast('A change could not be saved: '+(r.error||'server error'));});
           continue;}
         catch(e){if(/Unknown request/i.test(e.message||'')){opsOk=false;continue;}
@@ -3405,7 +3425,7 @@ function gasDb(org,pre){
       try{await gasApi(o.a,o.args);out.shift();saveOut();}
       catch(e){if(e.code==='net'){flushing=false;saveChip('offline');setTimeout(flush,navigator.onLine===false?15000:5000);return;}
         out.shift();saveOut();resync=true;
-        if(e.code==='denied'){CANW=CANW0=false;toast('You can view but not change data. Ask the admin for Contributor access.');}
+        if(e.code==='denied')deniedToast(e.message);
         else if(e.code!=='auth'&&e.code!=='no_access')toast('A change could not be saved: '+(e.message||'server error'));}}
     flushing=false;saveChip('');
     if(resync){resync=false;try{const j=await gasApi('load');fill(j.rows);cursor=(j.now||Date.now())-3000;saveCache();COLS.forEach(emit);}catch(_){}}};
@@ -3503,15 +3523,15 @@ async function bmBlobNet(id,thumb){
 function pendingJoins(){const em=new Set(D.team.filter(t=>t.status!=='Removed').map(t=>String(t.email||'').toLowerCase()));return (D.joinreq||[]).filter(r=>r.status==='Pending'&&!em.has(String(r.email||'').toLowerCase())).sort((a,b)=>(b.at||0)-(a.at||0));}
 function joinReqBox(){
   if(!isAdmin())return '';const L=pendingJoins();if(!L.length)return '';
-  return `<div class="box"><div class="box-h">${ico('user-plus')}<h2>New people — code sent, not signed in yet</h2><span class="pill p-amber">${L.length}</span></div>
+  return `<div class="box"><div class="box-h">${ico('user-plus')}<h2>New account requests</h2><span class="pill p-amber">${L.length}</span></div>
     ${L.map(r=>`<div class="srow"><span style="flex:1;min-width:180px"><b data-notr>${esc(r.name||'—')}</b><br><span class="code" data-notr>${esc(r.email)}${r.phone?' · '+esc(r.phone):''}</span><br>${r.role?`<span class="pill p-blue">Asked to join as: ${esc(r.role)}</span><br>`:''}<span class="code">Asked ${fd(new Date(r.at||Date.now()).toISOString().slice(0,10))}</span></span>
       ${r.phone?`<a class="btn sm ghost" href="tel:${esc(String(r.phone).replace(/\s/g,''))}">${ico('phone')}<span>Call</span></a>`:''}
       <button class="btn sm pri" data-jrok="${esc(r.id)}">${ico('check')}<span>Approve & choose role</span></button><button class="btn sm warn" data-jrno="${esc(r.id)}">${ico('x')}<span>Reject</span></button></div>`).join('')}
-    <div class="srow"><span class="code">They join automatically with the role they chose as soon as they enter the code you shared. Reject if you don't know them — their code will then not work. Change anyone's role or projects later from this Team page.</span></div></div>`;
+    <div class="srow"><span class="code">These people created an account from your invite link. Tap <b>Approve & choose role</b>, pick their role and projects and save — they can then sign in with their own password. Reject if you don't know them. Change anyone's role or projects later on this Team page.</span></div></div>`;
 }
 async function joinReqAct(id,ok){
   const r=(D.joinreq||[]).find(x=>x.id===id);if(!r)return;
-  if(ok){openForm('team',null,{name:r.name||'',phone:r.phone||'',email:r.email,role:JOIN_ROLES.includes(r.role)?r.role:'Site engineer',access:'Add & edit entries',projects:[],status:'Invited'});return;}
+  if(ok){openForm('team',null,{name:r.name||'',phone:r.phone||'',email:r.email,role:JOIN_ROLES.includes(r.role)?r.role:'',access:'Add & edit entries',projects:[],status:'Invited'});return;}
   try{await db.doc('joinreq/'+id).update({status:'Rejected',by:ME.id,decidedAt:Date.now()});toast('Request rejected');}catch(e){toast('Could not save: '+(e.message||e));}
 }
 
@@ -3522,7 +3542,7 @@ function vAdminPanel(){
   const ppl=D.team.filter(t=>t.status!=='Removed').sort((a,b)=>(a.role==='Admin'?0:1)-(b.role==='Admin'?0:1)||String(a.name).localeCompare(String(b.name)));
   const noProj=ppl.filter(t=>t.role==='Client'&&!(t.projects||[]).length);
   const joined=ppl.filter(t=>t.account).length;
-  const tiles=[[ppl.length,'People in the team'],[joined,'Signed in at least once'],[pendingJoins().length,'Code sent, not signed in yet'],[noProj.length,'Clients without a project']];
+  const tiles=[[ppl.length,'People in the team'],[joined,'Signed in at least once'],[pendingJoins().length,'New account requests'],[noProj.length,'Clients without a project']];
   const roles=ALL_ROLES();
   const pname_=t=>(t.projects||[]).includes('all')?'All projects':(t.projects||[]).length?(t.projects||[]).map(id=>(D.projects.find(p=>p.id===id)||{}).name||'—').join(', '):'No project';
   return header(label('adminpanel'))+
@@ -3532,7 +3552,7 @@ function vAdminPanel(){
   `<div class="box"><div class="box-h">${ico('users')}<h2>People & roles</h2><span class="code">Change a role here — their screens switch within seconds</span></div>
    ${ppl.length?ppl.map(t=>{const me=t.account&&t.account===ME.id;return `<div class="srow"><span style="flex:1;min-width:190px"><b data-notr>${esc(t.name||'—')}</b>${me?' <span class="pill p-green">You</span>':''}<br><span class="code" data-notr>${esc(t.email||'no email')}${t.phone?' · '+esc(t.phone):''}</span><br><span class="code">${esc(pname_(t))} · ${t.account?'signed in':'not signed in yet'}</span></span>
      <select data-adrole="${esc(t.id)}" aria-label="Role" style="width:auto" ${me?'disabled':''}>${roles.map(r=>`<option ${r===t.role?'selected':''}>${esc(r)}</option>`).join('')}</select>
-     <button class="btn sm" data-edit="team:${esc(t.id)}">${ico('pencil')}<span>Edit</span></button>${t.role!=='Admin'?`<button class="btn sm ghost" data-raperson="${esc(t.id)}">${ico('shield')}<span>Access</span></button>`:''}</div>`;}).join(''):`<div class="empty">No people yet. New people join when you share their login code.</div>`}</div>`+
+     <button class="btn sm" data-edit="team:${esc(t.id)}">${ico('pencil')}<span>Edit</span></button>${t.role!=='Admin'?`<button class="btn sm ghost" data-raperson="${esc(t.id)}">${ico('shield')}<span>Access</span></button>`:''}</div>`;}).join(''):`<div class="empty">No people yet. Share your invite link — new people create an account and you approve them here.</div>`}</div>`+
   `<div class="box"><div class="box-h">${ico('settings')}<h2>Admin tools</h2></div><div class="srow">
      <button class="btn" data-go="roleaccess">${ico('shield')}<span>Role access — what each role can see</span></button>
      <button class="btn" data-go="team">${ico('users')}<span>Team list</span></button>
@@ -5858,12 +5878,12 @@ document.addEventListener('submit',e=>{if(e.target.id!=='dlAdd')return;e.prevent
 Object.assign(ICONS,{'link':ICONS.link||'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'});
 const orgLink=(id,name)=>APP_URL+'?org='+encodeURIComponent(id)+(name?'&n='+encodeURIComponent(name):'');
 function orgLinkShare(id,name){
-  const link=orgLink(id,name),text=`Sign in to ${name} on BuildMitr:\n${link}\n\nOpen the link, enter your email and name, and ask the admin for the 6-digit login code.`;
-  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Sign-in link — ${esc(name)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
-   <div class="pane-b"><p class="code">Anyone who opens this link signs in straight into <b>${esc(name)}</b> — they don't have to pick an organisation. They still need your approval (the login code) before they see anything.</p>
-    <div class="inst-b" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:0"><div id="olQR" class="inst-qr" aria-label="QR code of the sign-in link"></div><code style="word-break:break-all;flex:1;min-width:200px">${esc(link)}</code></div>
+  const link=orgLink(id,name),text=`Join ${name} on BuildMitr:\n${link}\n\nOpen the link, tap “Create account”, fill your name, mobile, email and a password. You can use BuildMitr once the admin approves your account.`;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane" style="height:auto;max-height:100%;margin-top:auto"><div class="pane-h"><h2>Invite link — ${esc(name)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+   <div class="pane-b"><p class="code">People who open this link can create an account only in <b>${esc(name)}</b> — they never see other companies. They see nothing until you approve them on the Team page and choose their role.</p>
+    <div class="inst-b" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:0"><div id="olQR" class="inst-qr" aria-label="QR code of the invite link"></div><code style="word-break:break-all;flex:1;min-width:200px">${esc(link)}</code></div>
     <div class="sh-grid" style="margin-top:12px"><a class="btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${ico('message-circle')}<span>WhatsApp</span></a>
-     <a class="btn" href="mailto:?subject=${encodeURIComponent('Sign in to '+name+' on BuildMitr')}&body=${encodeURIComponent(text)}">${ico('mail')}<span>Email</span></a>
+     <a class="btn" href="mailto:?subject=${encodeURIComponent('Join '+name+' on BuildMitr')}&body=${encodeURIComponent(text)}">${ico('mail')}<span>Email</span></a>
      <button type="button" class="btn" data-olcopy="${esc(link)}">${ico('copy')}<span>Copy link</span></button>
      <button type="button" class="btn" data-olmore>${ico('share-2')}<span>More…</span></button></div></div></div></div>`;
   OLT={text,link,name};
@@ -5872,9 +5892,9 @@ function orgLinkShare(id,name){
 let OLT=null;
 function orgLinkBox(){
   if(!isAdmin()||!S.cloud||!CLOUD.org)return '';const name=orgName();
-  return `<div class="box"><div class="box-h">${ico('link')}<h2>Sign-in link for ${esc(name)}</h2></div><div class="srow"><code style="flex:1;min-width:200px;word-break:break-all">${esc(orgLink(CLOUD.org,name))}</code>
-    <button type="button" class="btn pri" data-orglink="${esc(CLOUD.org)}|${esc(name)}">${ico('share-2')}<span>Share link</span></button></div>
-    <div class="code" style="padding:0 16px 12px">Send this to your team and clients. It opens BuildMitr with ${esc(name)} already chosen. They enter their email and get the login code from you.</div></div>`;
+  return `<div class="box"><div class="box-h">${ico('link')}<h2>Invite link for ${esc(name)}</h2></div><div class="srow"><code style="flex:1;min-width:200px;word-break:break-all">${esc(orgLink(CLOUD.org,name))}</code>
+    <button type="button" class="btn pri" data-orglink="${esc(CLOUD.org)}|${esc(name)}">${ico('share-2')}<span>Invite people</span></button></div>
+    <div class="code" style="padding:0 16px 12px">Send this to your team and clients. They tap <b>Create account</b> and set their own password; you approve them on the Team page and choose their role.</div></div>`;
 }
 document.addEventListener('click',async e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-orglink]');if(b){const [id,...nm_]=b.dataset.orglink.split('|');orgLinkShare(id,nm_.join('|'));return;}}
@@ -6590,14 +6610,14 @@ Object.assign(ICONS,{'key-round':'<path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-
 const DID=(()=>{let d='';try{d=localStorage.getItem('bm-did')||'';}catch(_){}if(!/^d[\w]{8,40}$/.test(d)){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);try{localStorage.setItem('bm-did',d);}catch(_){}}return d;})();
 const devLabel=()=>{try{return `${devKind()} · ${appKind()}`;}catch(_){return 'Device';}};
 {const _api=gasApi;gasApi=async function(action,args){
-  if(action==='verify'||action==='loginPw'||action==='boot')args={...(args||{}),did:DID,dev:devLabel()};
+  if(action==='verify'||action==='loginPw'||action==='boot'||action==='signupVerify')args={...(args||{}),did:DID,dev:devLabel()};
   const j=await _api(action,args);
   if(j&&j.token&&['boot','setPw','devOutAll'].includes(action)){CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}}   // renewed login for this device
   if(j&&j.user&&j.user.email&&(action==='verify'||action==='loginPw')){try{localStorage.setItem('bm-last-email',j.user.email);}catch(_){}if(action==='verify'&&!j.hasPw)LG.askPw=true;}
   return j;};}
 try{if(!LG.email)LG.email=localStorage.getItem('bm-last-email')||'';}catch(_){}
 /* right after a first code sign-in without a password: ask once to set one */
-setInterval(()=>{if(!LG.askPw||!S.ready||!S.cloud||S.demo||LG.hasPw||document.querySelector('#layer .drawer'))return;LG.askPw=false;pwDialog(true);},1500);
+setInterval(()=>{if(!LG.askPw||!S.ready||!S.cloud||S.demo||(LG.hasPw&&!LG.forcePw)||document.querySelector('#layer .drawer'))return;LG.askPw=false;LG.forcePw=false;pwDialog(true);},1500);
 /* "I have an invite code": go straight to entering it */
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#lgHaveCode');if(!b)return;e.preventDefault();
   const i=document.getElementById('lgEmail');LG.email=((i&&i.value)||LG.email||'').trim().toLowerCase();
@@ -6619,7 +6639,7 @@ function dvBox(){if(!S.cloud||S.demo)return '';if(DV.list===null&&!DV.busy&&!DV.
 
 /* ---- Team (admin): invite code and sign out everywhere ---- */
 function teamAuthBtns(r){if(!S.cloud||S.demo||WT.srv!==true||!isAdmin()||!CANW||!r.email||r.account===ME.id||r.role==='Admin'&&!ME.isOwner)return '';
-  return `<button class="btn sm" data-tinv="${esc(r.id)}" title="Make a one-time sign-in code">${ico('key-round')}Invite code</button>${r.account?`<button class="btn sm ghost" data-tout="${esc(r.id)}" title="Sign out of all devices">${ico('log-out')}</button>`:''}`;}
+  return `${r.account?`<button class="btn sm ghost" data-tout="${esc(r.id)}" title="Sign out of all devices">${ico('log-out')}</button>`:''}`;}
 async function teamInvite(id){const r=D.team.find(x=>x.id===id);if(!r)return;toast('Making the invite code…');let j;
   try{j=await gasApi('invite',{email:r.email});}catch(e){toast(e.message);return;}
   const until=new Date(j.expires).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
@@ -7170,11 +7190,11 @@ function calList(){
   const ds=Object.keys(by).sort();
   return `<div class="srow"><label class="code" style="display:flex;gap:6px;align-items:center">Sort each day<select data-calsort><option value="time" ${CAL.sort!=='project'?'selected':''}>By time</option><option value="project" ${CAL.sort==='project'?'selected':''}>By project</option></select></label></div><div class="cal-list">${ds.length?ds.map(d=>`<div class="md-g">${esc(new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}))}</div>${calSortRows(by[d],x=>{const mine=x.src==='cal'&&x.who.includes(ME.id),c=x.c;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${d}" ${calDone(x.id,d)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}<div style="flex:1;min-width:0"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}${x.src!=='cal'?' <span class="pill p-grey">starts</span>':''}</b><div class="code">${calPn(x)?esc(calPn(x))+' · ':''}${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(x.src==='cal'&&calDone(x.id,d,u)?' ✓':'')).join(', '):''}</div></div>
       <div class="cal-act">${mine&&!calDone(x.id,d)&&x.project?`<button type="button" class="btn sm" data-fin="cal|${esc(x.id)}|${d}">${ico('upload')}<span>Upload & finish</span></button>`:''}${x.src==='cal'&&calCanEdit(c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>${c.repeat?`<button type="button" class="btn sm ghost" data-calskip="${esc(x.id)}|${d}">Skip day</button>`:''}`:''}<button type="button" class="btn sm ghost" data-calday="${d}" data-calmode2="month">Day</button></div></div>`;})}`).join(''):`<div class="empty">Nothing in the next 60 days.</div>`}</div>`;}
-function calIntoTasks(h){try{calBackfill();}catch(_){}if(!canView('calendar'))return h;const xs=calOpen(30,30).sort((a,b)=>(b.first?1:0)-(a.first?1:0)||a.due0.localeCompare(b.due0)),d0=today();
-  const box=`<div class="box"><div class="box-h">${foldBtn('caltasks')}${ico('calendar')}<h2>Calendar work</h2><span class="code">${xs.length} open · next 30 days</span>${calCanEdit(null)?`<button type="button" class="btn sm pri" data-caladd="${d0}" data-caltask="1">${ico('plus')}<span>New task</span></button>`:''}${canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Calendar</button>`:''}</div>
+function calIntoTasks(h){try{calBackfill();}catch(_){}if(!canView('calendar'))return h;const one=S.proj&&S.proj!=='all';const xs=calOpen(one?90:30,one?365:30).filter(x=>!one||x.project===S.proj).sort((a,b)=>(b.first?1:0)-(a.first?1:0)||a.due0.localeCompare(b.due0)),d0=today();
+  const box=`<div class="box"><div class="box-h">${foldBtn('caltasks')}${ico('calendar')}<h2>${one?'Calendar work for this project':'Calendar work'}</h2><span class="code">${xs.length} open · ${one?'next 12 months':'next 30 days'}</span>${calCanEdit(null)?`<button type="button" class="btn sm pri" data-caladd="${d0}" data-caltask="1">${ico('plus')}<span>New task</span></button>`:''}${canView('calendar')?`<button type="button" class="btn sm" data-go="calendar">Calendar</button>`:''}</div>
   ${folded('caltasks')?'':xs.length?xs.map(x=>{const mine=x.who.includes(ME.id),ov=x.due0<d0;return `<div class="cal-r" style="--c:${calColor(x.project)}">${mine?`<input type="checkbox" data-calck="${esc(x.id)}|${x.due0}" ${calDone(x.id,x.due0)?'checked':''} aria-label="Done">`:'<span class="cal-bar-c"></span>'}
     <div style="flex:1;min-width:0"><b>${x.first?'⭐ ':''}${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b><div class="code"><span class="${ov?'late-t':''}">${ov?'Late · ':''}${fd(x.due0)}</span> · ${esc(calPn(x)||'Office')} · ${esc(x.kind||'')}${x.who.length?' · '+x.who.map(u=>esc(pnm(u))+(calDone(x.id,x.due0,u)?' ✓':'')).join(', '):''}</div></div>
-    <div class="cal-act">${calCanEdit(x.c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>`:''}</div></div>`;}).join(''):`<div class="empty">No calendar work in the next 30 days.</div>`}</div>`;
+    <div class="cal-act">${calCanEdit(x.c)?`<button type="button" class="btn sm" data-caledit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button>`:''}</div></div>`;}).join(''):`<div class="empty">${one?'No calendar work for this project.':'No calendar work in the next 30 days.'}</div>`}</div>`;
   const i=h.indexOf('<div class="box');return i<0?h+box:h.slice(0,i)+box+h.slice(i);}
 function vCalendar(){try{setTimeout(calBackfill,1500);}catch(_){}
   const mineN=calMine(today()).filter(x=>!x.done).length;
@@ -7420,7 +7440,8 @@ async function calTaskDone(cid,uid,on){const c=(D.cal||[]).find(x=>x.id===cid);i
   try{await db.doc(ex[0]+'/'+ex[1].id).update(on?{status:'Completed',progress:100}:{status:'In progress',progress:0});}catch(_){}}
 /* work scheduled before this existed: create the missing tasks once (admin / project manager / the person who scheduled it) */
 let CT_BACK=false;
-function calBackfill(){if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=true;const d0=today(),old=(()=>{const d=dOf(d0);d.setDate(d.getDate()-30);return isoD(d);})();
+let DENIED_T=0;function deniedToast(m){if(Date.now()-DENIED_T<8000)return;DENIED_T=Date.now();toast('Not saved: '+(m||'you do not have permission to change this.'));}
+function calBackfill(){if(!actBoss()&&!canEditView("tasks"))return;if(CT_BACK||!S.ready||S.demo||!ME||!ME.id)return;CT_BACK=true;const d0=today(),old=(()=>{const d=dOf(d0);d.setDate(d.getDate()-30);return isoD(d);})();
   (D.cal||[]).filter(c=>calWantsTask(c)&&(c.who||[]).length&&(actBoss()||c.by===ME.id)&&(c.repeat?(!c.until||c.until>=d0):(c.end||c.start)>=old)&&(c.who||[]).some(u=>!calLinked(c.id).some(([,t])=>t.who===u)))
     .forEach(c=>calSyncTasks(c));}
 
@@ -8298,10 +8319,10 @@ function render(){
   side();
   {const q=document.getElementById('qaFab');if(q)q.hidden=!(S.ready&&curRole()!=='none');}
   const v=S.view;
+  CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));   // decided for THIS page before it is drawn
   const html=!S.ready?`<div class="box hero-empty"><h2>${S.stale?"Can't reach the server yet. Check your connection.":'Loading…'}</h2></div>`:
     v==='stdlib'?vStdLib():v==='calendar'?vCalendar():v==='myday'?vMyDay():v==='attend'?vAttend():v==='dashboard'?vDashboard():v==='orgs'?(header(label('orgs'))+(isSuperAdmin()?orgsBox():`<div class="box hero-empty">${ico('shield')}<h2>Only the BuildMitr admin can open this page</h2></div>`)):v==='projects'?vProjects():v==='inventory'?vInventory():v==='reports'?vReports():v==='settings'?vSettings():v==='wages'?vWages():v==='balances'?vBalances():v==='budgetva'?vBudgetVA():v==='schedule'||v==='designsched'?vSchedule():v==='planner'?vPlanner():v==='drawlib'?vDrawLib():v==='docmaker'?vDocMaker():v==='worktime'?vWorkTime():v==='notices'?vNotices():v==='install'?vInstall():v==='cctv'?vCctv():v==='project'?vProject():v==='alerts'?vAlerts():v==='meetings'?vMeetings():v==='sitepay'?vSitePay():v==='attbulk'?vAttBulk():v==='client'?vClient():v==='noaccess'?vNoAccess():v==='audit'?vAudit():v==='forms'?vForms():v==='form'?vForm():v==='messages'?vMessages():v==='roleaccess'?vRoleAccess():v==='adminpanel'?vAdminPanel():v==='sitehome'?vSiteHome():v==='desk'?vDesk():v==='cphotos'?vCPhotos():v==='cpay'?vCPay():v==='cdocs'?vCDocs():v==='pipeline'?vPipeline():v==='followups'?vFollowups():v==='estimator'?vEstimator():v==='content'?vContent():v==='mktdash'?vMktDash():v==='leadimp'?vLeadImp():MOD[v]?(v==='tasks'?calIntoTasks(vModule(v)):vModule(v)):vDashboard();
   try{document.body.setAttribute('data-ui',S.ready?uiOf():'owner');document.body.setAttribute('data-view',S.view);}catch(_){}
-  CANW=CANW0&&(!S.ready||['sitehome','desk','client','dashboard','project','noaccess'].includes(v)||canEditView(v));
   document.getElementById('view').innerHTML=html+(S.ready&&HOME_VIEWS.includes(v)?signOutBar():'')+tabBar();draw();
   if(v==='adminpanel'&&S.cloud&&isAdmin())aiAdminLoad();
   if(v==='orgs'&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
@@ -8347,7 +8368,7 @@ document.addEventListener('click',e=>{
   if(!d.del&&!d.reset&&!d.fdel&&!d.tdelx&&S.confirm)S.confirm=null;
   if('close' in d){closeLayer();render();return;}
   if(el.id==='signOut'||el.id==='lgOut'){cloudSignOut();return;}
-  if(el.id==='lgBack'){lgSet('email');return;}
+  if(el.id==='lgBack'){if(LG.signup){LG.signup=false;lgSet('signup');return;}lgSet('email');return;}
   if(el.id==='lgResend'){lgSend();return;}
   if(el.id==='lgRecheck'||el.id==='lgRetry'){cloudEnter(CLOUD.user);return;}
   if(el.id==='lgDemo'){try{sessionStorage.setItem('bm-forcedemo','1');}catch(_){}location.reload();return;}
@@ -8355,8 +8376,9 @@ document.addEventListener('click',e=>{
   if(d.lgorg){cloudEnter(CLOUD.user,d.lgorg);return;}
   if(el.id==='orgPick'){try{localStorage.removeItem('bm-org');}catch(_){}bmClearCache();location.reload();return;}
   if(d.jrok){joinReqAct(d.jrok,true);return;}
+  if(el.id==='lgSignup'){LG.reset=false;const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('signup');return;}
   if(el.id==='lgUseCode'){LG.mode='code';const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('email');return;}
-  if(el.id==='lgUsePw'){LG.mode='pw';const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('email');return;}
+  if(el.id==='lgUsePw'){LG.mode='pw';LG.reset=false;LG.signup=false;const i=document.getElementById('lgEmail');if(i)LG.email=i.value.trim();lgSet('email');return;}
   if(el.id==='pwSet'){pwDialog(false);return;}
   if(d.jrno){joinReqAct(d.jrno,false);return;}
   if(el.id==='langBtn'){const i=LANGS.findIndex(l=>l[0]===LANG);setLang(LANGS[(i+1)%LANGS.length][0]);return;}
@@ -8508,6 +8530,7 @@ document.addEventListener('keydown',e=>{if(e.target.id==='chatText'&&e.key==='En
 document.addEventListener('submit',async e=>{
   e.preventDefault();
   if(e.target.id==='lgEmailForm'){lgSend();return;}
+  if(e.target.id==='lgSignupForm'){lgSignup();return;}
   if(e.target.id==='lgPwForm'){lgPwLogin();return;}
   if(e.target.id==='pwForm'){pwSave();return;}
   if(e.target.id==='lgCodeForm'){lgVerify();return;}
