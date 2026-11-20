@@ -1067,7 +1067,7 @@ function side(){
 }
 function header(title,actions=''){
   const opts=PJ().sort((a,b)=>(b.created||0)-(a.created||0)).map(p=>`<option value="${p.id}" ${S.proj===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('');
-  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj).length+bellUnread();return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
+  return `${S.web&&!S.cloud?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('globe')}<span style="flex:1"><b>Web demo.</b> Sample data is loaded and everything you add is saved only in this browser. Photo and file uploads work in the team version.</span>${cloudCfg()?`<button class="btn sm pri" id="lgExitDemo">Sign in</button>`:''}<button class="btn sm" data-reset="1">Reset demo</button></div>`:''}${S.demo?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('flask-conical')}<span style="flex:1"><b>Demo mode.</b> Sample projects to show how BuildMitr works. Nothing here is saved.</span><button class="btn sm" data-demo="off">Exit demo</button></div>`:''}${S.viewAs?previewBar():''}<div class="bar">${backBtn()}<h1>${title}</h1>${S.ready&&canView('alerts')?(()=>{const c=bellCount(S.proj);return `<button class="btn bell" data-go="alerts" aria-label="Alerts">${ico('bell')}${c?`<span class="bell-n">${c}</span>`:''}</button>`;})():''}
     <label class="psw">${ico('building-2')}<select id="projSel" aria-label="Project"><option value="all">All projects</option>${opts}</select></label>${actions}</div>`;
 }
 const isAdmin=()=>ME.isOwner||ME.canEdit;
@@ -2153,7 +2153,8 @@ function vAlerts(){
   const empty=tab==='act'?`<div class="box hero-empty">${ico('check')}<h2>${q||cat?'Nothing matches':'All clear'}</h2><p>${q||cat?'Try another word or type.':'No late tasks, pending approvals, dues or low stock right now.'}</p></div>`
     :`<div class="box hero-empty">${ico('bell')}<h2>${AL.unread?'No new updates':'No updates yet'}</h2><p>Drawings, reviews and work given to you in the last 14 days show here.</p></div>`;
   if(tab==='upd')setTimeout(()=>{if(S.view!=='alerts'||AL.tab!=='upd')return;try{localStorage.setItem(ACT_SEEN_K(),String(Date.now()));}catch(_){}},1500);   // opened → read (the dots stay until you leave)
-  return header(label('alerts'))+
+  const more=S.proj!=='all'?bellCount('all')-bellCount(S.proj):0;
+  return header(label('alerts'))+(more>0?`<div class="note">${ico('filter')}<span style="flex:1">Showing <b data-notr>${esc(pname(S.proj))}</b> only. <b>${more}</b> more alert${more===1?'':'s'} in other projects.</span><button type="button" class="btn sm" data-alall="1">Show all projects</button></div>`:'')+
   `<div class="al-sum">
     <button type="button" class="al-t ${tab==='act'?'on':''}" data-altab="act"><b>Needs action</b><span>${cnt('high')?`<i class="pill p-red">${cnt('high')} urgent</i>`:''}${cnt('med')?`<i class="pill p-amber">${cnt('med')} soon</i>`:''}${!act.length?'<i class="pill p-green">All clear</i>':''}${cnt('low')?`<i class="pill p-grey">${cnt('low')} info</i>`:''}</span></button>
     <button type="button" class="al-t ${tab==='upd'?'on':''}" data-altab="upd"><b>Recent updates</b><span>${nNew?`<i class="pill p-blue">${nNew} new</i>`:''}<i class="pill p-grey">${upd.length>=60?'latest 60':upd.length+' in 14 days'}</i></span></button>
@@ -2172,7 +2173,7 @@ let alQT=0;function alQRender(){if(S.view!=='alerts')return;const i0=document.ge
 document.addEventListener('input',e=>{if(S.view!=='alerts'||!e.target||e.target.id!=='alQ')return;AL.q=e.target.value;if(e.isComposing)return;clearTimeout(alQT);alQT=setTimeout(alQRender,250);});   // waits for the word (phone/Telugu keyboards)
 document.addEventListener('compositionend',e=>{if(S.view!=='alerts'||!e.target||e.target.id!=='alQ')return;AL.q=e.target.value;clearTimeout(alQT);alQT=setTimeout(alQRender,250);});
 document.addEventListener('change',e=>{if(S.view!=='alerts'||!e.target)return;if(e.target.id==='alSort'){AL.sort=e.target.value;render();}else if(e.target.id==='alUnread'){AL.unread=e.target.checked;render();}});
-document.addEventListener('click',e=>{if(S.view!=='alerts')return;const b=e.target.closest&&e.target.closest('[data-altab],[data-alcat],[data-alread]');if(!b)return;
+document.addEventListener('click',e=>{if(S.view!=='alerts')return;const al=e.target.closest&&e.target.closest('[data-alall]');if(al){S.proj='all';try{localStorage.setItem('bm-proj','all');}catch(_){}render();return;}const b=e.target.closest&&e.target.closest('[data-altab],[data-alcat],[data-alread]');if(!b)return;
   if(b.dataset.altab){AL.tab=b.dataset.altab;AL.cat='';AL.sort='urgent';}else if(b.hasAttribute('data-alread')){AL.snap=Date.now();try{localStorage.setItem(ACT_SEEN_K(),String(AL.snap));}catch(_){}}else AL.cat=b.dataset.alcat;render();});
 
 /* ================= Material rate history ================= */
@@ -7414,6 +7415,9 @@ function bellActs(){const me=ME&&ME.id;if(!me)return [];const boss=actBoss(),wk=
   return (D.audit||[]).filter(a=>a.at>wk&&a.by!==me&&['uploaded','updated','assigned','scheduled','review','returned','approved','comment'].includes(a.action)&&(boss?(!a.project||projOK(a.project)):(a.to||[]).includes(me)))
     .sort((a,b)=>b.at-a.at).slice(0,60);}
 const bellUnread=()=>{const s=actSeen();return bellActs().filter(a=>a.at>s).length;};
+/* the bell number = exactly what the Alerts page shows for the chosen project (or all projects) */
+function bellCount(pid){const s=actSeen(),inP=p=>pid==='all'||!p||p===pid;
+  return computeAlerts().filter(a=>inP(a.pid)).length+bellActs().filter(a=>a.at>s&&inP(a.project)).length;}
 /* ================= Calendar work → tasks =================
    Each person a calendar work is given to also gets a task (design kinds → design schedule tasks, others → site tasks),
    kept in step when the work is changed, moved, re-assigned, ticked done or deleted. Task id: cal_<work>_<person>. */
@@ -8312,7 +8316,7 @@ function render(){
   if(!db){document.getElementById('side').innerHTML=`<div class="brand">BuildMitr</div>`;
     document.getElementById('view').innerHTML=`<div class="box hero-empty">${ico('log-in')}<h2>Sign in to use BuildMitr</h2><p>Open this page signed in to claude.ai with the account it was shared with. All project data is saved there for the whole team.</p></div>`;draw();return;}
   if(S.proj!=='all'&&!proj(S.proj)&&S.ready)S.proj='all';
-  if(S.ready&&S.view!==S._lastView){if(S.view==='alerts'){try{AL.snap=actSeen();AL.tab=bellUnread()&&!computeAlerts().some(a=>a.sev==='high')?'upd':AL.tab||'act';}catch(_){}}S._lastView=S.view;}
+  if(S.ready&&S.view!==S._lastView){if(S.view==='alerts'){try{AL.snap=actSeen();AL.tab=bellActs().some(a=>a.at>AL.snap&&(S.proj==='all'||!a.project||a.project===S.proj))&&!computeAlerts().some(a=>a.sev==='high')?'upd':AL.tab||'act';}catch(_){}}S._lastView=S.view;}
   if(S.ready&&!['noaccess'].includes(S.view)&&!(UI_ONLY[S.view]?uiOf()===UI_ONLY[S.view]&&canView(S.view):canView(S.view))){S.view=homeView();}
   navTrack();
   if(S.ready&&curRole()==='none')S.view='noaccess';
