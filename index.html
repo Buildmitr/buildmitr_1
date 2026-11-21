@@ -1765,12 +1765,12 @@ function vProject(){
   const sl=p.loc||(p.maps&&parseLoc(p.maps));const nf=D.forms.filter(f=>f.project===p.id).length;
   const by=c=>D[c].filter(x=>x.project===p.id);const ts=by('tasks');
   const pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;
-  const ed_=canStage(p);
+  const ed_=canStage(p)&&!p.shared;if(isAdmin()&&S.cloud)setTimeout(()=>shrLoad(),0);
   return header(esc(p.name),`<button class="btn" data-go="projects">${ico('arrow-left')}Projects</button>`)+`<div class="box"><div class="box-h">${ico('flag')}<h2>Project stage</h2>${ed_?'<span class="code">Tap a stage to mark it done</span>':''}</div>${stageStrip(p,ed_)}
     <div class="srow" style="flex-wrap:wrap;gap:6px"><span class="code">Services</span>${PSERV.map(x=>(p.services||[]).includes(x)?`<button type="button" class="pill p-blue" ${ed_?`data-pserv="${esc(p.id)}|${esc(x)}"`:'disabled'}>${esc(x)}</button>`:ed_?`<button type="button" class="pill p-grey" data-pserv="${esc(p.id)}|${esc(x)}" style="opacity:.6">+ ${esc(x)}</button>`:'').join('')}</div></div>`+
-  `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${CANW&&(isAdmin()||(canEditView('projects')&&p.by===ME.id))?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
-  <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>
-  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}${canView('tasks')?(()=>{let n=ts.filter(t=>t.status!=='Completed').length;try{if(canView('calendar'))n+=calOpen(90,365).filter(x=>x.project===p.id).length;}catch(_){}return `<button class="btn" data-go="tasks" data-ptasks="${esc(p.id)}">${ico('list-checks')}Tasks${n?` · ${n} open`:''}</button>`;})():''}</div></div>`+projMeetBox(p);
+  `<div class="box"><div class="siteloc">${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(p.prefix||'')}</b> ${esc(cname(p.client)!=='—'?'· '+cname(p.client):'')}<div class="code">${esc(p.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):''}${S.cloud&&isAdmin()&&!p.shared?`<button class="btn sm" data-pshare="${esc(p.id)}">${ico('share-2')}Share with a company</button>`:''}${CANW&&!p.shared&&(isAdmin()||(canEditView('projects')&&p.by===ME.id))?`<button class="btn sm" data-edit="projects:${p.id}">${ico('pencil')}Edit project</button>`:''}</div></div>
+  <div class="box tiles"><div class="tile"><b>${pc}%</b><span>Progress</span></div><div class="tile"><b>${ts.filter(t=>t.status!=='Completed').length}</b><span>Open tasks</span></div><div class="tile"><b>${by('issues').filter(i=>i.status!=='Resolved').length}</b><span>Open issues</span></div><div class="tile"><b>${fd(p.start)} → ${fd(p.end)}</b><span>Schedule</span></div></div>${p.shared?`<div class="note">${ico('share-2')}<span style="flex:1">Shared by <b data-notr>${esc(p.shared.name)}</b>. Your team works on its tasks, drawings, site updates and calendar here; payments, invoices and budget stay with ${esc(p.shared.name)}.</span>${isAdmin()?`<button type="button" class="btn sm" data-shstop="${esc(p.shared.id)}">Stop sharing</button>`:''}</div>`:''}${!p.start?`<div class="note warn">${ico('pause-circle')}<span><b>No project date — tasks paused.</b> This project's tasks and calendar work don't send alerts to anyone. Add a start date in <b>Edit project</b> to switch them on.</span></div>`:''}
+  <div class="box"><div class="siteloc" style="gap:8px"><button class="btn pri" data-go="dashboard">${ico('layout-dashboard')}Project dashboard</button><button class="btn" data-go="schedule">${ico('gantt-chart')}Activity schedule</button>${canView('documents')?`<button class="btn" data-go="drawlib">${ico('library')}Drawings library</button>`:''}<button class="btn" data-go="forms">${ico('clipboard-check')}Checklists & sheets${nf?` · ${nf}`:''}</button><button class="btn" data-go="reports">${ico('file-bar-chart')}Summary & export</button><button class="btn" data-go="cctv">${ico('cctv')}Cameras</button>${canView('invoices')&&!p.shared?`${CANW?`<button class="btn" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}<button class="btn ghost" data-go="docmaker">Quotations & invoices${by('invoices').length?` · ${by('invoices').length}`:''}</button>`:''}${canView('tasks')?(()=>{let n=ts.filter(t=>t.status!=='Completed').length;try{if(canView('calendar'))n+=calOpen(90,365).filter(x=>x.project===p.id).length;}catch(_){}return `<button class="btn" data-go="tasks" data-ptasks="${esc(p.id)}">${ico('list-checks')}Tasks${n?` · ${n} open`:''}</button>`;})():''}</div></div>`+projMeetBox(p);
 }
 const fmtTs=ms=>ms?new Date(ms).toLocaleDateString(LOC(),{day:'numeric',month:'short'}):'—';
 
@@ -2093,11 +2093,16 @@ function raiseInvoice(mid){
 }
 
 /* ================= Alerts ================= */
+/* a project whose date was removed (no start date) is paused: none of its tasks or calendar work raise alerts */
+const projLive=pid=>{if(!pid)return true;const p=proj(pid);return !p||!!p.start;};
 function computeAlerts(){
   const t=today(),A_=[];const add=(sev,txt,view,pid,d,who)=>{if(canView(view)&&(!pid||projOK(pid)))A_.push({sev,txt,view,pid,d:d||'',who:who||''});};
   const bossA=isAdmin()||curRole()==='Project manager';
-  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,canView('tasks')?'tasks':'myday',x.project,x.due,x.who));
-  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project,x.due,x.who));
+  try{if(isAdmin()&&S.cloud){if(!SHR.data)setTimeout(()=>shrLoad(),0);((SHR.data||{}).invites||[]).forEach(x=>A_.push({sev:'med',txt:`${x.from} wants to share project ${x.name} with you — accept on Projects`,view:'projects',pid:'',d:'',who:''}));}}catch(_){}
+  // a task made from Calendar work alerts only while that work is still on the calendar; tasks of a project with no date never alert
+  const calLive=x=>{if(!projLive(x.project))return false;if(!x.calId)return true;return (D.cal||[]).some(c=>c.id===x.calId);};
+  D.tasks.filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&calLive(x)&&(bossA||x.who===ME.id)).forEach(x=>add('high',`Task late: ${x.title} (due ${fd(x.due)})${x.who&&bossA?' — '+pnm(x.who):''}`,canView('tasks')?'tasks':'myday',x.project,x.due,x.who));
+  (D.dtasks||[]).filter(x=>x.status!=='Completed'&&x.status!=='For review'&&x.due&&x.due<t&&calLive(x)&&x.who===ME.id).forEach(x=>add('high',`Design task late: ${x.title} (due ${fd(x.due)})`,canView('designsched')?'designsched':'myday',x.project,x.due,x.who));
   D.tasks.filter(x=>x.status!=='Completed'&&n(x.progress)>=100&&gateMissing(x).length).forEach(x=>add('med',`${x.title}: waiting for approved ${gateMissing(x).join(', ')}`,'forms',x.project));
   D.issues.filter(x=>x.status!=='Resolved'&&(x.severity==='High'||(x.due&&x.due<t))).forEach(x=>add('high',`${x.kind||'Issue'}: ${x.title}${x.due&&x.due<t?' — overdue':''}`,'issues',x.project,x.due,x.who));
   D.leads.filter(l=>l.follow&&l.follow<=t&&!['Won','Lost'].includes(l.stage)).forEach(l=>add('med',`Follow up lead: ${l.name} (${l.phone})`,'leads','',l.follow,l.who));
@@ -3432,8 +3437,11 @@ function gasDb(org,pre){
     if(resync){resync=false;try{const j=await gasApi('load');fill(j.rows);cursor=(j.now||Date.now())-3000;saveCache();COLS.forEach(emit);}catch(_){}}};
   const send=(a,args)=>{out.push({a,args});saveOut();setTimeout(flush,0);return Promise.resolve();};
   try{window.addEventListener('online',()=>flush());window.addEventListener('beforeunload',ev=>{if(out.length){ev.preventDefault();ev.returnValue='';}});}catch(_){}
+  let shsig=null;   // which projects other companies share with us: when it changes, everything is loaded again
   const poll=async()=>{if(polling||!ready)return;polling=true;
     try{const j=await gasApi('since',{ts:cursor});
+      if(j.shsig!==undefined&&shsig!==null&&j.shsig!==shsig){const k=await gasApi('load');fill(k.rows);shsig=k.shsig!==undefined?k.shsig:null;cursor=(k.now||Date.now())-3000;saveCache();COLS.forEach(emit);polling=false;return;}
+      if(j.shsig!==undefined)shsig=j.shsig;
       const pi=pendingIds();try{if(window.bmIncoming&&(j.rows||[]).length)window.bmIncoming(j.rows.filter(([c,id])=>!pi.has(c+'|'+id)).map(([c,id,s])=>{const o=(store[c]||[]).find(x=>x.id===id);return [c,id,parse(s),o?o.data:null];}));}catch(_){}
       (j.rows||[]).forEach(([c,id,s])=>{if(COLS.includes(c)&&!pi.has(c+'|'+id))put(c,id,parse(s));});(j.gone||[]).forEach(([c,id])=>{if(!pi.has(c+'|'+id))drop(c,id);});
       cursor=Math.max(cursor,(j.now||Date.now())-3000);if((j.rows||[]).length||(j.gone||[]).length)saveCache();}catch(_){}
@@ -3441,12 +3449,12 @@ function gasDb(org,pre){
   const tick=()=>{const hidden=document.visibilityState==='hidden';setTimeout(async()=>{await poll();tick();},hidden?30000:(S.view==='messages'?4000:8000));};
   try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')poll();});}catch(_){}
   const cached=pre?null:bmGet(CK);
-  if(pre){fill(pre.rows);cursor=(pre.now||Date.now())-3000;ready=true;saveCache();setTimeout(tick,0);}
+  if(pre){fill(pre.rows);if(pre.shsig!==undefined)shsig=pre.shsig;cursor=(pre.now||Date.now())-3000;ready=true;saveCache();setTimeout(tick,0);}
   if(out.length)setTimeout(flush,800);       // came with the sign-in request
   else if(cached&&cached.rows){fill(cached.rows);cursor=cached.cursor||0;ready=true;}                         // last visit's copy: shown at once
   (async()=>{if(pre)return;
     for(let k=0;k<3;k++){try{const j=await gasApi('load');
-        fill(j.rows);cursor=(j.now||Date.now())-3000;ready=true;saveCache();break;}
+        fill(j.rows);if(j.shsig!==undefined)shsig=j.shsig;cursor=(j.now||Date.now())-3000;ready=true;saveCache();break;}
       catch(e){if(e.code==='auth'||e.code==='no_access'){bmClearCache();if(!cached){lgSet(e.code==='auth'?'email':'loading',e.message);if(e.code==='auth')cloudForget();}return;}
         if(k===2){if(!cached)lgSet('loading','Could not load your data: '+e.message);else{toast('Showing saved data — could not reach the server.');tick();}return;}await new Promise(r=>setTimeout(r,1500));}}
     COLS.forEach(c=>(ls[c]||[]).forEach(f=>f(snap(c))));tick();})();
@@ -3461,6 +3469,7 @@ function gasDb(org,pre){
       add:async o=>{const id=newId();await docRef(c,id).set(o);return {id};},
       onSnapshot:next=>{(ls[c]=ls[c]||[]).push(next);if(ready)setTimeout(()=>next(snap(c)),0);return()=>{};}}),
     refreshNow:poll,
+    reloadAll:async()=>{const k=await gasApi('load');fill(k.rows);if(k.shsig!==undefined)shsig=k.shsig;cursor=(k.now||Date.now())-3000;saveCache();COLS.forEach(emit);},
     /* many entries in one request (e.g. a whole work schedule) */
     batch:async list=>{list.forEach(([c,id,d])=>{try{NTF.mine[c+'|'+id]=Date.now();}catch(_){}try{const pv=(store[c]||[]).find(x=>x.id===id);actLog(c,id,pv?pv.data:null,d);}catch(_){}put(c,id,d);});saveCache();for(let i=0;i<list.length;i+=300)await send('putMany',{items:list.slice(i,i+300)});},
     delMany:async list=>{list.forEach(([c,id])=>drop(c,id));saveCache();for(let i=0;i<list.length;i+=1500)await send('delMany',{items:list.slice(i,i+1500)});},
@@ -3474,7 +3483,7 @@ function gasAssets(org){
     file=await bmShrink(file);
     if(file.size>10*1024*1024)throw new Error('The file is larger than 10 MB.');
     const b64=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>no(new Error('Could not read the file.'));fr.readAsDataURL(file);});
-    const j=await gasApi('upload',{b64,name:file.name||'file',type:type||file.type||'application/octet-stream'});return {id:j.id};}};
+    const j=await gasApi('upload',{b64,name:file.name||'file',type:type||file.type||'application/octet-stream'});return {id:j.id};}};   // a file attached to a shared project moves to the owner company when the entry is saved (server)
 }
 /* photos & files are PRIVATE: each one comes through the server only for a signed-in member who may see it.
    /_blob/<id> pictures load as private copies (small preview in lists, full size when opened); links open in the app viewer. */
@@ -5923,18 +5932,18 @@ function vProjects(){
   const all=D.projects.filter(p=>projOK(p.id)),arch=all.filter(p=>p.archived);if(PV.arch&&!arch.length)PV.arch=false;
   const q=S.q.toLowerCase(),list=projOrdered(all.filter(p=>!!p.archived===!!PV.arch).filter(p=>[p.prefix,p.name,p.address,p.description,cname(p.client)].join(' ').toLowerCase().includes(q)));
   const btn=CANW&&canEditView('projects')?`<button class="btn pri" data-add="projects">${ico('plus')}New project</button>`:'';
-  if(!D.projects.length)return header(label('projects'))+`<div class="box hero-empty">${ico('building-2')}<h2>No projects yet</h2><p>Start by creating your first project. Then record daily reports, tasks, material, labour and payments against it.</p>${btn}</div>`;
+  if(!D.projects.length){setTimeout(()=>shrLoad(),0);return header(label('projects'))+shrInviteBox()+`<div class="box hero-empty">${ico('building-2')}<h2>No projects yet</h2><p>Start by creating your first project. Then record daily reports, tasks, material, labour and payments against it.</p>${btn}</div>`;}
   const stats=p=>{const ts=D.tasks.filter(t=>t.project===p.id),pc=ts.length?Math.round(ts.reduce((s,t)=>s+(t.status==='Completed'?100:+t.progress||0),0)/ts.length):0;return {pc,open:D.issues.filter(i=>i.project===p.id&&i.status!=='Resolved').length};};
   const moveOK=canEd&&admin&&PV.sort==='order'&&!q&&!PV.arch;
   const acts=(p,i)=>`${moveOK?`<button type="button" class="btn sm ghost" data-pmove="${p.id}|-1" ${i===0?'disabled':''} aria-label="Move ${esc(p.name)} up">${ico('arrow-up')}</button><button type="button" class="btn sm ghost" data-pmove="${p.id}|1" ${i===list.length-1?'disabled':''} aria-label="Move ${esc(p.name)} down">${ico('arrow-down')}</button>`:''}
-    ${canEd&&(admin||p.by===ME.id)?`<button type="button" class="btn sm ghost" data-edit="projects:${p.id}" aria-label="Edit ${esc(p.name)}">${ico('pencil')}</button>`:''}
-    ${admin?(p.archived?`<button type="button" class="btn sm ghost" data-parch="${p.id}|0">${ico('rotate-ccw')}<span>Restore</span></button>`:`<button type="button" class="btn sm ghost" data-parch="${p.id}|1" aria-label="Archive ${esc(p.name)}">${ico('archive')}</button>`)+`<button type="button" class="btn sm ghost warn" data-pdel="${p.id}" aria-label="Delete ${esc(p.name)}">${ico('trash-2')}</button>`:''}`;
-  const card=(p,i)=>{const s=stats(p);return `<div class="pcard-w"><button class="pcard" data-proj="${p.id}">${p.prefix?`<span class="code">${esc(p.prefix)}</span>`:''}<h3>${esc(p.name)}${p.archived?' <span class="pill p-grey">Archived</span>':''}</h3>
+    ${canEd&&!p.shared&&(admin||p.by===ME.id)?`<button type="button" class="btn sm ghost" data-edit="projects:${p.id}" aria-label="Edit ${esc(p.name)}">${ico('pencil')}</button>`:''}
+    ${admin&&!p.shared?(p.archived?`<button type="button" class="btn sm ghost" data-parch="${p.id}|0">${ico('rotate-ccw')}<span>Restore</span></button>`:`<button type="button" class="btn sm ghost" data-parch="${p.id}|1" aria-label="Archive ${esc(p.name)}">${ico('archive')}</button>`)+`<button type="button" class="btn sm ghost warn" data-pdel="${p.id}" aria-label="Delete ${esc(p.name)}">${ico('trash-2')}</button>`:''}`;
+  const card=(p,i)=>{const s=stats(p);return `<div class="pcard-w"><button class="pcard" data-proj="${p.id}">${p.prefix?`<span class="code">${esc(p.prefix)}</span>`:''}<h3>${esc(p.name)}${p.archived?' <span class="pill p-grey">Archived</span>':''}${p.shared?` <span class="pill p-blue" title="Shared by ${esc(p.shared.name)}">${ico('share-2')} ${esc(p.shared.name)}</span>`:shrCount(p.id)?` <span class="pill p-blue">${ico('share-2')} Shared</span>`:''}</h3>
       <div class="meta"><span>${ico('map-pin')}${esc(p.address||'—')}</span>${p.loc?'<span class="pill p-green">Pinned</span>':''}</div>
       <div class="meta"><span>${ico('calendar')}${fd(p.start)} → ${fd(p.end)}</span><span>${ico('alert-triangle')}${s.open} open</span></div>
       <div style="display:flex;gap:8px;align-items:center"><div class="prog" style="flex:1"><i style="width:${s.pc}%"></i></div><span class="code">${s.pc}%</span></div></button>
       ${canEd||admin?`<div class="pcard-acts">${acts(p,i)}</div>`:''}</div>`;};
-  const row=(p,i)=>{const s=stats(p);return `<tr><td class="code">${esc(p.prefix||'')}</td><td><button type="button" class="linkish" data-proj="${p.id}"><b>${esc(p.name)}</b></button>${p.archived?' <span class="pill p-grey">Archived</span>':''}<div class="code">${esc(p.address||'')}</div></td>
+  const row=(p,i)=>{const s=stats(p);return `<tr><td class="code">${esc(p.prefix||'')}</td><td><button type="button" class="linkish" data-proj="${p.id}"><b>${esc(p.name)}</b></button>${p.archived?' <span class="pill p-grey">Archived</span>':''}${p.shared?` <span class="pill p-blue">${ico('share-2')} ${esc(p.shared.name)}</span>`:''}<div class="code">${esc(p.address||'')}</div></td>
       <td>${esc(cname(p.client)||'—')}</td><td class="code">${fd(p.start)} → ${fd(p.end)}</td><td class="num">${s.pc}%</td><td class="num">${s.open}</td><td class="acts">${acts(p,i)}</td></tr>`;};
   const bar=`<div class="pl-bar"><input id="q" placeholder="Search projects by name, code, client, place" value="${esc(S.q)}" aria-label="Search projects">
     <label class="code">Sort<select id="pv-sort">${[['order','My order'],['name','Name A–Z'],['code','Project code / number'],['start','Start date'],['newest','Newest first']].map(([v,l])=>`<option value="${v}" ${PV.sort===v?'selected':''}>${l}</option>`).join('')}</select></label>
@@ -5944,12 +5953,52 @@ function vProjects(){
   const body=!list.length?`<div class="empty">${q?'No project matches your search.':PV.arch?'No archived projects.':'No projects.'}</div>`:
     PV.lay==='list'?`<div class="box"><div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Project</th><th>Client</th><th>Dates</th><th class="num">Done</th><th class="num">Issues</th><th></th></tr></thead><tbody>${list.map(row).join('')}</tbody></table></div></div>`:
     `<div class="cards">${list.map(card).join('')}</div>`;
-  return header(PV.arch?'Archived projects':label('projects'),btn)+bar+body;
+  setTimeout(()=>shrLoad(),0);
+  return header(PV.arch?'Archived projects':label('projects'),btn)+shrInviteBox()+bar+body;
 }
+/* ---- one project shared with another company ---- */
+const SHR={data:null,at:0,busy:false};
+async function shrLoad(force){
+  if(!S.cloud||!S.ready||SHR.busy||!isAdmin())return;if(!force&&SHR.data&&Date.now()-SHR.at<60000)return;
+  SHR.busy=true;let ch=false;try{const d=await gasApi('shareList');ch=JSON.stringify(d)!==JSON.stringify(SHR.data);SHR.data=d;}catch(_){if(!SHR.data)SHR.data={out:[],in:[],invites:[]};}SHR.at=Date.now();SHR.busy=false;
+  if(ch&&['projects','project'].includes(S.view)&&!document.querySelector('#layer .drawer'))render();
+  if(document.getElementById('shareForm'))shrDialog(document.getElementById('shareForm').dataset.pid);
+}
+const shrCount=pid=>((SHR.data||{}).out||[]).filter(x=>x.project===pid).length;
+function shrInviteBox(){
+  const inv=((SHR.data||{}).invites||[]);if(!inv.length||!isAdmin())return '';
+  return `<div class="box"><div class="box-h">${ico('share-2')}<h2>Projects shared with ${esc(orgName())}</h2><span class="code">${inv.length} waiting</span></div>${inv.map(x=>`<div class="srow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:220px"><b data-notr>${esc(x.from)}</b> wants to share <b data-notr>${esc(x.name)}</b> with you. Your team can work on its tasks, drawings and site updates; money stays with ${esc(x.from)}.</span><button type="button" class="btn sm pri" data-shacc="${esc(x.id)}">${ico('check')}<span>Accept</span></button><button type="button" class="btn sm" data-shdec="${esc(x.id)}">Decline</button></div>`).join('')}</div>`;
+}
+function shrDialog(pid){
+  const p=proj(pid);if(!p)return;const out=((SHR.data||{}).out||[]).filter(x=>x.project===pid);
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="shareForm" data-pid="${esc(pid)}">
+    <div class="pane-h"><h2>Share with another company</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><p class="code">Share <b data-notr>${esc(pname(pid))}</b> with another company on BuildMitr. Their team can see and work on its tasks, design tasks, drawings, issues, site updates, calendar work, meetings and checklists. <b>Payments, invoices, budget, quotations and the project value stay with ${esc(orgName())}.</b></p>
+      <label class="req">Email of the other company's admin<input name="email" type="email" inputmode="email" required placeholder="admin@theircompany.com"></label>
+      <p class="code">They get an email and accept from their Projects page. You or they can stop sharing at any time.</p>
+      ${out.length?`<div class="tbl-wrap"><table><thead><tr><th>Shared with</th><th>Status</th><th></th></tr></thead><tbody>${out.map(x=>`<tr><td><b data-notr>${esc(x.to||x.email)}</b>${x.to?`<div class="code" data-notr>${esc(x.email)}</div>`:''}</td><td>${x.status==='Active'?'<span class="pill p-green">Sharing</span>':'<span class="pill p-amber">Waiting to accept</span>'}</td><td><button type="button" class="btn sm" data-shstop="${esc(x.id)}">${x.status==='Active'?'Stop sharing':'Cancel'}</button></td></tr>`).join('')}</tbody></table></div>`:''}
+    </div><div class="pane-f"><button type="button" class="btn" data-close>Close</button><button class="btn pri">${ico('send')}<span>Share</span></button></div></form></div>`;
+}
+async function shrAct(a,args,msg){
+  try{SHR.data=await gasApi(a,args);SHR.at=Date.now();toast(msg);}catch(e){toast(e.message||'Could not do that.');return false;}
+  try{if(db&&db.reloadAll)await db.reloadAll();else if(db&&db.refreshNow)await db.refreshNow();}catch(_){}
+  if(document.getElementById('shareForm'))shrDialog(document.getElementById('shareForm').dataset.pid);else render();
+  return true;
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pshare],[data-shstop],[data-shacc],[data-shdec]');if(!b)return;e.preventDefault();
+  if(b.dataset.pshare){shrDialog(b.dataset.pshare);shrLoad(true);return;}
+  if(b.dataset.shacc){b.disabled=true;shrAct('shareAccept',{id:b.dataset.shacc},'Project added — your team can now work on it.');return;}
+  if(b.dataset.shdec){if(!confirm('Decline this shared project?'))return;shrAct('shareStop',{id:b.dataset.shdec},'Declined.');return;}
+  if(b.dataset.shstop){if(!confirm('Stop sharing this project? The other company will no longer see it.'))return;shrAct('shareStop',{id:b.dataset.shstop},'Sharing stopped.').then(ok=>{if(ok&&S.view==='project'&&!proj(S.proj)){S.view='projects';render();}});return;}
+},true);
+document.addEventListener('submit',e=>{if(!e.target||e.target.id!=='shareForm')return;e.preventDefault();const f=e.target,em=(f.elements.email.value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('Enter a valid email.');return;}
+  const btn=f.querySelector('.btn.pri');if(btn)btn.disabled=true;
+  shrAct('shareAdd',{project:f.dataset.pid,email:em},'Invitation sent to '+em+'.').then(()=>{const b2=document.querySelector('#shareForm .btn.pri');if(b2)b2.disabled=false;});},true);
 async function projMove(id,dir){
   const list=projOrdered(D.projects.filter(p=>projOK(p.id)&&!p.archived));const i=list.findIndex(p=>p.id===id),j=i+dir;if(i<0||j<0||j>=list.length)return;
   [list[i],list[j]]=[list[j],list[i]];
-  const ch=list.map((p,k)=>[p,k]).filter(([p,k])=>p.order!==k).map(([p,k])=>['projects',p.id,{...recOf(p),order:k}]);
+  const ch=list.map((p,k)=>[p,k]).filter(([p,k])=>p.order!==k&&!p.shared).map(([p,k])=>['projects',p.id,{...recOf(p),order:k}]);   // a shared project belongs to the other company: its place is not saved
   await write(()=>dbBatch(ch),'Order saved');render();
 }
 function projDelDialog(id){
@@ -7239,7 +7288,7 @@ function calIcs(){const d0=today(),xs=(D.cal||[]).filter(c=>(c.who||[]).includes
     L.push('SUMMARY:'+z(c.title+(c.project?' — '+pname(c.project):'')),'DESCRIPTION:'+z((c.kind||'')+(c.notes?'\n'+c.notes:'')),'END:VEVENT');});
   L.push('END:VCALENDAR');saveFile('BuildMitr - my work.ics',new Blob([L.join('\r\n')],{type:'text/calendar'}));}
 /* bell: my work today */
-{const _ca=computeAlerts;computeAlerts=function(){const A_=_ca();try{if(canView('calendar'))calMine(today()).filter(x=>!x.done).forEach(x=>A_.push({sev:'med',txt:`Today: ${x.title}${x.project?' ('+pname(x.project)+')':''}`,view:canView('myday')?'myday':'calendar',pid:x.project}));}catch(_){}return A_;};}
+{const _ca=computeAlerts;computeAlerts=function(){const A_=_ca();try{if(canView('calendar'))calMine(today()).filter(x=>!x.done&&projLive(x.project)).forEach(x=>A_.push({sev:'med',txt:`Today: ${x.title}${x.project?' ('+pname(x.project)+')':''}`,view:canView('myday')?'myday':'calendar',pid:x.project}));}catch(_){}return A_;};}
 
 async function calTick(cid,d,on){const c=(D.cal||[]).find(x=>x.id===cid);if(!c)return;const id=`${ME.id}_${cid}_${d}`;
   if(on)await write(()=>db.doc('caldone/'+id).set({user:ME.id,cal:cid,date:d,own:c.by||'',title:c.title,at:Date.now()}),'Done ✓');
