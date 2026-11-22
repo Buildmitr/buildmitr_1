@@ -104,6 +104,41 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 td.acts{white-space:nowrap;text-align:right}
 td .thumbs{display:flex;gap:4px}
 td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
+.th-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;background:var(--line);color:var(--ink);font-weight:700;font-size:12px;text-decoration:none}
+.dpr-list{display:grid;gap:12px;padding:12px}
+.dpr-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.dpr-h{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.dpr-d{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dpr-d b{font-size:15px}
+.dpr-a{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.dpr-b{padding:6px 14px 12px;display:grid;gap:2px}
+.dpr-s{padding:8px 0;border-bottom:1px dashed var(--line)}.dpr-s:last-child{border-bottom:0}
+.dpr-l{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}.dpr-l svg{width:14px;height:14px}
+.dpr-t{white-space:pre-line;overflow-wrap:anywhere;font-size:14px;line-height:1.5}
+.crew-chips{display:flex;gap:6px;flex-wrap:wrap}
+table.dpr-mt{font-size:13px;max-width:640px}table.dpr-mt td,table.dpr-mt th{padding:6px 8px}
+.dpr-ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.dpr-ph a{display:block;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--line)}
+.dpr-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.f-sec{margin-top:6px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.f-grp{display:grid;gap:6px}.f-gl{font-size:13px;color:var(--muted)}
+.crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.crew-i{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:4px 4px 4px 8px;font-size:13px}
+.crew-i span{flex:1;min-width:0}.crew-i input{width:58px;padding:6px}
+.crew-tot{grid-column:1/-1}
+.mrows,.wrows{display:grid;gap:6px}
+.wr-row{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 34px;gap:6px;align-items:start}
+.wr-row select,.wr-row textarea{min-width:0}
+.wrows>.btn{width:max-content}
+@media(max-width:480px){.wr-row{grid-template-columns:minmax(0,1fr) 34px;padding-bottom:6px;border-bottom:1px dashed var(--line)}.wr-row [data-w=trade]{grid-column:1;grid-row:1}.wr-row [data-wrdel]{grid-column:2;grid-row:1}.wr-row textarea{grid-column:1/3;grid-row:2}}
+.mr-head,.mr-row{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1.2fr) 34px;gap:4px;align-items:center}
+.mr-row input,.mr-row select{min-width:0;padding:7px 6px}
+.mrows>.btn{width:max-content}
+@media(max-width:480px){.mr-head{display:none}.mr-row{grid-template-columns:repeat(3,minmax(0,1fr)) 34px;padding-bottom:6px;border-bottom:1px dashed var(--line)}.mr-row [data-m=item]{grid-column:1/4;grid-row:1}.mr-row [data-mrdel]{grid-column:4;grid-row:1}.mr-row [data-m=qty]{grid-column:1;grid-row:2}.mr-row [data-m=unit]{grid-column:2;grid-row:2}.mr-row [data-m=kind]{grid-column:3/5;grid-row:2}}
+.fv-count{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:2;background:rgb(0 0 0 / .55);color:#fff;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}
+.fv-img{position:relative;touch-action:pan-y pinch-zoom}
+.fv-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:64px;border:0;border-radius:10px;background:rgb(0 0 0 / .45);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fv-nav svg{width:28px;height:28px}.fv-nav:disabled{opacity:.15;cursor:default}
+.fv-prev{left:6px}.fv-next{right:6px}
 .empty{padding:32px 16px;color:var(--muted);text-align:center}
 .hero-empty{padding:44px 20px;text-align:center;display:grid;gap:12px;justify-items:center}
 .hero-empty h2{font-family:var(--f-display);margin:0;font-size:18px}
@@ -659,8 +694,12 @@ const MOD={
     {k:'status',l:'Status',t:'select',o:['Open','Resolved'],list:1},{k:'details',l:'Details',t:'textarea'},{k:'photos',l:'Photos',t:'photos',list:1}]},
   dpr:{label:'Daily reports',te:'రోజువారీ నివేదిక',icon:'notebook-pen',actions:['whatsapp'],fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'date',l:'Date',t:'date',req:1,list:1,def:'today'},
-    {k:'weather',l:'Weather',t:'select',o:['Clear','Cloudy','Rain','Hot'],list:1},{k:'work',l:'Work done today',t:'textarea',req:1,list:1},
-    {k:'plan',l:'Plan for tomorrow',t:'textarea'},{k:'hindrance',l:'Hindrances',t:'textarea'},{k:'photos',l:'Site photos',t:'photos',list:1}]},
+    {k:'weather',l:'Weather',t:'select',o:['Clear','Cloudy','Rain','Hot'],list:1},
+    {k:'items',l:'Choose the work type, then write what was done',t:'workrows',sec:'Work done today'},
+    {k:'work',l:'Other notes',t:'textarea',list:1},
+    {k:'crew',l:'Labour on site today',t:'crew',sec:'Labour'},
+    {k:'mats',l:'Material received / used today',t:'matrows',sec:'Material'},
+    {k:'plan',l:'Plan for tomorrow',t:'textarea',sec:'Tomorrow & hindrances'},{k:'hindrance',l:'Hindrances',t:'textarea'},{k:'photos',l:'Site photos',t:'photos',list:1,sec:'Photos'}]},
   team:{label:'Team',te:'టీమ్',icon:'users',noProject:true,actions:['call','invite'],fields:[
     {k:'name',l:'Name',t:'text',req:1,list:1},{k:'phone',l:'Mobile (WhatsApp)',t:'text',req:1,list:1},{k:'email',l:'Email',t:'text'},
     {k:'role',l:'Role',t:'select',o:['Admin','Project manager','Site engineer','Supervisor','Accountant','Storekeeper','Architect','Structural engineer','Sub-contractor','Marketing','Client'],req:1,list:1},
@@ -1095,13 +1134,40 @@ function cell(f,r){
     case 'date':return fd(v);
     case 'money':return v?inr(v):'—';
     case 'number':return f.k==='progress'?`<div style="display:flex;gap:8px;align-items:center"><div class="prog"><i style="width:${Math.min(100,+v||0)}%"></i></div><span class="code">${+v||0}%</span></div>`:(v===''||v==null?'—':num(v));
-    case 'photos':return (v||[]).length?`<div class="thumbs">${v.slice(0,3).map(id=>`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="" loading="lazy"></a>`).join('')}${v.length>3?`<span class="code">+${v.length-3}</span>`:''}</div>`:'—';
+    case 'crew':return crewTot(v)?`<b>${num(crewTot(v))}</b> <span class="code">${esc(crewTxt(v))}</span>`:'—';
+    case 'workrows':{const t=[...new Set((Array.isArray(v)?v:[]).filter(x=>x&&x.work).map(x=>x.trade||'Other'))];return t.length?esc(t.join(', ')):'—';}
+    case 'matrows':return (v||[]).length?`${v.length} item${v.length>1?'s':''}`:'—';
+    case 'photos':{const ph=Array.isArray(v)?v:[];return ph.length?`<div class="thumbs">${ph.map((id,i)=>i<3?`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="" loading="lazy"></a>`:i===3?`<a class="th-more" data-img href="/_blob/${esc(id)}" target="_blank" rel="noopener" aria-label="Photo 4 of ${ph.length}">+${ph.length-3}</a>`:`<a hidden data-img href="/_blob/${esc(id)}"></a>`).join('')}</div>`:'—';}
     case 'select':return v?(STATUS_PILL[v]?`<span class="pill ${STATUS_PILL[v]}">${esc(v)}</span>`:esc(v)):'—';
     case 'textarea':return v?esc(String(v).length>90?String(v).slice(0,90)+'…':v):'—';
     default:return esc(v||'—');
   }
 }
 const isNum=f=>f.t==='number'&&f.k!=='progress'||f.t==='money';
+/* ---- daily report: trades, material rows, text ---- */
+const DPR_WTYPES=['Civil','Electrical','Plumbing','Carpentry','Painting','Tiles / flooring','Fabrication / steel','Waterproofing','False ceiling','Other'];
+MOD.dpr.fields.find(f=>f.k==='items').o=DPR_WTYPES;
+const DPR_PH={Civil:'e.g. GF slab shuttering 60%, brickwork FF east wall',Electrical:'e.g. Conduits in FF slab, DB fixing',Plumbing:'e.g. Sleeves in toilet slab, drain line to sump'};
+/* work lines of a report as [{trade,work}] — new reports keep them in items; the first test build used civil / electrical / plumbing */
+const dprItems=r=>{const a=(Array.isArray(r&&r.items)?r.items:[]).filter(x=>x&&x.work&&String(x.work).trim()).map(x=>({trade:String(x.trade||'Other'),work:String(x.work)}));
+  [['Civil','civil'],['Electrical','electrical'],['Plumbing','plumbing']].forEach(([t,k])=>{if(r&&r[k]&&String(r[k]).trim())a.push({trade:t,work:String(r[k])});});return a;};
+const dprTypes=r=>{const t=new Set(dprItems(r).map(x=>x.trade));if(crewTot(r.crew))t.add('Labour');if(dprMats(r).length)t.add('Material');if(r.work&&String(r.work).trim()&&!dprItems(r).length)t.add('Other');return t;};
+function wrRow(x,i){x=x||{};const ts=[...new Set([...DPR_WTYPES,...(x.trade?[x.trade]:[])])];
+  return `<div class="wr-row"><select data-w="trade" aria-label="Work type">${ts.map(t=>`<option ${t===(x.trade||'Civil')?'selected':''}>${esc(t)}</option>`).join('')}</select>
+    <textarea data-w="work" rows="2" placeholder="${esc(DPR_PH[x.trade]||'What was done today')}" aria-label="Work done">${esc(x.work||'')}</textarea>
+    <button type="button" class="btn sm ghost" data-wrdel aria-label="Remove">${ico('x')}</button></div>`;}
+const DPR_TRADES=['Mason','Helper / coolie','Carpenter','Bar bender','Electrician','Plumber','Painter','Tiles / flooring','Other'];
+const DPR_UNITS=['Bags','Cum','Cft','Kg','Ton','Nos','Rft','Sqft','Ltr','Load','Trip'];
+const crewTot=c=>Object.values(c&&typeof c==='object'?c:{}).reduce((a,x)=>a+(+x||0),0);
+const crewTxt=c=>Object.entries(c&&typeof c==='object'?c:{}).filter(([,x])=>+x>0).map(([t,x])=>`${t} ${num(+x)}`).join(' · ');
+const dprMats=r=>(Array.isArray(r&&r.mats)?r.mats:[]).filter(m=>m&&m.item);
+function mrRow(m){m=m||{};const u=[...new Set([...DPR_UNITS,...(m.unit?[m.unit]:[])])];
+  return `<div class="mr-row"><input data-m="item" list="dprmat" placeholder="e.g. Cement OPC 53" value="${esc(m.item||'')}" aria-label="Material">
+    <input data-m="qty" type="number" min="0" step="any" inputmode="decimal" placeholder="Qty" value="${esc(m.qty??'')}" aria-label="Quantity">
+    <select data-m="unit" aria-label="Unit"><option value="">Unit</option>${u.map(x=>`<option ${x===m.unit?'selected':''}>${esc(x)}</option>`).join('')}</select>
+    <select data-m="kind" aria-label="Received or used">${['Received','Used'].map(x=>`<option ${x===(m.kind||'Received')?'selected':''}>${x}</option>`).join('')}</select>
+    <button type="button" class="btn sm ghost" data-mrdel aria-label="Remove row">${ico('x')}</button></div>`;}
+const dprWork=r=>dprItems(r).map(x=>`${x.trade}: ${x.work.trim()}`).concat(r.work&&String(r.work).trim()?[String(r.work).trim()]:[]).join('\n');
 
 /* ================= Generic module list ================= */
 const teamRole=id=>{const t=(D.team||[]).find(x=>x.account===id);return t&&t.role||'';};
@@ -1110,9 +1176,10 @@ function vModule(k){
   let rows=D[k].filter(r=>m.noProject&&S.proj!=='all'?(k!=='labour'||r.project===S.proj):inProj(r));if(k==='documents')rows=rows.filter(relOK);
   if(k==='cameras')rows=rows.filter(camAllowed);
   const q=S.q.toLowerCase();
-  if(q)rows=rows.filter(r=>m.fields.some(f=>String(cell(f,r)).toLowerCase().replace(/<[^>]+>/g,'').includes(q)));
+  if(q)rows=rows.filter(r=>m.fields.some(f=>String(cell(f,r)).toLowerCase().replace(/<[^>]+>/g,'').includes(q))||k==='dpr'&&[dprWork(r),r.plan,r.hindrance,crewTxt(r.crew),...dprMats(r).map(x=>x.item)].join(' ').toLowerCase().includes(q));
   const stF=m.fields.find(f=>f.k==='status');
   if(S.fstat&&stF)rows=rows.filter(r=>r.status===S.fstat);
+  if(k==='dpr'&&S.dprT)rows=rows.filter(r=>dprTypes(r).has(S.dprT));
   rows.sort((a,b)=>(b.date||b.due||'').localeCompare(a.date||a.due||'')||(b.at||0)-(a.at||0));
   /* person / team: filter + sort + group (lists with an "Assigned to" person) */
   const whoF=m.fields.find(f=>f.k==='who'&&f.t==='member');let gKey=null,gHead=null;
@@ -1137,15 +1204,37 @@ function vModule(k){
   const intro=k==='team'?joinReqBox()+teamIntro():k==='wtpl'?wtplIntro():'';
   return header(esc(label(k)),(k==='dpr'&&CANW?`<button class="btn" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:'')+(k==='attendance'&&CANW?`<button class="btn" data-go="attbulk">${ico('calendar-plus')}Mark for whole gang</button>`:'')+(k==='tasks'&&CANW?`<button class="btn" data-import="1">${ico('file-up')}Import schedule</button>`:'')+(k==='team'&&canView('roleaccess')?`<button class="btn" data-go="roleaccess">${ico('shield')}Role access</button>`:'')+(k==='leads'?`<button class="btn" data-go="pipeline">${ico('kanban')}Pipeline board</button>`:'')+addBtn(k))+intro+
   `<div class="box"><div class="filters"><input id="q" placeholder="Search" value="${esc(S.q)}" aria-label="Search">
+    ${k==='dpr'?`<select id="fdprt" aria-label="Work type" style="width:auto"><option value="">All work types</option>${[...DPR_WTYPES,'Labour','Material'].map(o=>`<option ${S.dprT===o?'selected':''}>${o}</option>`).join('')}</select>`:''}
     ${stF?`<select id="fstat" aria-label="Status"><option value="">All statuses</option>${stF.o.map(o=>`<option ${S.fstat===o?'selected':''}>${o}</option>`).join('')}</select>`:''}
     ${whoF?`<select id="fwho" aria-label="${esc(whoF.l)}"><option value="">Everyone</option>${pplOpts.map(([id,nm])=>`<option value="${esc(id)}" ${S.fwho===id?'selected':''}>${esc(nm)}</option>`).join('')}<option value="_none" ${S.fwho==='_none'?'selected':''}>Not assigned</option></select>
     <select id="lsort" aria-label="Sort by"><option value="">Sort: newest</option><option value="due" ${lsort==='due'?'selected':''}>Sort: due date</option><option value="person" ${lsort==='person'?'selected':''}>Group: by person</option><option value="team" ${lsort==='team'?'selected':''}>Group: by team / role</option>${stF?`<option value="status" ${lsort==='status'?'selected':''}>Sort: status</option>`:''}</select>`:''}
     <span class="code" style="margin-left:auto;align-self:center">${rows.length} ${rows.length===1?'entry':'entries'}</span></div>
-  ${rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
+  ${rows.length&&k==='dpr'?dprCards(rows,m):rows.length?`<div class="tbl-wrap mtbl"><table><thead><tr>${cols.map(f=>`<th class="${isNum(f)?'num':''}">${esc(f.l)}</th>`).join('')}${(m.extra||[]).map(x=>`<th class="num">${esc(x.l)}</th>`).join('')}<th></th></tr></thead>
   <tbody>${rows.map((r,i)=>(gKey&&(i===0||gKey(rows[i-1])!==gKey(r))?`<tr class="lgrp"><td colspan="${cols.length+(m.extra||[]).length+1}">${gHead(gKey(r),rows.filter(x=>gKey(x)===gKey(r)))}</td></tr>`:'')+`<tr>${cols.map(f=>`<td class="${isNum(f)?'num':''}" data-label="${esc(f.l)}">${cell(f,r)}</td>`).join('')}${(m.extra||[]).map(x=>`<td class="num" data-label="${esc(x.l)}"><b>${x.f(r)}</b></td>`).join('')}
-    <td class="acts">${TR_COLS.includes(k)?`${A&&trCanWrite(k,r)?trCamBtn(k,r.id):''}<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}</td></tr>`).join('')}${foot}</tbody></table></div>`
+    <td class="acts">${rowActs(k,r,m)}</td></tr>`).join('')}${foot}</tbody></table></div>`
+  :k==='dpr'&&(S.dprT||S.q)&&D.dpr.some(inProj)?`<div class="hero-empty">${ico('search')}<h2>No reports match</h2><p>Nothing found for ${esc(S.dprT||'')}${S.dprT&&S.q?' and ':''}${S.q?'“'+esc(S.q)+'”':''}.</p><button type="button" class="btn" data-dprclear>Show all reports</button></div>`
   :`<div class="hero-empty">${ico(m.icon)}<h2>No ${esc(m.label.toLowerCase())} yet</h2><p>${S.proj!=='all'&&!m.noProject?'Nothing recorded for this project.':'Add the first entry to start keeping records here.'}</p>${addBtn(k)}</div>`}</div>`;
 }
+
+/* daily reports as readable cards: every section in full, all photos (tap to open, swipe through) */
+function dprCards(rows,m){
+  const lim=S.dprN||15,show=rows.slice(0,lim),multi=S.proj==='all',T=S.dprT||'',TICO={Civil:'hammer',Electrical:'zap',Plumbing:'droplet',Painting:'paintbrush',Waterproofing:'droplet'};
+  const txt=v=>`<div class="dpr-t">${esc(String(v).trim())}</div>`;
+  const sec=(ic,l,v)=>v&&String(v).trim()?`<div class="dpr-s"><div class="dpr-l">${ico(ic)}<span>${esc(l)}</span></div>${txt(v)}</div>`:'';
+  return `<div class="dpr-list">${show.map(r=>{const c=r.crew&&typeof r.crew==='object'?r.crew:{},tot=crewTot(c),ms=dprMats(r),ph=Array.isArray(r.photos)?r.photos:[];
+    return `<article class="dpr-card">
+      <header class="dpr-h"><div class="dpr-d"><b>${fd(r.date)}</b>${multi?`<span class="pill p-grey">${esc(pname(r.project))}</span>`:''}${r.weather?`<span class="pill p-blue">${esc(r.weather)}</span>`:''}${r.by?`<span class="code">by ${esc(pnm(r.by))}</span>`:''}</div>
+        <div class="dpr-a">${rowActs('dpr',r,m)}</div></header>
+      <div class="dpr-b">
+        ${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).filter(([t])=>!T||t===T).map(([t,ws])=>sec(TICO[t]||'hammer',t,ws.join('\n'))).join('')}${!T||T==='Other'?sec('notebook-pen',dprItems(r).length?'Other notes':'Work done',r.work):''}
+        ${tot&&(!T||T==='Labour')?`<div class="dpr-s"><div class="dpr-l">${ico('hard-hat')}<span>Labour · ${num(tot)} on site</span></div><div class="crew-chips">${Object.entries(c).filter(([,x])=>+x>0).map(([t,x])=>`<span class="pill p-grey">${esc(t)} <b>${num(+x)}</b></span>`).join('')}</div></div>`:''}
+        ${ms.length&&(!T||T==='Material')?`<div class="dpr-s"><div class="dpr-l">${ico('package')}<span>Material</span></div><div class="tbl-wrap"><table class="dpr-mt"><thead><tr><th>Material</th><th class="num">Qty</th><th>Unit</th><th></th></tr></thead><tbody>${ms.map(x=>`<tr><td>${esc(x.item)}</td><td class="num">${x.qty===''||x.qty==null||isNaN(+x.qty)?'—':num(+x.qty)}</td><td>${esc(x.unit||'')}</td><td><span class="pill ${x.kind==='Used'?'p-amber':'p-green'}">${esc(x.kind||'Received')}</span></td></tr>`).join('')}</tbody></table></div></div>`:''}
+        ${T?'':sec('calendar','Plan for tomorrow',r.plan)+sec('alert-triangle','Hindrances',r.hindrance)}
+        ${ph.length?`<div class="dpr-s"><div class="dpr-l">${ico('camera')}<span>${ph.length} photo${ph.length>1?'s':''} — tap to open, swipe for the next</span></div><div class="dpr-ph">${ph.map((id,i)=>`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener" aria-label="Photo ${i+1} of ${ph.length}"><img src="/_blob/${esc(id)}" alt="" loading="lazy"></a>`).join('')}</div></div>`:''}
+      </div></article>`;}).join('')}
+    ${rows.length>lim?`<div style="text-align:center;padding:8px"><button type="button" class="btn" data-dprmore>${ico('chevron-down')}<span>Show ${Math.min(15,rows.length-lim)} more (${rows.length-lim} older)</span></button></div>`:''}</div>`;
+}
+function rowActs(k,r,m){return `${TR_COLS.includes(k)?`${A&&trCanWrite(k,r)?trCamBtn(k,r.id):''}<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}`;}
 
 function teamIntro(){
   const linked=new Set(D.team.map(t=>t.account).filter(Boolean));
@@ -1215,7 +1304,7 @@ function vDashboard(){
   ${canView('calendar')?`<div class="m-hide">${calBox('dash')}</div>${mCalLink()}`:''}
   <div class="grid2">
     <div class="box"><div class="box-h">${ico('notebook-pen')}<h2>Latest daily reports</h2>${CANW?`<button class="btn sm pri" data-quick="dprauto">${ico('sparkles')}Build today's report</button>`:''}</div>
-      ${dprs.length?dprs.map(r=>`<div style="padding:12px 16px;border-bottom:1px solid var(--line)"><div class="code">${fd(r.date)} · ${esc(pname(r.project))} · ${esc(nm(r.by))}</div><div style="overflow-wrap:anywhere">${esc(r.work)}</div>${(r.photos||[]).length?`<div class="thumbs" style="display:flex;gap:4px;margin-top:6px">${r.photos.slice(0,4).map(id=>`<img src="/_blob/${esc(id)}" alt="" style="width:48px;height:48px;border-radius:6px;object-fit:cover">`).join('')}</div>`:''}</div>`).join(''):`<div class="empty">No daily reports yet.</div>`}</div>
+      ${dprs.length?dprs.map(r=>`<div style="padding:12px 16px;border-bottom:1px solid var(--line)"><div class="code">${fd(r.date)} · ${esc(pname(r.project))} · ${esc(nm(r.by))}</div><div style="overflow-wrap:anywhere;white-space:pre-line">${esc(dprWork(r).slice(0,300))}</div>${(r.photos||[]).length?`<div class="thumbs" style="display:flex;gap:4px;margin-top:6px">${r.photos.map((id,i)=>i>3?`<a hidden data-img href="/_blob/${esc(id)}"></a>`:`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover"></a>`).join('')}${r.photos.length>4?`<span class="code" style="align-self:center">+${r.photos.length-4}</span>`:''}</div>`:''}</div>`).join(''):`<div class="empty">No daily reports yet.</div>`}</div>
     <div class="box"><div class="box-h">${ico('alert-triangle')}<h2>Open issues</h2></div>
       ${openI.length?`<div class="tbl-wrap"><table><tbody>${openI.slice(0,8).map(i=>`<tr><td><b>${esc(i.title)}</b><div class="code">${esc(pname(i.project))}</div></td><td>${cell(MOD.issues.fields[2],i)}</td><td>${fd(i.due)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No open issues.</div>`}</div>
     <div class="box m-hide"><div class="box-h">${ico('list-checks')}<h2>Tasks due soon</h2></div>
@@ -1304,7 +1393,18 @@ function fieldInput(f,v){
   const id='f-'+f.k,req=f.req?'required':'';
   const sel=(opts,val)=>`<select id="${id}" ${req}><option value="">—</option>${opts.map(([k,l])=>`<option value="${esc(k)}" ${String(val)===String(k)?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   switch(f.t){
-    case 'textarea':return `<textarea id="${id}" rows="3" ${req}>${esc(v||'')}</textarea>`;
+    case 'textarea':return `<textarea id="${id}" rows="3" ${f.ph?`placeholder="${esc(f.ph)}"`:''} ${req}>${esc(v||'')}</textarea>`;
+    case 'workrows':{const rows=(Array.isArray(v)?v:[]).filter(x=>x&&x.work);
+      return `<div id="${id}" class="wrows" data-wrows>${(rows.length?rows:[{trade:'Civil'},{trade:'Electrical'},{trade:'Plumbing'}]).map(wrRow).join('')}
+        <button type="button" class="btn sm" data-wradd>${ico('plus')}<span>Add work</span></button></div>`;}
+    case 'crew':{const c=v&&typeof v==='object'?v:{},extra=Object.keys(c).filter(t=>!DPR_TRADES.includes(t));
+      return `<div id="${id}" class="crew" data-crew>${[...DPR_TRADES,...extra].map((t,i)=>`<span class="crew-i"><span>${esc(t)}</span><input type="number" min="0" step="any" inputmode="decimal" data-trade="${esc(t)}" value="${+c[t]>0?esc(+c[t]):''}" aria-label="${esc(t)}" placeholder="0"></span>`).join('')}
+        <div class="crew-tot code">Total on site: <b data-crewtot>${num(crewTot(c))}</b></div></div>`;}
+    case 'matrows':{const rows=(Array.isArray(v)?v:[]).filter(x=>x&&x.item);
+      return `<div id="${id}" class="mrows" data-mrows><datalist id="dprmat">${[...new Set([...MAT_KEYS].flatMap(k=>(D[k]||[]).map(r=>(r.material||'').trim())).filter(Boolean))].sort().map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
+        <div class="mr-head code"><span>Material</span><span>Qty</span><span>Unit</span><span>Received / used</span><span></span></div>
+        ${(rows.length?rows:[{},{}]).map(mrRow).join('')}
+        <button type="button" class="btn sm" data-mradd>${ico('plus')}<span>Add material</span></button></div>`;}
     case 'number':case 'money':return `<input id="${id}" type="number" step="any" ${f.neg?'':'min="0"'} ${f.max?`max="${f.max}"`:''} inputmode="decimal" value="${esc(v??'')}" ${req}>`;
     case 'date':return `<input id="${id}" type="date" value="${esc(v||(f.def==='today'?today():''))}" ${req}>`;
     case 'select':return sel(f.o.map(o=>[o,o]),v??(f.o[0]&&f.k==='status'?f.o[0]:''));
@@ -1350,7 +1450,7 @@ function openForm(k,id,preset){
   DRAFT.loc=(r&&r.loc)||(r&&r.maps&&parseLoc(r.maps))||null;
   if(!isP&&!D.projects.length&&m.fields.some(f=>f.t==='project'&&f.req)){toast('Create a project first.');S.view='projects';render();return;}
   const vals=r||preset||null;DRAFT.lead=preset&&preset._lead||null;DRAFT.ms=preset&&preset._ms||null;
-  const body=m.fields.map(f=>`<label class="${f.req?'req':''}" for="f-${f.k}">${esc(trW(f.l))}${fieldInput(f,vals?vals[f.k]:undefined)}</label>`).join('');
+  const body=m.fields.map(f=>`${f.sec?`<div class="f-sec">${esc(trW(f.sec))}</div>`:''}${f.t==='crew'||f.t==='matrows'||f.t==='workrows'?`<div class="f-grp"><span class="f-gl">${esc(trW(f.l))}</span>${fieldInput(f,vals?(f.t==='workrows'?dprItems(vals):vals[f.k]):undefined)}</div>`:`<label class="${f.req?'req':''}" for="f-${f.k}">${esc(trW(f.l))}${fieldInput(f,vals?vals[f.k]:undefined)}</label>`}`).join('');
   document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="entryForm">
     <div class="pane-h"><h2>${r?'Edit':isP?'Create':'Add'} ${esc((isP?'project':m.label.replace(/s$/,'')).toLowerCase())}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
     <div class="pane-b">${body}</div>
@@ -1396,7 +1496,8 @@ async function addFiles(files,fk){
 function waLink(k,r){return 'https://wa.me/?text='+encodeURIComponent(waText(k,r));}
 function waText(k,r){
   let t='';
-  if(k==='dpr')t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${r.weather?' · '+r.weather:''}\n\n*Work done:*\n${r.work||''}${r.plan?`\n\n*Tomorrow:*\n${r.plan}`:''}${r.hindrance?`\n\n*Hindrances:*\n${r.hindrance}`:''}\n\n— ${orgName()}`;
+  if(k==='dpr'){const sec=(l,v)=>v&&String(v).trim()?`\n\n*${l}:*\n${String(v).trim()}`:'';const ms=dprMats(r),tot=crewTot(r.crew);
+    t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${r.weather?' · '+r.weather:''}${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).map(([t,ws])=>sec(t,ws.join('\n'))).join('')}${sec(dprItems(r).length?'Other notes':'Work done',r.work)}${tot?`\n\n*Labour (${num(tot)}):*\n${crewTxt(r.crew)}`:''}${ms.length?`\n\n*Material:*\n${ms.map(x=>`• ${x.item}${x.qty!==''&&x.qty!=null?' '+num(+x.qty):''} ${x.unit||''} (${x.kind||'Received'})`).join('\n')}`:''}${sec('Tomorrow',r.plan)}${sec('Hindrances',r.hindrance)}${(r.photos||[]).length?`\n\n📷 ${r.photos.length} photo${r.photos.length>1?'s':''} in BuildMitr`:''}\n\n— ${orgName()}`;}
   if(k==='invoices')t=`Dear ${cname(r.client)!=='—'?cname(r.client):'Sir/Madam'},\n\n${r.kind} ${r.no} dated ${fd(r.date)} for ${pname(r.project)}\nAmount: ${inr(invTotal(r))}${r.gst&&r.gst!=='No GST'?' (incl. '+r.gst+')':''}${r.got?`\nReceived: ${inr(r.got)}\nBalance: ${inr(invTotal(r)-(+r.got||0))}`:''}\n\nThank you,\n${orgName()}`;
   if(k==='po')t=`*Purchase order ${r.no}* – ${orgName()}\nTo: ${vname(r.vendor)}\nSite: ${pname(r.project)}${proj(r.project)?.address?'\n'+proj(r.project).address:''}${proj(r.project)?.loc?'\nLocation: '+gmaps(proj(r.project).loc):''}\n\n${r.material}: ${num(r.qty)} ${r.unit||''}${r.rate?` @ ${inr(r.rate)} = ${inr(r.qty*r.rate)}`:''}${r.delivery?`\nDeliver by: ${fd(r.delivery)}`:''}${r.terms?`\n\nTerms: ${r.terms}`:''}`;
   if(k==='issues')t=`*${r.kind||'Issue'}: ${r.title}*\nProject: ${pname(r.project)}${r.location?'\nLocation: '+r.location:''}\nPriority: ${r.severity||'—'}${r.who?'\nAssigned to: '+nm(r.who):''}${r.due?'\nFix by: '+fd(r.due):''}${r.details?'\n\n'+r.details:''}`;
@@ -1986,7 +2087,7 @@ function vClient(){
       <div class="grid2" style="padding:14px 16px">
         <div><h3 class="code" style="margin:0 0 6px">NOW HAPPENING</h3>${now.length?now.map(x=>`<div style="margin:4px 0">• <b>${esc(x.title)}</b> <span class="code">${+x.progress||0}%</span></div>`).join(''):'<div class="code">—</div>'}
           <h3 class="code" style="margin:12px 0 6px">COMING NEXT</h3>${next.length?next.map(x=>`<div style="margin:4px 0">• ${esc(x.title)} <span class="code">from ${fd(x.start)}</span></div>`).join(''):'<div class="code">—</div>'}</div>
-        <div><h3 class="code" style="margin:0 0 6px">LATEST SITE UPDATES</h3>${dprs.length?dprs.map(d=>`<div style="margin:6px 0"><span class="code">${fd(d.date)}</span><div style="overflow-wrap:anywhere">${esc(String(d.work||'').slice(0,220))}</div></div>`).join(''):'<div class="code">No updates yet.</div>'}</div>
+        <div><h3 class="code" style="margin:0 0 6px">LATEST SITE UPDATES</h3>${dprs.length?dprs.map(d=>`<div style="margin:6px 0"><span class="code">${fd(d.date)}</span><div style="overflow-wrap:anywhere">${esc(dprWork(d).replace(/\n/g,' · ').slice(0,220))}</div></div>`).join(''):'<div class="code">No updates yet.</div>'}</div>
       </div>
       ${photos.length&&canView('cphotos')?`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 14px">${photos.map(x=>`<a href="/_blob/${esc(x.id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(x.id)}" alt="Site photo ${esc(fd(x.date))}" style="width:96px;height:72px;object-fit:cover;border-radius:8px"></a>`).join('')}</div>`:''}
       ${cos.length?`<div style="padding:0 16px 14px"><h3 class="code" style="margin:0 0 6px">CHANGES WAITING FOR YOUR APPROVAL</h3>${cos.map(c=>`<div class="siteloc" style="padding:8px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:180px"><b>${esc(c.no)}</b> ${esc(c.desc)}<div class="code">Cost ${inr(c.amount)}${c.days?' · '+c.days+' days':''}</div></div>${CANW?`<button class="btn sm pri" data-coapp="${c.id}:Approved">${ico('check')}Approve</button><button class="btn sm" data-coapp="${c.id}:Rejected">Reject</button>`:''}</div>`).join('')}</div>`:''}
@@ -2052,21 +2153,28 @@ function buildDpr(pid,date){
   if(wu.length){L.push('Work done:');wu.forEach(w=>L.push(`• ${w.work}${w.qty?` — ${num(w.qty)} ${w.unit||''}`:''}${w.gang?` (${w.gang})`:''}`));}
   const prog=D.tasks.filter(t=>t.project===pid&&t.status==='In progress');
   if(prog.length){L.push('Activities in progress:');prog.forEach(t=>L.push(`• ${t.title} — ${+t.progress||0}%`));}
-  if(att.length||vl.length){L.push('Manpower:');if(att.length)L.push(`• Own labour: ${pres} present${half?`, ${half} half day`:''} (${Object.entries(trades).map(([t,c])=>`${t} ${c}`).join(', ')})`);vl.forEach(v=>L.push(`• ${vname(v.vendor)}: ${v.count} ${v.trade||'workers'}`));}
-  if(rec.length){L.push('Material received:');rec.forEach(r=>L.push(`• ${r.material} ${num(r.qty)} ${r.unit||''}${r.vendor?` from ${vname(r.vendor)}`:''}`));}
-  if(iss.length||con.length){L.push('Material used / issued:');iss.forEach(r=>L.push(`• Issued ${r.material} ${num(r.qty)} ${r.unit||''}${r.to?` to ${r.to}`:''}`));con.forEach(r=>L.push(`• Consumed ${r.material} ${num(r.qty)} ${r.unit||''}${r.work?` for ${r.work}`:''}`));}
+  if(false&&(att.length||vl.length)){L.push('Manpower:');if(att.length)L.push(`• Own labour: ${pres} present${half?`, ${half} half day`:''} (${Object.entries(trades).map(([t,c])=>`${t} ${c}`).join(', ')})`);vl.forEach(v=>L.push(`• ${vname(v.vendor)}: ${v.count} ${v.trade||'workers'}`));}
+  if(false&&rec.length){L.push('Material received:');rec.forEach(r=>L.push(`• ${r.material} ${num(r.qty)} ${r.unit||''}${r.vendor?` from ${vname(r.vendor)}`:''}`));}
+  if(iss.length){L.push('Material issued:');iss.forEach(r=>L.push(`• Issued ${r.material} ${num(r.qty)} ${r.unit||''}${r.to?` to ${r.to}`:''}`));}if(false){con.forEach(r=>L.push(`• Consumed ${r.material} ${num(r.qty)} ${r.unit||''}${r.work?` for ${r.work}`:''}`));}
   if(eq.length){L.push('Equipment:');eq.forEach(e=>L.push(`• ${ename(e.equip)} ${num(e.hours)} hrs${e.work?` — ${e.work}`:''}`));}
   const nd=new Date(date+'T00:00');nd.setDate(nd.getDate()+1);const tm=isoDate(nd);
   const plan=D.tasks.filter(t=>t.project===pid&&t.status!=='Completed'&&(t.start||'')<=tm&&(t.due||'9')>=tm).map(t=>`• ${t.title}`);
   const hin=[...D.issues.filter(i=>i.project===pid&&i.status!=='Resolved'&&i.severity==='High').map(i=>`• ${i.title}`),...D.requests.filter(r=>r.project===pid&&r.status==='Pending').map(r=>`• Waiting for ${r.material} (${num(r.qty)} ${r.unit||''})`)];
   const photos=[...wu.flatMap(w=>w.photos||[]),...D.issues.filter(i=>i.project===pid&&i.due===date).flatMap(i=>i.photos||[])];
-  return {work:L.join('\n')||'(Nothing recorded today yet — type the work done here.)',plan:plan.join('\n'),hindrance:hin.join('\n'),photos};
+  const crew={},tmap=t=>{t=String(t||'').toLowerCase();return /mason|brick/.test(t)?'Mason':/carpen|shutter/.test(t)?'Carpenter':/bar ?bend|steel|fitter/.test(t)?'Bar bender':/electric/.test(t)?'Electrician':/plumb/.test(t)?'Plumber':/paint/.test(t)?'Painter':/tile|floor|granite|marble/.test(t)?'Tiles / flooring':/help|cool|labou?r|worker|mazdoor|kuli/.test(t)?'Helper / coolie':'Other';};
+  Object.entries(trades).forEach(([t,c])=>{const k=tmap(t);crew[k]=(crew[k]||0)+c;});vl.forEach(v=>{const k=tmap(v.trade);crew[k]=(crew[k]||0)+(+v.count||0);});
+  const mats=[...rec.map(r=>({item:r.material,qty:+r.qty||'',unit:r.unit||'',kind:'Received'})),...con.map(r=>({item:r.material,qty:+r.qty||'',unit:r.unit||'',kind:'Used'}))].filter(x=>x.item);
+  return {work:L.join('\n')||'',plan:plan.join('\n'),hindrance:hin.join('\n'),photos,crew,mats};
 }
 function autoDpr(pid,date){
   const ex=D.dpr.find(d=>d.project===pid&&d.date===date);
   const b=buildDpr(pid,date);
-  if(ex){toast('A report for today already exists — opening it with the latest figures added below.');openForm('dpr',ex.id);setTimeout(()=>{const w=document.getElementById('f-work');if(w&&!w.value.includes(b.work.slice(0,30)))w.value=(w.value?w.value+'\n\n':'')+b.work;},50);return;}
-  openForm('dpr',null,{project:pid,date,work:b.work,plan:b.plan,hindrance:b.hindrance,photos:b.photos});
+  if(ex){toast('A report for today already exists — opening it with the latest figures added below.');openForm('dpr',ex.id);setTimeout(()=>{const w=document.getElementById('f-work');if(w&&b.work&&!w.value.includes(b.work.slice(0,30)))w.value=(w.value?w.value+'\n\n':'')+b.work;
+    const cb=document.getElementById('f-crew');if(cb){Object.entries(b.crew||{}).forEach(([t,c])=>{const i=cb.querySelector(`input[data-trade="${CSS.escape(t)}"]`);if(i&&!(+i.value>0))i.value=c;});cb.dispatchEvent(new Event('input',{bubbles:true}));}
+    const mb=document.getElementById('f-mats');if(mb){const have=new Set([...mb.querySelectorAll('.mr-row')].map(rw=>rw.querySelector('[data-m=item]').value.trim().toLowerCase()+'|'+rw.querySelector('[data-m=kind]').value));
+      (b.mats||[]).filter(x=>!have.has(x.item.trim().toLowerCase()+'|'+x.kind)).forEach(x=>{const empty=[...mb.querySelectorAll('.mr-row')].find(rw=>!rw.querySelector('[data-m=item]').value.trim()&&!rw.querySelector('[data-m=qty]').value.trim());
+        if(empty)empty.outerHTML=mrRow(x);else mb.querySelector('[data-mradd]').insertAdjacentHTML('beforebegin',mrRow(x));});}},50);return;}
+  openForm('dpr',null,{project:pid,date,items:b.work?[{trade:'Other',work:b.work}]:[],work:'',plan:b.plan,hindrance:b.hindrance,photos:b.photos,crew:b.crew,mats:b.mats});
   toast('Report built from today\'s entries. Check it, add remarks and photos, then Save.');
 }
 
@@ -2232,7 +2340,7 @@ function vAudit(){
   ${rows.length?`<div class="tbl-wrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Section</th><th>Details</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="code">${new Date(r.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(nm(r.by))}</td><td><span class="pill ${r.action==='deleted'?'p-red':r.action==='approved'?'p-green':r.action==='created'?'p-blue':'p-grey'}">${esc(r.action)}</span></td><td>${esc(MOD[r.col]?MOD[r.col].label:r.col)}</td><td>${esc(r.summary)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No changes recorded yet. Every add, edit, delete, approval and access change will appear here.</div>'}</div>
   <div class="code">Only the admin and editors can see this history.</div>`;
 }
-const recLabel=(c,r)=>String(r.name||r.title||r.material||r.no||r.stage||r.work||r.desc||(r.amount?inr(r.amount):'')||'').slice(0,80);
+const recLabel=(c,r)=>String(r.name||r.title||r.material||r.no||r.stage||(c==='dpr'?dprWork(r):r.work)||r.desc||(r.amount?inr(r.amount):'')||'').slice(0,80);
 
 /* ================= Project templates ================= */
 const PTPL={
@@ -2678,7 +2786,7 @@ function vCPhotos(){
   const ds=[...D.dpr,...D.workupd].filter(d=>ids.has(d.project)&&(d.photos||[]).length).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const byDate={};ds.forEach(d=>{(byDate[d.date]=byDate[d.date]||[]).push(d);});
   return clientHead('Progress photos')+(ds.length?Object.entries(byDate).map(([dt,arr])=>`<div class="box"><div class="box-h">${ico('calendar')}<h2>${fd(dt)}</h2>${PJ().length>1?`<span class="code">${esc([...new Set(arr.map(d=>(proj(d.project)||{}).name))].join(', '))}</span>`:''}</div>
-    <div style="padding:10px 16px">${arr.map(d=>`<div class="code" style="margin-bottom:6px;overflow-wrap:anywhere">${esc(String(d.work||'').slice(0,160))}</div>`).join('')}<div style="display:flex;gap:8px;flex-wrap:wrap">${arr.flatMap(d=>d.photos).map(id=>`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="Site photo ${esc(fd(dt))}" style="width:150px;height:112px;object-fit:cover;border-radius:10px"></a>`).join('')}</div></div></div>`).join('')
+    <div style="padding:10px 16px">${arr.map(d=>`<div class="code" style="margin-bottom:6px;overflow-wrap:anywhere">${esc(dprWork(d).replace(/\n/g,' · ').slice(0,160))}</div>`).join('')}<div style="display:flex;gap:8px;flex-wrap:wrap">${arr.flatMap(d=>d.photos).map(id=>`<a href="/_blob/${esc(id)}" target="_blank" rel="noopener"><img src="/_blob/${esc(id)}" alt="Site photo ${esc(fd(dt))}" style="width:150px;height:112px;object-fit:cover;border-radius:10px"></a>`).join('')}</div></div></div>`).join('')
     :`<div class="box hero-empty">${ico('images')}<h2>No photos yet</h2><p>Photos from the site team appear here every day.</p></div>`);
 }
 function vCPay(){
@@ -3497,7 +3605,7 @@ function bmPump(){while(BMF.run<(BMF.q.length&&BMF.q[0].thumb?8:4)&&BMF.q.length
 function fixBlobs(root){if(!CLOUD.blob||!root||root.nodeType!==1)return;
   const els=root.matches&&root.matches('img[src^="/_blob/"]')?[root]:[];els.push(...root.querySelectorAll('img[src^="/_blob/"]'));
   els.forEach(el=>{const id=el.getAttribute('src').slice(7);el.setAttribute('src',BMF_PH);el.dataset.bmf=id;el.classList.add('bmf-load');
-    const thumb=!!el.closest('.thumbs:not(.big),.bub-ph,.ph-chip,.citem');
+    const thumb=!!el.closest('.thumbs:not(.big),.bub-ph,.ph-chip,.citem,.dpr-ph');
     bmFileUrl(id,thumb).then(u=>{if(el.dataset.bmf===id){el.src=u;el.classList.remove('bmf-load');}}).catch(()=>{el.classList.remove('bmf-load');el.classList.add('bmf-err');el.title='Could not load this photo';});});}
 /* phone photos are made smaller before upload (max 2000 px) — faster to send and to open on site */
 async function bmShrink(file){try{if(!/^image\/(jpeg|png|webp)$/.test(file.type||'')||file.size<1.2e6)return file;
@@ -3797,6 +3905,9 @@ function toRef(f,v){
   if(f.t==='select'){const o=f.o.find(x=>x.toLowerCase()===String(v).toLowerCase())||f.o.find(x=>x.toLowerCase().includes(String(v).toLowerCase()));if(!o)throw new Error(`${f.l} must be one of: ${f.o.join(', ')}`);return o;}
   if(f.t==='location'){const l=parseLoc(v);if(!l)throw new Error('Location must be a map link or "lat, lng"');return l;}
   if(f.t==='photos'||f.t==='files')throw new Error('Photos and files must be uploaded in the form, not through chat');
+  if(f.t==='workrows'){if(Array.isArray(v))return v.filter(x=>x&&(typeof x.work==='string'||typeof x.work==='number')&&String(x.work).trim()).slice(0,40).map(x=>({trade:DPR_WTYPES.find(t=>t.toLowerCase()===String(x.trade||'').toLowerCase())||'Other',work:String(x.work).slice(0,4000)}));throw new Error(`${f.l} must be a list like [{"trade":"Civil","work":"GF slab shuttering"},{"trade":"Electrical","work":"Conduits"}]`);}
+  if(f.t==='crew'){if(v&&typeof v==='object'&&!Array.isArray(v))return Object.fromEntries(Object.entries(v).filter(([,x])=>+x>0).slice(0,20).map(([t,x])=>[String(t).slice(0,40),Math.round(+x*2)/2]));throw new Error(`${f.l} must be like {"Mason":4,"Helper / coolie":6}`);}
+  if(f.t==='matrows'){if(Array.isArray(v))return v.filter(x=>x&&x.item).slice(0,60).map(x=>({item:String(x.item).slice(0,120),qty:x.qty===''||x.qty==null||isNaN(+x.qty)?'':+x.qty,unit:String(x.unit||'').slice(0,20),kind:/use/i.test(x.kind||'')?'Used':'Received'}));throw new Error(`${f.l} must be a list like [{"item":"Cement","qty":20,"unit":"Bags","kind":"Received"}]`);}
   return String(v);}
 const AI_TOOLS=[
   {name:'find_records',description:'Search one collection and return matching records with names resolved (max 40). Use for any question about data: who is the client, team members, phone numbers, tasks, payments, stock etc. Returns {total, records}.',
@@ -3836,6 +3947,7 @@ const AI_TOOLS=[
        body[f.k]=f.t==='project'&&v===S.proj?v:toRef(f,v);}
      if(c==='projects'&&!body.client&&inF.client)body.client=toRef({t:'client'},inF.client);
      if(missing.length)throw new Error('Missing required: '+missing.join(', '));
+     if(c==='dpr'&&!dprWork(body).trim())throw new Error('A daily report needs the work done today: items as [{trade,work}] (trade one of the work types) or work.');
      if(ctx.signal.aborted)throw new Error('Stopped');
      let id=null;const ok=await write(async()=>{const r=await db.collection(c).add({...body,by:ME.id,at:Date.now(),...(c==='projects'?{created:Date.now()}:{})});id=r.id;});
      if(!ok)throw new Error('Saving failed (no permission or connection).');
@@ -3917,6 +4029,7 @@ function aiPrepareForm(a){
   if(c==='projects'&&!pre.client&&inF.client){try{pre.client=toRef({t:'client'},inF.client);}catch(e){problems.push(e.message);}}
   if(problems.length)return {ready:false,problems,ask_user:'Ask the user to correct these before preparing the form.'};
   if(missing.length)return {ready:false,missing,ask_user:'Ask the user for these required fields, then call prepare_form again.'};
+  if(c==='dpr'&&!dprWork(pre).trim())return {ready:false,missing:['Work done today: items as [{trade,work}] or work'],ask_user:'Ask the user what work was done today.'};
   const lbl=c==='projects'?'Project':MOD[c].label;
   const rows=Object.entries(pre).map(([k,v])=>{const f=fs.find(x=>x.k===k);return `<div><span class="code">${esc(f?f.l:k)}</span> <b data-notr>${esc(String(readable(c,{[k]:v})[k]??v))}</b></div>`;}).join('');
   AI.forms=AI.forms||{};const fid='f'+Date.now().toString(36);AI.forms[fid]={c,pre};
@@ -4063,7 +4176,7 @@ function dailyUpdateText(){
     const late=L('tasks').filter(x=>x.project===p.id&&x.status!=='Completed'&&x.due&&x.due<t).length;
     if(!dp.length&&!ppl&&!got&&!paid&&!mat.length&&!iss.length&&!late){quiet.push(pname(p.id));return;}
     out.push('',`🏗️ *${pname(p.id)}*`);
-    dp.length?dp.forEach(r=>{out.push(`• Work: ${String(r.work||'').replace(/\s+/g,' ').slice(0,280)}`);if(r.hindrance)out.push(`• Hindrance: ${String(r.hindrance).replace(/\s+/g,' ').slice(0,160)}`);}):out.push('• No daily report yet today');
+    dp.length?dp.forEach(r=>{out.push(`• Work: ${dprWork(r).replace(/\s+/g,' ').slice(0,280)}`);if(crewTot(r.crew))out.push(`• Labour: ${num(crewTot(r.crew))} (${crewTxt(r.crew)})`);if(r.hindrance)out.push(`• Hindrance: ${String(r.hindrance).replace(/\s+/g,' ').slice(0,160)}`);}):out.push('• No daily report yet today');
     if(ppl)out.push(`• Workers on site: ${ppl}`);
     if(mat.length)out.push(`• Material received: ${mat.slice(0,5).map(r=>`${r.material} ${num(r.qty)} ${r.unit||''}`.trim()).join(', ')}${mat.length>5?' …':''}`);
     if(got)out.push(`• Received from client: ${inr(got)}`);
@@ -5371,8 +5484,11 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
 /* ================= Open files inside the app ================= */
 function fileIdOf(href){const m=String(href||'').match(/drive\.google\.com\/file\/d\/([\w-]+)|lh3\.googleusercontent\.com\/d\/([\w-]+)|\/_blob\/([\w-]+)/);return m?(m[1]||m[2]||m[3]):null;}
 const appLink=id=>location.origin+location.pathname+'#f='+encodeURIComponent(id);
-async function openFile(id,isImg,name){
-  const L=document.getElementById('layer');const tok=Date.now()+Math.random();OPENF.t=tok;
+async function openFile(id,isImg,name,gal){
+  const L=document.getElementById('layer');const tok=Date.now()+Math.random();OPENF.t=tok;OPENF.cur=id;
+  OPENF.gal=gal&&gal.length>1&&gal.includes(id)?gal:null;const gi=OPENF.gal?OPENF.gal.indexOf(id):-1,gn=OPENF.gal?OPENF.gal.length:0;
+  if(OPENF.gal)name=`Photo ${gi+1} of ${gn}`;
+  const nav=OPENF.gal?`<button type="button" class="fv-nav fv-prev" data-fvgo="-1" aria-label="Previous photo" ${gi===0?'disabled':''}>${ico('chevron-left')}</button><button type="button" class="fv-nav fv-next" data-fvgo="1" aria-label="Next photo" ${gi===gn-1?'disabled':''}>${ico('chevron-right')}</button><span class="fv-count">${gi+1} / ${gn}</span>`:'';
   const shell=(body,extra='')=>`<div class="drawer fv"><div class="pane fv-pane"><div class="pane-h"><h2 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name||(isImg?'Photo':'File'))}</h2>${extra}
     <button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div><div class="pane-b" id="fvBody" style="padding:8px">${body}</div></div></div>`;
   L.innerHTML=shell(`<div class="fv-msg">${ico('loader')}<span>Opening ${esc(name||'the file')}…</span></div>`);
@@ -5383,7 +5499,7 @@ async function openFile(id,isImg,name){
   if(OPENF.u)URL.revokeObjectURL(OPENF.u);const u=OPENF.u=URL.createObjectURL(blob);OPENF.blob=blob;OPENF.fname=fname;
   const acts=`<button type="button" class="btn sm" data-fshare="${esc(id)}|${esc(nm)}|${esc(type)}|${esc(nm)}">${ico('share-2')}<span>Share</span></button>
     <button type="button" class="btn sm" data-fvdl>${ico('file-down')}<span>Download</span></button>${img||pdf?`<a class="btn sm ghost fv-tab" href="${u}" target="_blank" rel="noopener" aria-label="Open in a new tab">${ico('external-link')}</a>`:''}`;
-  const body=img?`<img src="${u}" alt="${esc(nm)}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px">`
+  const body=img?`<div class="fv-img">${nav}<img src="${u}" alt="${esc(nm)}" style="max-width:100%;max-height:calc(100vh - 150px);display:block;margin:auto;border-radius:6px"></div>`
     :pdf?`<div id="fvPdf" class="fv-pdf"><div class="fv-msg">${ico('loader')}<span>Opening the PDF…</span></div></div>`
     :`<div class="fv-msg" style="flex-direction:column">${ico(fileIco({name:fname,type}))}<b>${esc(fname)}</b><span class="code">${(blob.size/1048576).toFixed(1)} MB · this kind of file opens in its own program (AutoCAD, Excel…)</span><button type="button" class="btn pri" data-fvdl>${ico('file-down')}<span>Download to open</span></button></div>`;
   L.innerHTML=shell(body,acts);
@@ -5395,20 +5511,38 @@ async function openFile(id,isImg,name){
    catch(e){const box=document.getElementById('fvPdf');if(box)box.innerHTML=`<div class="fv-msg">Could not show the PDF here — use Download.</div>`;}}
 }
 const OPENF={};
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.matches&&t.matches('.wr-row [data-w=trade]')){const ta=t.closest('.wr-row').querySelector('textarea');ta.placeholder=DPR_PH[t.value]||'What was done today';}});
+document.addEventListener('input',e=>{const box=e.target.closest&&e.target.closest('[data-crew]');if(!box)return;const t=box.querySelector('[data-crewtot]');if(t)t.textContent=num([...box.querySelectorAll('input[data-trade]')].reduce((a,i)=>a+(+i.value>0?+i.value:0),0));});
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  const wa=e.target.closest('[data-wradd]');if(wa){const box=wa.closest('[data-wrows]');if(box.querySelectorAll('.wr-row').length>=40){toast('Up to 40 work lines in one report.');return;}const used=[...box.querySelectorAll('[data-w=trade]')].map(x=>x.value);wa.insertAdjacentHTML('beforebegin',wrRow({trade:DPR_WTYPES.find(t=>!used.includes(t))||'Other'}));const rs=box.querySelectorAll('.wr-row');rs[rs.length-1].querySelector('textarea').focus();return;}
+  const wd=e.target.closest('[data-wrdel]');if(wd){const rw=wd.closest('.wr-row'),box=rw.closest('[data-wrows]');if(box.querySelectorAll('.wr-row').length>1)rw.remove();else rw.querySelector('textarea').value='';return;}
+  const ad=e.target.closest('[data-mradd]');if(ad){const box=ad.closest('[data-mrows]');if(box.querySelectorAll('.mr-row').length>=60){toast('Up to 60 materials in one report.');return;}ad.insertAdjacentHTML('beforebegin',mrRow({}));const rs=box.querySelectorAll('.mr-row');rs[rs.length-1].querySelector('input').focus();return;}
+  const dl=e.target.closest('[data-mrdel]');if(dl){const rw=dl.closest('.mr-row'),box=rw.closest('[data-mrows]');if(box.querySelectorAll('.mr-row').length>1)rw.remove();else rw.querySelectorAll('input').forEach(i=>i.value='');return;}
+  if(e.target.closest('[data-dprclear]')){S.dprT='';S.q='';S.dprN=0;render();return;}
+  if(e.target.closest('[data-dprmore]')){S.dprN=(S.dprN||15)+15;render();}});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-fvdl]');if(!b||!OPENF.blob)return;saveFile(OPENF.fname,OPENF.blob);});
 /* a member link (…#f=<id>) opens that file after sign-in */
 (function bmDeepFile(){const m=/#f=([\w-]{2,200})/.exec(location.hash||'');if(!m)return;let n=0;const t=setInterval(()=>{if(++n>240){clearInterval(t);return;}
   if(S.ready&&CLOUD.blob&&ME&&ME.id){clearInterval(t);try{history.replaceState(null,'',location.pathname+location.search);}catch(_){}openFile(m[1],false,'');}},500);})();
 document.addEventListener('click',e=>{if(!e.target.closest||!CLOUD.blob)return;const a=e.target.closest('a[href]');if(!a||a.closest('.fv')||e.ctrlKey||e.metaKey||e.shiftKey)return;
   const id=fileIdOf(a.getAttribute('href'));if(!id)return;e.preventDefault();e.stopPropagation();
-  const img=!!a.querySelector('img');openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''));},true);
+  const img=!!a.querySelector('img')||a.hasAttribute('data-img');
+  let gal=null;if(img){const box=a.closest('.thumbs,.dpr-ph,[data-gal]')||a.parentElement;gal=[...new Set([...box.querySelectorAll('a[href]')].filter(x=>x.querySelector('img')||x.hasAttribute('data-img')).map(x=>fileIdOf(x.getAttribute('href'))).filter(Boolean))];}
+  openFile(id,img,(a.getAttribute('aria-label')||a.textContent||'').trim().replace(/^Open$/,''),gal);},true);
+/* photo viewer: next / previous by button, arrow keys or swipe */
+function fvGo(d){const g=OPENF.gal;if(!g||!document.querySelector('.drawer.fv'))return;const i=g.indexOf(OPENF.cur)+d;if(i<0||i>=g.length)return;openFile(g[i],true,'',g);}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-fvgo]');if(b){e.preventDefault();fvGo(+b.dataset.fvgo);}});
+document.addEventListener('keydown',e=>{if(e.repeat||!OPENF.gal||!document.querySelector('.drawer.fv'))return;if(e.key==='ArrowRight')fvGo(1);else if(e.key==='ArrowLeft')fvGo(-1);});
+(()=>{let x0=null,y0=0;document.addEventListener('touchstart',e=>{x0=e.target.closest&&e.target.closest('.fv-img')&&e.touches.length===1?e.touches[0].clientX:null;y0=x0===null?0:e.touches[0].clientY;},{passive:true});
+  document.addEventListener('touchmove',e=>{if(e.touches.length>1)x0=null;},{passive:true});
+  document.addEventListener('touchend',e=>{if(x0===null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3)fvGo(dx<0?1:-1);},{passive:true});})();
 
 /* ================= Live cameras inside BuildMitr =================
  * • EZVIZ (and Hikvision cameras on an EZVIZ account): the admin connects the company's EZVIZ account once; live video
  *   then plays inside the app (short-lived HLS link made on the server — the key and verification codes never reach phones).
  * • Any HLS (.m3u8), YouTube Live, MJPEG or web-viewer link also plays inside the app.
  * • "Scan camera QR" reads the QR on the camera / box / a shared QR picture and fills in the camera for you. */
-Object.assign(ICONS,{'scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+Object.assign(ICONS,{zap:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',droplet:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>','scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
   'maximize':'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'});
 const CAM={ez:null,list:null};
 const camEzBrand=c=>['EZVIZ','Hikvision'].includes(c.brand)&&c.serial&&!/demo/i.test(c.serial);
@@ -8048,7 +8182,7 @@ async function exportCsv(k){
   else if(k==='wages'){headers=['Worker','Trade','Daily wage','Days','OT hours','Earned','Advances','To pay'];rows=wagesRows().map(r=>[r.name,r.trade,r.wage,r.days,r.ot,Math.round(r.gross),r.advance,Math.round(r.net)]);}
   else if(k==='balances'){const b=balanceRows();headers=['Type','Name','Billed','Paid / received','Balance'];rows=[...b.cli,...b.vend].map(r=>[r.kind,r.name,Math.round(r.billed),Math.round(r.paid),Math.round(r.bal)]);}
   else{const m=MOD[k];const fs=m.fields.filter(f=>f.t!=='photos');headers=[...fs.map(f=>f.l),'Added by'];
-    rows=D[k].filter(r=>(m.noProject?true:inProj(r))&&(k!=='documents'||relOK(r))).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?pnm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
+    rows=D[k].filter(r=>(m.noProject?true:inProj(r))&&(k!=='documents'||relOK(r))).map(r=>[...fs.map(f=>{const v=r[f.k];return f.t==='project'?pname(v):f.t==='member'?pnm(v):f.t==='vendor'?vname(v):f.t==='labour'?lname(v):f.t==='client'?cname(v):f.t==='equipment'?ename(v):f.t==='files'?(v||[]).map(x=>x.name).join('; '):f.t==='workrows'?dprWork({...r,work:''}).replace(/\n/g,' | '):f.t==='crew'?crewTxt(v):f.t==='matrows'?dprMats({mats:v}).map(x=>`${x.item} ${x.qty!==''&&x.qty!=null?x.qty:''} ${x.unit||''} (${x.kind||'Received'})`.replace(/\s+/g,' ')).join('; '):f.t==='projects'?((v||[]).includes('all')?'All projects':(v||[]).map(pname).join('; ')):v??'';}),nm(r.by)]);}
   const csv='﻿'+[headers,...rows].map(r=>r.map(v=>{const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
   const pn=S.proj==='all'?'all-projects':(proj(S.proj)?.prefix||proj(S.proj)?.name||'project').replace(/[^\w-]+/g,'-');
   await saveFile(`BuildMitr-${k}-${pn}-${today()}.csv`,new Blob([csv],{type:'text/csv'}));
@@ -8381,7 +8515,7 @@ function render(){
   if(v==='orgs'&&S.cloud&&isSuperAdmin()){if(ORGS.length)orgsDraw();if(Date.now()-ORGS_AT>60000)orgsLoad();}
   if(v==='messages'&&S.ready){const box=document.getElementById('chatMsgs');if(box&&box.scrollTo)box.scrollTop=box.scrollHeight;if(S.chatFocus){const ta=document.getElementById('chatText');if(ta&&ta.focus){ta.focus();try{ta.setSelectionRange(ta.value.length,ta.value.length);}catch(_){}}}chatMarkSeen();}
   const qi=document.getElementById('q');
-  if(qi)qi.oninput=e=>{S.q=e.target.value;const pos=e.target.selectionStart;render();const n=document.getElementById('q');if(n){n.focus();n.setSelectionRange(pos,pos);}};
+  if(qi)qi.oninput=e=>{S.q=e.target.value;S.dprN=0;const pos=e.target.selectionStart;render();const n=document.getElementById('q');if(n){n.focus();n.setSelectionRange(pos,pos);}};
 }
 let rT;
 function refresh(){clearTimeout(rT);rT=setTimeout(async()=>{
@@ -8442,7 +8576,7 @@ document.addEventListener('click',e=>{
   if(d.fback){S.leaveOk=false;FORM=null;S.view='forms';render();scrollTo(0,0);return;}
   if(d.fproj){S.proj=d.fproj;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}S.view='forms';render();scrollTo(0,0);return;}
   if(d.fpick){S.proj='all';S.view='forms';render();scrollTo(0,0);return;}
-  if(d.go){S.leaveOk=false;S.view=d.go;S.q='';S.fstat='';S.fwho='';try{DL.miss=false;}catch(_){}if(typeof matchMedia!=='undefined'&&matchMedia(SMALL_MQ).matches)COLLAPSED=true;render();scrollTo(0,0);return;}
+  if(d.go){S.leaveOk=false;S.view=d.go;S.q='';S.fstat='';S.dprT='';S.fwho='';try{DL.miss=false;}catch(_){}if(typeof matchMedia!=='undefined'&&matchMedia(SMALL_MQ).matches)COLLAPSED=true;render();scrollTo(0,0);return;}
   if(d.proj){S.proj=d.proj;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}S.view='project';render();scrollTo(0,0);return;}
   if(d.add){openForm(d.add);return;}
   if(d.edit){const[k,id]=d.edit.split(':');openForm(k,id);return;}
@@ -8533,8 +8667,9 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   if(e.target&&e.target.dataset&&e.target.dataset.adrole){adminSetRole(e.target.dataset.adrole,e.target.value);return;}
-  if(e.target.id==='projSel'){S.proj=e.target.value;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}render();return;}
+  if(e.target.id==='projSel'){S.proj=e.target.value;S.dprN=0;try{localStorage.setItem('bm-proj',S.proj)}catch(_){}render();return;}
   if(e.target.id==='fstat'){S.fstat=e.target.value;render();return;}
+  if(e.target.id==='fdprt'){S.dprT=e.target.value;S.dprN=0;render();return;}
   if(e.target.id==='fwho'){S.fwho=e.target.value;render();return;}
   if(e.target.id==='lsort'){S.lsort=e.target.value;try{localStorage.setItem('bm-lsort',S.lsort);}catch(_){}render();return;}
   if(e.target.id==='fbranch'){S.fbranch=e.target.value;render();return;}
@@ -8612,6 +8747,9 @@ document.addEventListener('submit',async e=>{
   const body={};
   for(const f of DRAFT.fields){
     if(f.t==='photos'){body[f.k]=DRAFT.photos[f.k]||[];continue;}
+    if(f.t==='workrows'){const box=document.getElementById('f-'+f.k);body[f.k]=box?[...box.querySelectorAll('.wr-row')].map(rw=>({trade:rw.querySelector('[data-w=trade]').value||'Other',work:rw.querySelector('[data-w=work]').value.trim().slice(0,4000)})).filter(x=>x.work).slice(0,40):[];continue;}
+    if(f.t==='crew'){const box=document.getElementById('f-'+f.k),c={};if(box)box.querySelectorAll('input[data-trade]').forEach(i=>{const x=+i.value;if(x>0)c[i.dataset.trade]=Math.round(x*2)/2;});body[f.k]=c;continue;}
+    if(f.t==='matrows'){const box=document.getElementById('f-'+f.k);if(box&&[...box.querySelectorAll('.mr-row')].some(rw=>!rw.querySelector('[data-m=item]').value.trim()&&rw.querySelector('[data-m=qty]').value.trim())){toast('A material row has a quantity but no material name — fill the name or clear the row.');return;}body[f.k]=box?[...box.querySelectorAll('.mr-row')].map(rw=>{const g=n=>(rw.querySelector(`[data-m="${n}"]`)||{}).value||'';const q=g('qty').trim();return {item:g('item').trim().slice(0,120),qty:q===''?'':+q,unit:g('unit'),kind:g('kind')||'Received'};}).filter(x=>x.item):[];continue;}
     if(f.t==='files'){body[f.k]=DRAFT.files[f.k]||[];continue;}
     if(f.t==='location'){body[f.k]=DRAFT.loc||null;continue;}
     if(f.t==='tplmulti'){const box=document.getElementById('f-'+f.k);body[f.k]=box?[...box.querySelectorAll('input:checked')].map(x=>x.value):[];continue;}
@@ -8621,6 +8759,8 @@ document.addEventListener('submit',async e=>{
     body[f.k]=v??'';
   }
 
+  if(DRAFT.k==='dpr'){body.civil='';body.electrical='';body.plumbing='';}
+  if(DRAFT.k==='dpr'&&!dprWork(body).trim()){toast('Write the work done today — pick the work type (Civil, Electrical, Plumbing…) and write what was done.');return;}
   if(body.link&&!/^https:\/\//i.test(body.link)){toast('Link must start with https://');return;}
   const k=DRAFT.k,id=DRAFT.id;
   if(body.gstin){body.gstin=body.gstin.toUpperCase().replace(/\s/g,'');if(!GSTIN_RE.test(body.gstin)){toast('GSTIN format looks wrong — it has 15 characters, like 36ABCDE1234F1Z5.');return;}}
