@@ -694,7 +694,6 @@ const MOD={
     {k:'status',l:'Status',t:'select',o:['Open','Resolved'],list:1},{k:'details',l:'Details',t:'textarea'},{k:'photos',l:'Photos',t:'photos',list:1}]},
   dpr:{label:'Daily reports',te:'రోజువారీ నివేదిక',icon:'notebook-pen',actions:['whatsapp'],fields:[
     {k:'project',l:'Project',t:'project',req:1,list:1},{k:'date',l:'Date',t:'date',req:1,list:1,def:'today'},
-    {k:'weather',l:'Weather',t:'select',o:['Clear','Cloudy','Rain','Hot'],list:1},
     {k:'items',l:'Choose the work type, then write what was done',t:'workrows',sec:'Work done today'},
     {k:'work',l:'Other notes',t:'textarea',list:1},
     {k:'crew',l:'Labour on site today',t:'crew',sec:'Labour'},
@@ -1223,7 +1222,7 @@ function dprCards(rows,m){
   const sec=(ic,l,v)=>v&&String(v).trim()?`<div class="dpr-s"><div class="dpr-l">${ico(ic)}<span>${esc(l)}</span></div>${txt(v)}</div>`:'';
   return `<div class="dpr-list">${show.map(r=>{const c=r.crew&&typeof r.crew==='object'?r.crew:{},tot=crewTot(c),ms=dprMats(r),ph=Array.isArray(r.photos)?r.photos:[];
     return `<article class="dpr-card">
-      <header class="dpr-h"><div class="dpr-d"><b>${fd(r.date)}</b>${multi?`<span class="pill p-grey">${esc(pname(r.project))}</span>`:''}${r.weather?`<span class="pill p-blue">${esc(r.weather)}</span>`:''}${r.by?`<span class="code">by ${esc(pnm(r.by))}</span>`:''}</div>
+      <header class="dpr-h"><div class="dpr-d"><b>${fd(r.date)}</b>${multi?`<span class="pill p-grey">${esc(pname(r.project))}</span>`:''}${r.by?`<span class="code">by ${esc(pnm(r.by))}</span>`:''}</div>
         <div class="dpr-a">${rowActs('dpr',r,m)}</div></header>
       <div class="dpr-b">
         ${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).filter(([t])=>!T||t===T).map(([t,ws])=>sec(TICO[t]||'hammer',t,ws.join('\n'))).join('')}${!T||T==='Other'?sec('notebook-pen',dprItems(r).length?'Other notes':'Work done',r.work):''}
@@ -1497,7 +1496,7 @@ function waLink(k,r){return 'https://wa.me/?text='+encodeURIComponent(waText(k,r
 function waText(k,r){
   let t='';
   if(k==='dpr'){const sec=(l,v)=>v&&String(v).trim()?`\n\n*${l}:*\n${String(v).trim()}`:'';const ms=dprMats(r),tot=crewTot(r.crew);
-    t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${r.weather?' · '+r.weather:''}${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).map(([t,ws])=>sec(t,ws.join('\n'))).join('')}${sec(dprItems(r).length?'Other notes':'Work done',r.work)}${tot?`\n\n*Labour (${num(tot)}):*\n${crewTxt(r.crew)}`:''}${ms.length?`\n\n*Material:*\n${ms.map(x=>`• ${x.item}${x.qty!==''&&x.qty!=null?' '+num(+x.qty):''} ${x.unit||''} (${x.kind||'Received'})`).join('\n')}`:''}${sec('Tomorrow',r.plan)}${sec('Hindrances',r.hindrance)}${(r.photos||[]).length?`\n\n📷 ${r.photos.length} photo${r.photos.length>1?'s':''} in BuildMitr`:''}\n\n— ${orgName()}`;}
+    t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).map(([t,ws])=>sec(t,ws.join('\n'))).join('')}${sec(dprItems(r).length?'Other notes':'Work done',r.work)}${tot?`\n\n*Labour (${num(tot)}):*\n${crewTxt(r.crew)}`:''}${ms.length?`\n\n*Material:*\n${ms.map(x=>`• ${x.item}${x.qty!==''&&x.qty!=null?' '+num(+x.qty):''} ${x.unit||''} (${x.kind||'Received'})`).join('\n')}`:''}${sec('Tomorrow',r.plan)}${sec('Hindrances',r.hindrance)}${(r.photos||[]).length?`\n\n📷 ${r.photos.length} photo${r.photos.length>1?'s':''} in BuildMitr`:''}\n\n— ${orgName()}`;}
   if(k==='invoices')t=`Dear ${cname(r.client)!=='—'?cname(r.client):'Sir/Madam'},\n\n${r.kind} ${r.no} dated ${fd(r.date)} for ${pname(r.project)}\nAmount: ${inr(invTotal(r))}${r.gst&&r.gst!=='No GST'?' (incl. '+r.gst+')':''}${r.got?`\nReceived: ${inr(r.got)}\nBalance: ${inr(invTotal(r)-(+r.got||0))}`:''}\n\nThank you,\n${orgName()}`;
   if(k==='po')t=`*Purchase order ${r.no}* – ${orgName()}\nTo: ${vname(r.vendor)}\nSite: ${pname(r.project)}${proj(r.project)?.address?'\n'+proj(r.project).address:''}${proj(r.project)?.loc?'\nLocation: '+gmaps(proj(r.project).loc):''}\n\n${r.material}: ${num(r.qty)} ${r.unit||''}${r.rate?` @ ${inr(r.rate)} = ${inr(r.qty*r.rate)}`:''}${r.delivery?`\nDeliver by: ${fd(r.delivery)}`:''}${r.terms?`\n\nTerms: ${r.terms}`:''}`;
   if(k==='issues')t=`*${r.kind||'Issue'}: ${r.title}*\nProject: ${pname(r.project)}${r.location?'\nLocation: '+r.location:''}\nPriority: ${r.severity||'—'}${r.who?'\nAssigned to: '+nm(r.who):''}${r.due?'\nFix by: '+fd(r.due):''}${r.details?'\n\n'+r.details:''}`;
