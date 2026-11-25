@@ -1,5 +1,5 @@
 // BuildMitr offline support: keeps the app and its helper libraries on the phone
-const VER='buildmitr-v101',BUILD='dea491176253';   // BUILD is written by the website build on every deploy
+const VER='buildmitr-v102',BUILD='1490ccbeb35a';   // BUILD is written by the website build on every deploy
 const CACHE=VER+'-'+BUILD;
 const CORE=['./','./index.html','./app.js','./config.js','./agents.js','./reports.js','./manifest.json'];
 const CORE_SET=new Set(CORE.map(p=>new URL(p,self.location).pathname));

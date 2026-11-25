@@ -1,4 +1,4 @@
-/* bm-build:dea491176253 */
+/* bm-build:1490ccbeb35a */
 /* ================= Module definitions =================
    Every list screen is driven by one of these. Field types:
    text, textarea, number, money, date, select, project, member, vendor, client, labour, photos */
