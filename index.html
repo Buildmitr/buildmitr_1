@@ -3742,7 +3742,7 @@ function vAdminPanel(){
   return header(label('adminpanel'))+
   `<div class="box"><div class="tiles">${tiles.map(([n,l])=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`).join('')}</div></div>`+
   (noProj.length?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('info')}<span><b>${noProj.length} client(s) cannot see any project yet.</b> Tap <b>Edit</b> next to them below and choose their project.</span></div>`:'')+
-  joinReqBox()+(ME.isOwner&&S.cloud&&!S.demo?digBox():'')+
+  joinReqBox()+(ME.isOwner&&S.cloud&&!S.demo?digBox():'')+(ME.isOwner&&S.cloud&&!S.demo&&typeof drpBox==='function'?drpBox():'')+
   `<div class="box"><div class="box-h">${ico('users')}<h2>People & roles</h2><span class="code">Change a role here — their screens switch within seconds</span></div>
    ${ppl.length?ppl.map(t=>{const me=t.account&&t.account===ME.id;return `<div class="srow"><span style="flex:1;min-width:190px"><b data-notr>${esc(t.name||'—')}</b>${me?' <span class="pill p-green">You</span>':''}<br><span class="code" data-notr>${esc(t.email||'no email')}${t.phone?' · '+esc(t.phone):''}</span><br><span class="code">${esc(pname_(t))} · ${t.account?'signed in':'not signed in yet'}</span></span>
      <select data-adrole="${esc(t.id)}" aria-label="Role" style="width:auto" ${me?'disabled':''}>${roles.map(r=>`<option ${r===t.role?'selected':''}>${esc(r)}</option>`).join('')}</select>
@@ -9079,4 +9079,5 @@ document.addEventListener('submit',async e=>{
 })();
 </script>
 <script src="agents.js"></script>
+<script src="reports.js"></script>
 </body></html>
