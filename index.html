@@ -112,6 +112,7 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .feed-l{display:flex;gap:6px}.feed-l input{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}.feed-s{margin:6px 0;padding-left:18px}
 .upi-qr{width:220px;max-width:70vw;margin:6px auto}.upi-qr svg{width:100%;height:auto;display:block}
 .gsi-btn{display:flex;justify-content:center;min-height:44px}
+.dig-k{display:grid;gap:3px}.dig-ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px;margin-top:6px}.dig-ppl .pl-chk{align-items:flex-start}
 .dig-prev{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;font-size:13px}.dig-prev ul{margin:4px 0 0;padding-left:18px}
 .dpr-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .dpr-h{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -1386,7 +1387,6 @@ function vSettings(){
   ${bmUpdBox()}
   <div class="box"><div class="box-h">${ico('bell')}<h2>Notifications</h2></div>${ntSettings()}<div class="srow"><span class="code">Shows a Windows / phone notification when someone messages you, gives you a task or drawing, changes it, or schedules work for you — while BuildMitr is open or running in the background (the Windows app keeps running in the tray).</span></div></div>
   ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
-  ${ME.isOwner&&S.cloud&&!S.demo?digBox():''}
   ${feedBox()}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
     <label class="code">Company name<input id="o-name" value="${esc(org.name||'')}" ${admin?'':'disabled'} placeholder="e.g. BuildMitr"></label>
@@ -3742,7 +3742,7 @@ function vAdminPanel(){
   return header(label('adminpanel'))+
   `<div class="box"><div class="tiles">${tiles.map(([n,l])=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`).join('')}</div></div>`+
   (noProj.length?`<div class="note" style="background:var(--amber);color:var(--amber-ink)">${ico('info')}<span><b>${noProj.length} client(s) cannot see any project yet.</b> Tap <b>Edit</b> next to them below and choose their project.</span></div>`:'')+
-  joinReqBox()+
+  joinReqBox()+(ME.isOwner&&S.cloud&&!S.demo?digBox():'')+
   `<div class="box"><div class="box-h">${ico('users')}<h2>People & roles</h2><span class="code">Change a role here — their screens switch within seconds</span></div>
    ${ppl.length?ppl.map(t=>{const me=t.account&&t.account===ME.id;return `<div class="srow"><span style="flex:1;min-width:190px"><b data-notr>${esc(t.name||'—')}</b>${me?' <span class="pill p-green">You</span>':''}<br><span class="code" data-notr>${esc(t.email||'no email')}${t.phone?' · '+esc(t.phone):''}</span><br><span class="code">${esc(pname_(t))} · ${t.account?'signed in':'not signed in yet'}</span></span>
      <select data-adrole="${esc(t.id)}" aria-label="Role" style="width:auto" ${me?'disabled':''}>${roles.map(r=>`<option ${r===t.role?'selected':''}>${esc(r)}</option>`).join('')}</select>
@@ -7153,25 +7153,35 @@ document.addEventListener('click',async e=>{if(!e.target.closest)return;
     await db.collection('payments').add({project:r.project,date:today(),dir:'Received from client',cat:'',client:r.client||'',party:'',amount:due,mode:'UPI',ref:r.no||'',by:ME.id,at:Date.now()});},`${inr(due)} received — invoice marked Paid`);
   delete UPIG[r.id];if(ok)closeLayer();else g.disabled=false;render();});
 
-/* ================= Morning summary (admin) ================= */
-const DIG={cfg:null,err:'',busy:0,prev:null};
-async function digLoad(){if(DIG.busy)return;DIG.busy=1;try{DIG.cfg=await gasApi('digGet',{});DIG.err='';}catch(e){DIG.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not load');}DIG.busy=0;if(S.view==='settings')render();}
+/* ================= Daily email reports (company admin, in Admin panel) ================= */
+const DIG={cfg:null,err:'',busy:0,prev:null,prevKind:''};
+async function digLoad(){if(DIG.busy)return;DIG.busy=1;try{DIG.cfg=await gasApi('digGet',{});DIG.err='';}catch(e){DIG.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not load');}DIG.busy=0;if(S.view==='adminpanel')render();}
+function digPeople(){return (D.team||[]).filter(t=>t.status!=='Removed'&&t.role!=='Client'&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(t.email||'').trim())).sort((a,b)=>(a.role==='Admin'?0:1)-(b.role==='Admin'?0:1)||String(a.name||'').localeCompare(String(b.name||'')));}
 function digBox(){
-  const h=`<div class="box-h">${ico('sun')}<h2>Morning summary</h2>${DIG.cfg?`<span class="pill ${DIG.cfg.on?'p-green':'p-grey'}">${DIG.cfg.on?'On':'Off'}</span>`:''}</div>`;
+  const h=`<div class="box-h">${ico('mail')}<h2>Daily email reports</h2>${DIG.cfg?`<span class="pill ${DIG.cfg.on||DIG.cfg.eve?'p-green':'p-grey'}">${DIG.cfg.on&&DIG.cfg.eve?'Morning + evening':DIG.cfg.on?'Morning':DIG.cfg.eve?'Evening':'Off'}</span>`:''}</div>`;
   if(!DIG.cfg&&!DIG.err){digLoad();return `<div class="box">${h}<div class="empty">Loading…</div></div>`;}
   if(!DIG.cfg)return `<div class="box">${h}<div class="note warn">${ico('alert-triangle')}<span>${esc(DIG.err)}</span></div></div>`;
-  const c=DIG.cfg;
-  return `<div class="box" id="digBox">${h}<div style="padding:0 16px 16px;display:grid;gap:10px;max-width:640px">
-    <p class="code" style="margin:0">Every morning after 8 am the admins get one email with yesterday's daily reports (and which sites sent none), labour and material, overdue tasks, open issues, money received and unpaid invoices.</p>
-    <label class="pl-chk"><input type="checkbox" id="dig-on" ${c.on?'checked':''}> <b>Send the morning summary</b></label>
-    <label class="pl-chk"><input type="checkbox" id="dig-wa" ${c.wa?'checked':''}> Also send it on WhatsApp (uses the WhatsApp updates numbers above, when they are on)</label>
-    <div class="code">Goes to: ${c.to&&c.to.length?c.to.map(esc).join(', '):'the company admins'}${c.last?` · last sent ${esc(fd(c.last))}`:''}</div>
-    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="digSave">${ico('check')}<span>Save</span></button><button type="button" class="btn" id="digTest">${ico('send')}<span>Email me a sample now</span></button></div>
-    ${DIG.prev?`<div class="dig-prev">${DIG.prev.map(([t,ls])=>`<div><b>${esc(t)}</b><ul>${ls.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`).join('')}</div>`:''}
+  const c=DIG.cfg,ppl=digPeople(),pick=new Set((c.to||[]).map(x=>String(x).toLowerCase())),none=!pick.size;
+  return `<div class="box" id="digBox">${h}<div style="padding:0 16px 16px;display:grid;gap:12px;max-width:720px">
+    <div class="dig-k"><label class="pl-chk"><input type="checkbox" id="dig-on" ${c.on?'checked':''}> <b>Morning summary</b> — 7:30 am</label>
+      <div class="code">Yesterday's daily reports (and which sites sent none), labour and material, overdue tasks, open issues, money received and unpaid invoices.${c.last?` Last sent ${esc(fd(c.last))}.`:''}</div></div>
+    <div class="dig-k"><label class="pl-chk"><input type="checkbox" id="dig-eve" ${c.eve?'checked':''}> <b>Evening report</b> — 7:30 pm</label>
+      <div class="code">Today's daily reports and work done, labour and material, issues, money, tasks due tomorrow and the plan for tomorrow.${c.lastEve?` Last sent ${esc(fd(c.lastEve))}.`:''}</div></div>
+    <div><b>Who gets them</b> <span class="code">— tick the people in your team${none?' (nobody ticked: only the admins get them)':''}</span>
+      <div class="dig-ppl">${ppl.length?ppl.map(t=>{const em=String(t.email).trim().toLowerCase();return `<label class="pl-chk"><input type="checkbox" data-digto="${esc(em)}" ${pick.has(em)||(none&&t.role==='Admin')?'checked':''}> <span><b data-notr>${esc(t.name||em)}</b> <span class="code">${esc(t.role||'')} · ${esc(em)}</span></span></label>`;}).join(''):'<div class="code">Add people with an email on the Team page first.</div>'}</div></div>
+    <div class="code">${ico('info')} The reports include money totals (received, paid out, unpaid invoices) — tick only people who may see them. They go out at 7:30 am and 7:30 pm — or, if nobody in the company has BuildMitr open then, as soon as someone opens it.${(c.sendsTo||[]).length?` Now going to: ${c.sendsTo.map(esc).join(', ')}.`:''}</div>
+    <label class="pl-chk"><input type="checkbox" id="dig-wa" ${c.wa?'checked':''}> Also send them on WhatsApp (Settings → WhatsApp updates, when it is on)</label>
+    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="digSave">${ico('check')}<span>Save</span></button>
+      <button type="button" class="btn" data-digtest="am">${ico('send')}<span>Email me a morning sample</span></button><button type="button" class="btn" data-digtest="pm">${ico('send')}<span>Email me an evening sample</span></button></div>
+    ${DIG.prev?`<div class="dig-prev"><b>${DIG.prevKind==='pm'?'Evening report':'Morning summary'} — sample</b>${DIG.prev.map(([t,ls])=>`<div><b>${esc(t)}</b><ul>${ls.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`).join('')}</div>`:''}
   </div></div>`;}
-document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#digSave,#digTest');if(!b||!DIG.cfg)return;b.disabled=true;
-  try{DIG.cfg=await gasApi('digSet',{cfg:{on:!!(document.getElementById('dig-on')||{}).checked,wa:!!(document.getElementById('dig-wa')||{}).checked}});
-    if(b.id==='digTest'){const r=await gasApi('digTest',{});DIG.prev=r.lines||null;toast(r.sent?'Sample sent to your email':'Could not send the email');}else toast(DIG.cfg.on?'Morning summary is on':'Morning summary is off');}
+function digRead(){const g=id=>document.getElementById(id);return {on:!!(g('dig-on')||{}).checked,eve:!!(g('dig-eve')||{}).checked,wa:!!(g('dig-wa')||{}).checked,
+  to:[...document.querySelectorAll('[data-digto]')].filter(i=>i.checked).map(i=>i.dataset.digto)};}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#digSave,[data-digtest]');if(!b||!DIG.cfg)return;b.disabled=true;
+  try{const cfg=digRead();if((cfg.on||cfg.eve)&&!cfg.to.length&&digPeople().length){toast('Tick at least one person to get the reports.');b.disabled=false;return;}
+    DIG.cfg=await gasApi('digSet',{cfg});
+    if(b.dataset.digtest){const r=await gasApi('digTest',{kind:b.dataset.digtest});DIG.prev=r.lines||null;DIG.prevKind=b.dataset.digtest;toast(r.sent?'Sample sent to your email':'Could not send the email');}
+    else{const n=(DIG.cfg.sendsTo||[]).length;toast(cfg.on||cfg.eve?`Saved — ${n} ${n===1?'person gets':'people get'} the reports`:'Daily email reports are off');}}
   catch(err){toast(err.message||'Could not save');}b.disabled=false;render();});
 
 /* ================= Suggestions to approve ================= */
@@ -9069,5 +9079,4 @@ document.addEventListener('submit',async e=>{
 })();
 </script>
 <script src="agents.js"></script>
-
 </body></html>
