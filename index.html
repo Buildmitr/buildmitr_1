@@ -111,6 +111,7 @@ td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .act-wk{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:0 16px 10px}.act-wk>div{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:2px}.act-wk b{font-size:20px}.act-sv{background:var(--bg)}
 .feed-l{display:flex;gap:6px}.feed-l input{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}.feed-s{margin:6px 0;padding-left:18px}
 .upi-qr{width:220px;max-width:70vw;margin:6px auto}.upi-qr svg{width:100%;height:auto;display:block}
+.gsi-btn{display:flex;justify-content:center;min-height:44px}
 .dig-prev{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;font-size:13px}.dig-prev ul{margin:4px 0 0;padding-left:18px}
 .dpr-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .dpr-h{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -3393,6 +3394,7 @@ function vLogin(){
     <label>Password<input id="lgPw" type="password" autocomplete="current-password" required placeholder="Your password"></label>${err}
     <button class="btn pri lg-go" ${LG.busy?'disabled':''}>${LG.busy?'Checking…':'Sign in'}</button>
     <button type="button" class="btn ghost sm" id="lgUseCode">First time or forgot password?</button>
+    ${gsiOK()?`<div id="gsiWrap"><div class="lg-or"><span>or</span></div><div id="gsiBtn" class="gsi-btn"></div></div>`:''}
     ${LG.fixedOrg?`<div class="lg-or"><span>new to ${esc(lgOrgN||'this company')}?</span></div><button type="button" class="btn" id="lgSignup">${ico('user-plus')}<span>Create account</span></button>`:`<div class="code lg-hint">${ico('link')}<span>New here? Open the invite link your company admin sent you, then tap <b>Create account</b>.</span></div>`}</form>`;
   else if(step==='email')body=`<form id="lgEmailForm" class="lg-form"><h2>Get a code on your email</h2><p class="code">For people your company admin has already added or approved. We email you a 6-digit code — enter it, then set your password.</p>
     <label>Email<input id="lgEmail" type="email" inputmode="email" autocomplete="email" required value="${esc(LG.email)}" placeholder="name@example.com"></label>${err}
@@ -3467,6 +3469,28 @@ async function lgVerify(){
   let j;const so=(()=>{try{return localStorage.getItem('bm-org')||'';}catch(_){return '';}})();try{j=await gasApi('verify',{email:LG.email,code,org:so});}catch(e){lgSet('code',e.message);return;}
   CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}
   LG.owner=!!j.owner;LG.hasPw=!!j.hasPw;LG.pwAsked=false;if(LG.reset){LG.askPw=true;LG.forcePw=true;}LG.reset=false;
+  await cloudEnter(j.user,j.org||null,j.mems,j.data?{rows:j.data.rows,now:j.data.now}:null);
+}
+/* ---- Sign in with Google (for people already in a company; new people still join through the company link) ---- */
+function gsiOK(){const c=window.BM_CONFIG||{};if(!c.googleClientId||!/\.apps\.googleusercontent\.com$/.test(c.googleClientId))return false;
+  const ua=navigator.userAgent||'';if(/Electron|; wv\)|BuildMitrApp/.test(ua))return false;   // Google blocks its sign-in inside app windows: use email there
+  return location.protocol==='https:'&&(c.googleOrigins||['https://buildmitr.github.io']).includes(location.origin);}
+let GSI_P=null,GSI_INIT=false;
+function gsiMount(b){
+  GSI_P=GSI_P||Promise.race([loadJs('https://accounts.google.com/gsi/client',()=>window.google&&google.accounts&&google.accounts.id),new Promise((_,no)=>setTimeout(()=>no(new Error('slow')),10000))]);
+  GSI_P.then(()=>{
+    if(!document.body.contains(b))return;
+    if(!GSI_INIT){google.accounts.id.initialize({client_id:window.BM_CONFIG.googleClientId,callback:gsiDone,ux_mode:'popup',auto_select:false,cancel_on_tap_outside:true});GSI_INIT=true;}
+    google.accounts.id.renderButton(b,{theme:'outline',size:'large',text:'signin_with',shape:'pill',width:Math.min(320,b.clientWidth||300)});
+  }).catch(()=>{GSI_P=null;const w=document.getElementById('gsiWrap');if(w)w.hidden=true;});}
+setInterval(()=>{if(S.ready)return;const b=document.getElementById('gsiBtn');if(b&&!b.dataset.on){b.dataset.on='1';gsiMount(b);}},400);
+async function gsiDone(resp){
+  if(!resp||!resp.credential||LG.busy)return;
+  LG.busy=true;render();let j;
+  const so=(()=>{try{return localStorage.getItem('bm-org')||'';}catch(_){return '';}})();
+  try{j=await gasApi('gsignin',{credential:resp.credential,org:so});}catch(e){LG.busy=false;lgSet('email',e.message);return;}
+  CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}
+  LG.email=j.user.email;LG.owner=!!j.owner;LG.hasPw=!!j.hasPw;LG.busy=false;if(!j.hasPw)LG.askPw=true;   // a password too, for the Windows / Android apps
   await cloudEnter(j.user,j.org||null,j.mems,j.data?{rows:j.data.rows,now:j.data.now}:null);
 }
 async function lgPwLogin(){
@@ -6862,10 +6886,10 @@ Object.assign(ICONS,{'key-round':'<path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-
 const DID=(()=>{let d='';try{d=localStorage.getItem('bm-did')||'';}catch(_){}if(!/^d[\w]{8,40}$/.test(d)){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);try{localStorage.setItem('bm-did',d);}catch(_){}}return d;})();
 const devLabel=()=>{try{return `${devKind()} · ${appKind()}`;}catch(_){return 'Device';}};
 {const _api=gasApi;gasApi=async function(action,args){
-  if(action==='verify'||action==='loginPw'||action==='boot'||action==='signupVerify')args={...(args||{}),did:DID,dev:devLabel()};
+  if(action==='verify'||action==='loginPw'||action==='gsignin'||action==='boot'||action==='signupVerify')args={...(args||{}),did:DID,dev:devLabel()};
   const j=await _api(action,args);
   if(j&&j.token&&['boot','setPw','devOutAll'].includes(action)){CLOUD.token=j.token;try{localStorage.setItem('bm-token',j.token);}catch(_){}}   // renewed login for this device
-  if(j&&j.user&&j.user.email&&(action==='verify'||action==='loginPw')){try{localStorage.setItem('bm-last-email',j.user.email);}catch(_){}if(action==='verify'&&!j.hasPw)LG.askPw=true;}
+  if(j&&j.user&&j.user.email&&(action==='verify'||action==='loginPw'||action==='gsignin')){try{localStorage.setItem('bm-last-email',j.user.email);}catch(_){}if(action==='verify'&&!j.hasPw)LG.askPw=true;}
   return j;};}
 try{if(!LG.email)LG.email=localStorage.getItem('bm-last-email')||'';}catch(_){}
 /* right after a first code sign-in without a password: ask once to set one */
