@@ -1,12 +1,13 @@
 // BuildMitr offline support: keeps the app and its helper libraries on the phone
-const VER='buildmitr-v102',BUILD='1490ccbeb35a';   // BUILD is written by the website build on every deploy
+const VER='buildmitr-v103',BUILD='f3afea8ba48a';   // BUILD is written by the website build on every deploy
 const CACHE=VER+'-'+BUILD;
-const CORE=['./','./index.html','./app.js','./config.js','./agents.js','./reports.js','./manifest.json'];
+const PACKS=["./packs/f3afea8ba48a/admin.js", "./packs/f3afea8ba48a/ai.js", "./packs/f3afea8ba48a/cameras.js", "./packs/f3afea8ba48a/chat.js", "./packs/f3afea8ba48a/drawings.js", "./packs/f3afea8ba48a/estimates.js", "./packs/f3afea8ba48a/extras.js", "./packs/f3afea8ba48a/forms.js", "./packs/f3afea8ba48a/library.js", "./packs/f3afea8ba48a/marketing.js", "./packs/f3afea8ba48a/meetings.js", "./packs/f3afea8ba48a/office.js", "./packs/f3afea8ba48a/planning.js", "./packs/f3afea8ba48a/reports.js"];   // the other pages' code files — written by the website build
+const CORE=['./','./index.html','./app.js','./config.js','./agents.js','./reports.js','./manifest.json'].concat(PACKS);
 const CORE_SET=new Set(CORE.map(p=>new URL(p,self.location).pathname));
-// a new version is saved only when the page and the app code are from the same build (checked by their build mark)
+// a new version is saved only when the page, the app code and every page file are from the same build (checked by their build mark)
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE.map(u=>new Request(u,{cache:'reload'})))
-  .then(()=>BUILD==='dev'?null:Promise.all(['./index.html','./app.js'].map(u=>c.match(u).then(r=>r?r.text():''))).then(([h,j])=>{
-    if(h.indexOf('bm-build:'+BUILD)<0||j.indexOf('bm-build:'+BUILD)<0)return caches.delete(CACHE).then(()=>{throw new Error('mixed build — try again later');});})))
+  .then(()=>BUILD==='dev'?null:Promise.all(['./index.html','./app.js'].concat(PACKS).map(u=>c.match(u).then(r=>r?r.text():''))).then(ts=>{
+    if(ts.some(t=>t.indexOf('bm-build:'+BUILD)<0))return caches.delete(CACHE).then(()=>{throw new Error('mixed build — try again later');});})))
   .then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
