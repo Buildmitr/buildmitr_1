@@ -1,10 +1,10 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:8a5d2b979024 */
 /* ---- page code in separate files (packs/*.js) ----
    The main screens are in this file. Other pages' code comes from small separate files that load in the background
    right after the app starts. Until a file has arrived, a stand-in with the same name takes its place:
    while a page is being drawn it notes the gap and the page shows "Loading…" for a moment, then draws in full;
    on a tap or other action it fetches that file at once. */
-const BM_BUILD='f3afea8ba48a';
+const BM_BUILD='8a5d2b979024';
 const PK=(()=>{
   const P={"reports":["vReports","downloadDoc","vWages","vBalances","vBudgetVA","cashFlow","gstSplit"],"extras":["waLink","convertLead","findPlace","vAttBulk","saveAttBulk","vAudit"],"forms":["accDoc","formLevel","projTeam","autoHead","vForms","openAccess","saveAccess","newForm","openForm2","itemList","vForm","saveFormDoc","exportFormXlsx","printForm","uploadTemplate"],"admin":["backupXlsx","backupJson","restoreJson","vAdminPanel","adminSetRole","adminPhone","shareSheet","shareTo","orgsBox","orgsLoad","orgsDraw","orgCreate","orgSave","orgOpen","vInstall","instQR","orgLinkShare","dlDelBtn","dlDelete","dlMarkDel","feedLoad","upiDialog","digLoad","digBox"],"marketing":["vPipeline","vFollowups","followDone","vEstimator","vEstQuick","estDoc","vContent","vMktDash","vLeadImp","leadMap","runLeadImport","portfolioDoc","readLeadFile"],"chat":["tickState","projPeople","chatProjects","vMessages","chatMarkSeen","chatSend","openChatGroup","openRoleGroup","quoteHtml","renderMsgs","pinBar","openMsgMenu","openForward","doForward","msgAction","msgReact","setLang"],"cameras":["loadHls","vCctv","hlsInto","playCam","camFull","camParseQR","camScanDialog","qrStart","camFromQR"],"planning":["setRows","parseXml","parseXer","readImportFile","parsePaste","impBuild","impRender","openImport","impMatch","runImport","schedExport","schSave","makeSchedule","scheduleRecords","e2MakeProject","schedDialog","schedMake","plSetType","plStdApply","vPlanner","plGantt","plMonths","plSave","plFromEst","plOpen","taskComments","taskCommentAdd","plRe","schedEdit","dsSecForm","schedShiftDialog","dsOpen","dsDraw"],"ai":["aiPrompt","aiMsg","aiAsk","aiTool","aiPrepareForm","aiOpenRecord","aiTrim","aiAskGemini","aiMd","aiFill","aiUsageLine","aiClear"],"estimates":["estModeBtns","vEstDetailed","e2Xls","e2Doc","e2Editor","e2Touch","e2SaveRates","e2Rerender","docTplPick","docTplSave","docNextNo","docTpl","docBlank","docFromRec","docOpen","docNew","docClient","docPdfBlob","docPdf","docPptx","docShareFile","docSave","vDocMaker","lhSave"],"drawings":["relBadge","relBtn","relSet","dleOpen","dleDraw","dleSave","dlMissing","vDlMissing","vDrawLib","dlFloorBox","dlUpload","fileShareText","shareFiles","shareFilesTo","apChips","apButtons","apLog","apDialog","apSave","mkOpen","mkImage","mkPage","mkReady","mkFit","mkTextAt","mkTextDone","mkTools","mkSave","finForm","finNew"],"office":["wtCsv","ntHash","ntPeople","llCsv","vNotices","ntOne","ntPdf","ntSign","ntForm","ntSave"],"library":["stdAccTxt","vStdLib","stdUpForm","stdFolderForm","stdFolderForm2","stdCollect","stdToProj","stdPjDisc"],"meetings":["momText","vMeetings","momOpen","momSave","pnAdd","pnPatch","snapSave","mrChip","mrSegStart","mrStart","mrStop","mrPanelRefresh","mrGo","mrFill","mrListen","mrText"]};const by={};Object.keys(P).forEach(p=>P[p].forEach(n=>{by[n]=p;}));
   const st={},waits={},hits=[],hitP=new Set();let inR=0;
@@ -2375,8 +2375,9 @@ function gasAssets(org){
   return {upload:async(file,{type}={})=>{
     file=await bmShrink(file);
     if(file.size>10*1024*1024)throw new Error('The file is larger than 10 MB.');
-    const b64=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>no(new Error('Could not read the file.'));fr.readAsDataURL(file);});
-    const j=await gasApi('upload',{b64,name:file.name||'file',type:type||file.type||'application/octet-stream'});return {id:j.id};}};   // a file attached to a shared project moves to the owner company when the entry is saved (server)
+    const ty=type||file.type||'application/octet-stream',th=/^image\//.test(ty)?await bmThumbOf(file):null;
+    const args={b64:await bmB64(file),name:file.name||'file',type:ty};if(th&&th.size<300e3)args.t64=await bmB64(th);
+    const j=await gasApi('upload',args);bmKeepLocal(j.id,file,th);return {id:j.id};}};   // a file attached to a shared project moves to the owner company when the entry is saved (server)
 }
 /* photos & files are PRIVATE: each one comes through the server only for a signed-in member who may see it.
    /_blob/<id> pictures load as private copies (small preview in lists, full size when opened); links open in the app viewer. */
@@ -2393,11 +2394,28 @@ function fixBlobs(root){if(!CLOUD.blob||!root||root.nodeType!==1)return;
     const thumb=!!el.closest('.thumbs:not(.big),.bub-ph,.ph-chip,.citem,.dpr-ph');
     bmFileUrl(id,thumb).then(u=>{if(el.dataset.bmf===id){el.src=u;el.classList.remove('bmf-load');}}).catch(()=>{el.classList.remove('bmf-load');el.classList.add('bmf-err');el.title='Could not load this photo';});});}
 /* phone photos are made smaller before upload (max 2000 px) — faster to send and to open on site */
-async function bmShrink(file){try{if(!/^image\/(jpeg|png|webp)$/.test(file.type||'')||file.size<1.2e6)return file;
-  const bmp=await createImageBitmap(file);const k=Math.min(1,2000/Math.max(bmp.width,bmp.height));if(k>=1&&file.size<3e6){try{bmp.close&&bmp.close();}catch(_){}return file;}
-  const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);try{bmp.close&&bmp.close();}catch(_){}
-  const b=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.85));if(!b||b.size>=file.size)return file;
+/* phone photos are made smaller before upload: max 1600 px, good JPEG quality — sharp for reports and PDFs, quick to send */
+const BM_PH={max:1600,q:.8,thumb:480,tq:.7};
+const bmBmp=f=>createImageBitmap(f,{imageOrientation:'from-image'}).catch(()=>createImageBitmap(f));   // keep the photo the right way up
+async function bmShrink(file){try{const png=/^image\/png$/.test(file.type||'');   // drawings and screenshots (PNG) stay as before: only very big ones are made smaller
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type||'')||file.size<(png?1.2e6:450e3))return file;
+  const bmp=await bmBmp(file);const k=Math.min(1,(png?2000:BM_PH.max)/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);try{bmp.close&&bmp.close();}catch(_){}
+  const b=await new Promise(ok=>c.toBlob(ok,'image/jpeg',BM_PH.q));if(!b||b.size>=file.size)return file;
   return new File([b],String(file.name||'photo').replace(/\.(png|webp|jpe?g)$/i,'')+'.jpg',{type:'image/jpeg'});}catch(_){return file;}}
+/* the small preview shown in lists (about 30–50 KB) */
+async function bmThumbOf(blob){try{if(!/^image\/(jpeg|png|webp|gif)$/.test(blob.type||'')||blob.size<120e3)return null;const bmp=await bmBmp(blob);const k=Math.min(1,BM_PH.thumb/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas');c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bmp,0,0,c.width,c.height);try{bmp.close&&bmp.close();}catch(_){}
+  return await new Promise(ok=>c.toBlob(ok,'image/jpeg',BM_PH.tq));}catch(_){return null;}}
+const bmB64=blob=>new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=()=>no(new Error('Could not read the file.'));fr.readAsDataURL(blob);});
+/* the photo you just uploaded is kept on this device, so it never has to come back down from the server */
+async function bmKeepLocal(id,blob,thumb){try{const c=await caches.open('bm-files');await c.put('/f/'+id,new Response(blob,{headers:{'Content-Type':blob.type||'application/octet-stream'}}));
+  if(thumb)await c.put('/f/'+id+'?t',new Response(thumb,{headers:{'Content-Type':'image/jpeg'}}));}catch(_){}}
+/* an older photo that has no small preview yet: this device makes one and sends it, so lists load quickly for everyone */
+const BMT={q:[],run:false,done:new Set(),n:0};
+function bmThumbBackfill(id,blob){let boss=false;try{boss=isAdmin()||curRole()==='Project manager';}catch(_){}if(!boss||!CLOUD.blob||S.demo||BMT.done.has(id)||BMT.n>=40||!/^image\//.test(blob.type||''))return;BMT.done.add(id);BMT.n++;BMT.q.push([id,blob]);if(!BMT.run)bmThumbPump();}
+async function bmThumbPump(){BMT.run=true;while(BMT.q.length){const [id,blob]=BMT.q.shift();try{const t=await bmThumbOf(blob);if(t&&t.size<300e3){await gasApi('thumbSet',{id,t64:await bmB64(t)});try{const c=await caches.open('bm-files');await c.put('/f/'+id+'?t',new Response(t,{headers:{'Content-Type':'image/jpeg'}}));}catch(_){}}}catch(e){if(/Unknown request/i.test(e&&e.message||'')){BMT.q.length=0;BMT.n=99;}}
+    await new Promise(r=>setTimeout(r,800));}BMT.run=false;}
 try{new MutationObserver(ms=>{if(!CLOUD.blob)return;for(const m of ms)for(const n of m.addedNodes)fixBlobs(n);}).observe(document.body,{childList:true,subtree:true});}catch(_){}
 /* the PDF report reads photo bytes: ask the server for them (Drive pictures cannot be read directly by the page) */
 function saveChip(st){let c=document.getElementById('saveChip');if(!c){c=document.createElement('div');c.id='saveChip';c.setAttribute('role','status');document.body.appendChild(c);}
@@ -2418,7 +2436,8 @@ function bmThumbGo(){while(BMN.q.length){const grp=BMN.q.splice(0,8);
    .catch(e=>{if(/Unknown request/i.test(e.message||''))BMN.single=true;grp.forEach(j=>bmBlobNet(j.id,true).then(j.ok,j.no));});}}
 async function bmBlobNet(id,thumb){
   const j=await gasApi('file',thumb?{id,thumb:1}:{id});if(j.name)BMF.name[id]=j.name;const bin=atob(j.b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
-  return new Response(new Blob([u],{type:j.type||'application/octet-stream'}));
+  const bl=new Blob([u],{type:j.type||'application/octet-stream'});if(thumb&&!j.thumb)bmThumbBackfill(id,bl);
+  return new Response(bl);
 }
 
 
@@ -4421,7 +4440,7 @@ function recFileIds(r){const out=new Set();const walk=(v,k)=>{if(!v)return;
   if(typeof v==='object'){if(v.id&&(v.name||v.type)&&typeof v.id==='string')out.add(v.id);Object.entries(v).forEach(([kk,x])=>{if(typeof x==='object')walk(x,kk);});}};
   Object.entries(r||{}).forEach(([k,v])=>walk(v,k));return [...out].filter(id=>/^[\w-]{2,100}$/.test(id));}
 async function trashFiles(ids){ids=[...new Set((ids||[]).filter(Boolean))];if(!ids.length||!S.cloud||!canDelFiles())return;
-  try{const c=await caches.open('bm-files');await Promise.all(ids.map(id=>c.delete('/_blob/'+id)));}catch(_){}
+  try{const c=await caches.open('bm-files');await Promise.all(ids.flatMap(id=>[c.delete('/_blob/'+id),c.delete('/f/'+id),c.delete('/f/'+id+'?t')]));}catch(_){}
   if(WT.srv!==true)return;   // older server: the record no longer points to the file; the Drive copy stays
   try{await gasApi('delFile',{ids});}catch(_){}}
 

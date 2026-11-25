@@ -1,7 +1,7 @@
 // BuildMitr offline support: keeps the app and its helper libraries on the phone
-const VER='buildmitr-v103',BUILD='f3afea8ba48a';   // BUILD is written by the website build on every deploy
+const VER='buildmitr-v103',BUILD='8a5d2b979024';   // BUILD is written by the website build on every deploy
 const CACHE=VER+'-'+BUILD;
-const PACKS=["./packs/f3afea8ba48a/admin.js", "./packs/f3afea8ba48a/ai.js", "./packs/f3afea8ba48a/cameras.js", "./packs/f3afea8ba48a/chat.js", "./packs/f3afea8ba48a/drawings.js", "./packs/f3afea8ba48a/estimates.js", "./packs/f3afea8ba48a/extras.js", "./packs/f3afea8ba48a/forms.js", "./packs/f3afea8ba48a/library.js", "./packs/f3afea8ba48a/marketing.js", "./packs/f3afea8ba48a/meetings.js", "./packs/f3afea8ba48a/office.js", "./packs/f3afea8ba48a/planning.js", "./packs/f3afea8ba48a/reports.js"];   // the other pages' code files — written by the website build
+const PACKS=["./packs/8a5d2b979024/admin.js", "./packs/8a5d2b979024/ai.js", "./packs/8a5d2b979024/cameras.js", "./packs/8a5d2b979024/chat.js", "./packs/8a5d2b979024/drawings.js", "./packs/8a5d2b979024/estimates.js", "./packs/8a5d2b979024/extras.js", "./packs/8a5d2b979024/forms.js", "./packs/8a5d2b979024/library.js", "./packs/8a5d2b979024/marketing.js", "./packs/8a5d2b979024/meetings.js", "./packs/8a5d2b979024/office.js", "./packs/8a5d2b979024/planning.js", "./packs/8a5d2b979024/reports.js"];   // the other pages' code files — written by the website build
 const CORE=['./','./index.html','./app.js','./config.js','./agents.js','./reports.js','./manifest.json'].concat(PACKS);
 const CORE_SET=new Set(CORE.map(p=>new URL(p,self.location).pathname));
 // a new version is saved only when the page, the app code and every page file are from the same build (checked by their build mark)
