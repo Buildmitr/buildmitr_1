@@ -7169,7 +7169,7 @@ function digBox(){
       <div class="code">Today's daily reports and work done, labour and material, issues, money, tasks due tomorrow and the plan for tomorrow.${c.lastEve?` Last sent ${esc(fd(c.lastEve))}.`:''}</div></div>
     <div><b>Who gets them</b> <span class="code">— tick the people in your team${none?' (nobody ticked: only the admins get them)':''}</span>
       <div class="dig-ppl">${ppl.length?ppl.map(t=>{const em=String(t.email).trim().toLowerCase();return `<label class="pl-chk"><input type="checkbox" data-digto="${esc(em)}" ${pick.has(em)||(none&&t.role==='Admin')?'checked':''}> <span><b data-notr>${esc(t.name||em)}</b> <span class="code">${esc(t.role||'')} · ${esc(em)}</span></span></label>`;}).join(''):'<div class="code">Add people with an email on the Team page first.</div>'}</div></div>
-    <div class="code">${ico('info')} The reports include money totals (received, paid out, unpaid invoices) — tick only people who may see them. They go out at 7:30 am and 7:30 pm — or, if nobody in the company has BuildMitr open then, as soon as someone opens it.${(c.sendsTo||[]).length?` Now going to: ${c.sendsTo.map(esc).join(', ')}.`:''}</div>
+    <div class="code">${ico('info')} Each person gets their own email with only the projects and sections their role and access allow — money only for admins, project managers and accountants; site staff see only their projects. They go out at 7:30 am and 7:30 pm — or, if nobody in the company has BuildMitr open then, as soon as someone opens it.${(c.sendsTo||[]).length?` Now going to: ${c.sendsTo.map(esc).join(', ')}.`:''}</div>
     <label class="pl-chk"><input type="checkbox" id="dig-wa" ${c.wa?'checked':''}> Also send them on WhatsApp (Settings → WhatsApp updates, when it is on)</label>
     <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="digSave">${ico('check')}<span>Save</span></button>
       <button type="button" class="btn" data-digtest="am">${ico('send')}<span>Email me a morning sample</span></button><button type="button" class="btn" data-digtest="pm">${ico('send')}<span>Email me an evening sample</span></button></div>
@@ -7180,7 +7180,7 @@ function digRead(){const g=id=>document.getElementById(id);return {on:!!(g('dig-
 document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#digSave,[data-digtest]');if(!b||!DIG.cfg)return;b.disabled=true;
   try{const cfg=digRead();if((cfg.on||cfg.eve)&&!cfg.to.length&&digPeople().length){toast('Tick at least one person to get the reports.');b.disabled=false;return;}
     DIG.cfg=await gasApi('digSet',{cfg});
-    if(b.dataset.digtest){const r=await gasApi('digTest',{kind:b.dataset.digtest});DIG.prev=r.lines||null;DIG.prevKind=b.dataset.digtest;toast(r.sent?'Sample sent to your email':'Could not send the email');}
+    if(b.dataset.digtest){const r=await gasApi('digTest',{kind:b.dataset.digtest});DIG.prev=r.lines||null;DIG.prevKind=b.dataset.digtest;toast(r.sent?'Sample sent to your email':(r.lines||[]).length?'Could not send the email':'Nothing to report for your projects yet');}
     else{const n=(DIG.cfg.sendsTo||[]).length;toast(cfg.on||cfg.eve?`Saved — ${n} ${n===1?'person gets':'people get'} the reports`:'Daily email reports are off');}}
   catch(err){toast(err.message||'Could not save');}b.disabled=false;render();});
 
