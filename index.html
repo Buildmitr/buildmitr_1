@@ -106,6 +106,12 @@ td .thumbs{display:flex;gap:4px}
 td .thumbs img{width:34px;height:34px;border-radius:6px;object-fit:cover}
 .th-more{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;background:var(--line);color:var(--ink);font-weight:700;font-size:12px;text-decoration:none}
 .dpr-list{display:grid;gap:12px;padding:12px}
+.sug{display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);flex-wrap:wrap}.sug-i{width:32px;height:32px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex:none}.sug-i svg{width:16px;height:16px}
+.sug-b{flex:1;min-width:200px;overflow-wrap:anywhere}.sug-a{display:flex;gap:6px;flex-wrap:wrap}
+.act-wk{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:0 16px 10px}.act-wk>div{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:2px}.act-wk b{font-size:20px}.act-sv{background:var(--bg)}
+.feed-l{display:flex;gap:6px}.feed-l input{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}.feed-s{margin:6px 0;padding-left:18px}
+.upi-qr{width:220px;max-width:70vw;margin:6px auto}.upi-qr svg{width:100%;height:auto;display:block}
+.dig-prev{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:8px;font-size:13px}.dig-prev ul{margin:4px 0 0;padding-left:18px}
 .dpr-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .dpr-h{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
 .dpr-d{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.dpr-d b{font-size:15px}
@@ -1256,7 +1262,7 @@ function dprCards(rows,m){
       </div></article>`;}).join('')}
     ${rows.length>lim?`<div style="text-align:center;padding:8px"><button type="button" class="btn" data-dprmore>${ico('chevron-down')}<span>Show ${Math.min(15,rows.length-lim)} more (${rows.length-lim} older)</span></button></div>`:''}</div>`;
 }
-function rowActs(k,r,m){return `${TR_COLS.includes(k)?`${A&&trCanWrite(k,r)?trCamBtn(k,r.id):''}<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}`;}
+function rowActs(k,r,m){return `${TR_COLS.includes(k)?`${A&&trCanWrite(k,r)?trCamBtn(k,r.id):''}<button class="btn sm ghost" data-tropen="${k}|${esc(r.id)}" aria-label="Details and history">${ico('message-square')}${(r.log||[]).length?' '+(r.log||[]).length:''}</button>${r.status==='For review'&&trCanReview(r)&&trCanWrite(k,r)?`<button class="btn sm pri" data-trok="${k}|${esc(r.id)}">${ico('check')}Approve</button><button class="btn sm warn" data-trback="${k}|${esc(r.id)}">${ico('corner-up-left')}Send back</button>`:''}`:''}${(m.actions||[]).includes('raise')&&msStatus(r)==='Due'&&!r.inv&&canView('invoices')&&CANW?`<button class="btn sm pri" data-raise="${r.id}">${ico('receipt')}Raise invoice</button>`:''}${(m.actions||[]).includes('call')&&r.phone?`<a class="btn sm ghost" href="https://wa.me/${esc(waNum(r.phone))}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp chat">${ico('phone')}</a>`:''}${k==='team'?teamAuthBtns(r):''}${k==='team'&&canView('roleaccess')&&r.role!=='Admin'?`<button class="btn sm" data-raperson="${r.id}">${ico('shield')}Access${personOv(r.id)?' ·':''}</button>`:''}${(m.actions||[]).includes('invite')&&r.phone?`<a class="btn sm" href="${esc(inviteLink(r))}" target="_blank" rel="noopener noreferrer">${ico('send')}Invite</a>`:''}${(m.actions||[]).includes('convert')&&CANW&&r.stage!=='Won'?`<button class="btn sm" data-convert="${r.id}">${ico('arrow-right-circle')}Make project</button>`:''}${(m.actions||[]).includes('convert')&&r.project&&proj(r.project)?`<button class="btn sm ghost" data-proj="${r.project}">${ico('building-2')}Open project</button>`:''}${(m.actions||[]).includes('download')?`<button class="btn sm ghost" data-doc="${k}:${r.id}" aria-label="Download">${ico('file-down')}</button>`:''}${k==='invoices'&&upiLink(r)?`<button class="btn sm ghost" data-upi="${esc(r.id)}" aria-label="Pay by UPI" title="Pay by UPI (QR)">${ico('qr-code')}</button>`:''}${(m.actions||[]).includes('whatsapp')?`<button type="button" class="btn sm ghost" data-shrec="${esc(k)}:${esc(r.id)}" aria-label="Share or save">${ico('share-2')}</button>`:''}${m.wa?(()=>{const u=m.wa(r);return u?`<a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener noreferrer" aria-label="Send on WhatsApp">${ico('message-circle')}</a>`:'';})():''}${CANW&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost" data-edit="${k}:${r.id}" aria-label="Edit">${ico('pencil')}</button>`:''}${canDel(r)&&(!['team','cameras'].includes(k)||isAdmin())?`<button class="btn sm ghost warn" data-del="${k}:${r.id}" aria-label="Delete">${S.confirm===r.id?'Tap again':ico('trash-2')}</button>`:''}`;}
 
 function teamIntro(){
   const linked=new Set(D.team.map(t=>t.account).filter(Boolean));
@@ -1309,7 +1315,7 @@ function vDashboard(){
   const siteBox=sp?`<div class="box"><div class="siteloc">${pc.length?`<button class="btn sm" data-go="cctv">${ico('cctv')}${pc.length} camera${pc.length>1?'s':''} · ${pc.filter(c=>c.status==='Online').length} online</button>`:''}${canView('invoices')&&CANW?`<button class="btn sm" data-dmnew="Quotation">${ico('file-text')}Quotation</button><button class="btn sm" data-dmnew="Tax invoice">${ico('receipt')}Invoice</button>`:''}${ico('map-pin')}<div style="flex:1;min-width:180px"><b>${esc(sp.name)}</b><div class="code">${esc(sp.address||'No address yet')}</div></div>${sl?mapButtons(sl,true):`${CANW?`<button class="btn sm" data-edit="projects:${sp.id}">${ico('map-pin')}Add map pin</button>`:''}`}</div></div>`:'';
   const al=computeAlerts().filter(a=>S.proj==='all'||!a.pid||a.pid===S.proj);
   const alBox=al.length?`<div class="box"><div class="box-h">${ico('bell')}<h2>Needs attention</h2><span class="pill p-red">${al.filter(a=>a.sev==='high').length} urgent</span><button class="btn sm" data-go="alerts">See all ${al.length}</button></div>${al.slice(0,4).map(a=>`<div class="siteloc" style="border-bottom:1px solid var(--line);padding:9px 16px"><span class="pill ${a.sev==='high'?'p-red':a.sev==='med'?'p-amber':'p-grey'}">${a.sev==='high'?'Urgent':a.sev==='med'?'Soon':'Info'}</span><span style="flex:1;min-width:180px">${esc(a.txt)}</span><button class="btn sm" data-alertgo="${a.view}|${a.pid||''}">Open</button></div>`).join('')}</div>`:'';
-  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+ntBox()+siteBox+ownerBox()+mktBox()+`
+  return header(label('dashboard'),isAdmin()?`<button type="button" class="btn pri" data-shareupd>${ico('message-circle')}<span>Today's update</span></button>`:'')+ntBox()+siteBox+sugBox()+ownerBox()+actWeekBox()+mktBox()+`
   ${S.stale?`<div class="note">${ico('wifi-off')}<span>Can't reach the server right now — figures may be out of date.</span></div>`:''}
   <div class="box tiles dash-tiles">
     ${dTile(openT.length,`Open tasks${late.length?` · <span style="color:var(--red-ink)">${late.length} late</span>`:''}`,'tasks')}
@@ -1372,12 +1378,14 @@ function vReports(){
 function vSettings(){
   const org=D.org.find(o=>o.id==='main')||{};
   const admin=ME.isOwner||ME.canEdit;
-  return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button>`)+`
+  return header(label('settings'),`<button class="btn" data-go="install">${ico('download')}<span>Install app (Android, iPhone, PC, Mac)</span></button><a class="btn" href="security.html" target="_blank" rel="noopener">${ico('lock')}<span>Security</span></a>`)+`
   ${myProfileBox(admin)}
   ${actBoss()?ctBox()+trSetBox():''}
   ${bmUpdBox()}
   <div class="box"><div class="box-h">${ico('bell')}<h2>Notifications</h2></div>${ntSettings()}<div class="srow"><span class="code">Shows a Windows / phone notification when someone messages you, gives you a task or drawing, changes it, or schedules work for you — while BuildMitr is open or running in the background (the Windows app keeps running in the tray).</span></div></div>
   ${isAdmin()&&S.cloud&&!S.demo?waBox():''}
+  ${ME.isOwner&&S.cloud&&!S.demo?digBox():''}
+  ${feedBox()}
   ${admin?`<div class="box"><div class="box-h"><h2>Company</h2></div><form id="orgForm" style="padding:16px;display:grid;gap:12px;max-width:520px">
     <label class="code">Company name<input id="o-name" value="${esc(org.name||'')}" ${admin?'':'disabled'} placeholder="e.g. BuildMitr"></label>
     <label class="code">GSTIN<input id="o-gst" value="${esc(org.gstin||'')}" ${admin?'':'disabled'}></label>
@@ -1525,7 +1533,7 @@ function waText(k,r){
   let t='';
   if(k==='dpr'){const sec=(l,v)=>v&&String(v).trim()?`\n\n*${l}:*\n${String(v).trim()}`:'';const ms=dprMats(r),tot=crewTot(r.crew);
     t=`*Daily report – ${pname(r.project)}*\nDate: ${fd(r.date)}${Object.entries(dprItems(r).reduce((o,x)=>{(o[x.trade]=o[x.trade]||[]).push(x.work.trim());return o;},Object.create(null))).map(([t,ws])=>sec(t,ws.join('\n'))).join('')}${sec(dprItems(r).length?'Other notes':'Work done',r.work)}${tot?`\n\n*Labour (${num(tot)}):*\n${crewTxt(r.crew)}`:''}${ms.length?`\n\n*Material:*\n${ms.map(x=>`• ${x.item}${x.qty!==''&&x.qty!=null?' '+num(+x.qty):''} ${x.unit||''} (${x.kind||'Received'})`).join('\n')}`:''}${sec('Tomorrow',dprPlan(r).map(x=>`${x.trade}: ${x.work.trim()}`).join('\n'))}${sec('Hindrances',r.hindrance)}${dprPhotos(r).length?`\n\n📷 ${dprPhotos(r).length} photo${dprPhotos(r).length>1?'s':''} in BuildMitr`:''}\n\n— ${orgName()}`;}
-  if(k==='invoices')t=`Dear ${cname(r.client)!=='—'?cname(r.client):'Sir/Madam'},\n\n${r.kind} ${r.no} dated ${fd(r.date)} for ${pname(r.project)}\nAmount: ${inr(invTotal(r))}${r.gst&&r.gst!=='No GST'?' (incl. '+r.gst+')':''}${r.got?`\nReceived: ${inr(r.got)}\nBalance: ${inr(invTotal(r)-(+r.got||0))}`:''}\n\nThank you,\n${orgName()}`;
+  if(k==='invoices')t=`Dear ${cname(r.client)!=='—'?cname(r.client):'Sir/Madam'},\n\n${r.kind} ${r.no} dated ${fd(r.date)} for ${pname(r.project)}\nAmount: ${inr(invTotal(r))}${r.gst&&r.gst!=='No GST'?' (incl. '+r.gst+')':''}${r.got?`\nReceived: ${inr(r.got)}\nBalance: ${inr(invTotal(r)-(+r.got||0))}`:''}${upiLink(r)?`\n\nPay by UPI: ${(D.org.find(o=>o.id==='main')||{}).upi}`:''}\n\nThank you,\n${orgName()}`;
   if(k==='po')t=`*Purchase order ${r.no}* – ${orgName()}\nTo: ${vname(r.vendor)}\nSite: ${pname(r.project)}${proj(r.project)?.address?'\n'+proj(r.project).address:''}${proj(r.project)?.loc?'\nLocation: '+gmaps(proj(r.project).loc):''}\n\n${r.material}: ${num(r.qty)} ${r.unit||''}${r.rate?` @ ${inr(r.rate)} = ${inr(r.qty*r.rate)}`:''}${r.delivery?`\nDeliver by: ${fd(r.delivery)}`:''}${r.terms?`\n\nTerms: ${r.terms}`:''}`;
   if(k==='issues')t=`*${r.kind||'Issue'}: ${r.title}*\nProject: ${pname(r.project)}${r.location?'\nLocation: '+r.location:''}\nPriority: ${r.severity||'—'}${r.who?'\nAssigned to: '+nm(r.who):''}${r.due?'\nFix by: '+fd(r.due):''}${r.details?'\n\n'+r.details:''}`;
   if(k==='changes')t=`*Change order ${r.no}* – ${pname(r.project)}\nDate: ${fd(r.date)}\n\n${r.desc}\n\nCost impact: ${inr(r.amount)}${r.days?'\nTime impact: '+r.days+' days':''}\nStatus: ${r.status||'Requested'}\n\nPlease confirm approval.\n— ${orgName()}`;
@@ -1631,6 +1639,7 @@ function schedMonths(ts,SE){if(!ts.length)return '';const s0=ts.reduce((m,t)=>t.
 /* ================= Printable invoice / PO ================= */
 async function downloadDoc(k,id){
   const r=D[k].find(x=>x.id===id);if(!r)return;
+  let upiQ='';if(k==='invoices'&&upiLink(r)){try{upiQ=await Promise.race([qrSvg(upiLink(r)),new Promise(res=>setTimeout(()=>res(''),2500))]);}catch(_){upiQ='';}}
   const org=D.org.find(o=>o.id==='main')||{};
   const p=proj(r.project)||{};const e=s=>esc(s||'');
   let title,to,rowsH,total;
@@ -1654,6 +1663,7 @@ th{background:#e2efe8}.n{text-align:right;white-space:nowrap}.tot td{font-weight
 <tr class="tot"><td></td><td>Total</td><td class="n">${inr(total)}</td></tr>${k==='invoices'&&r.got?`<tr><td></td><td>Received</td><td class="n">${inr(r.got)}</td></tr><tr class="tot"><td></td><td>Balance due</td><td class="n">${inr(total-r.got)}</td></tr>`:''}</tbody></table>
 ${r.terms?`<p><b>Terms:</b> ${e(r.terms).replace(/\n/g,'<br>')}</p>`:''}
 ${k==='invoices'?`<p class="muted">Place of supply: ${e(r.__pos||'—')}${org.state?` · Supplier state: ${e(org.state)}`:''}</p>${org.bank||org.upi?`<table><tr><th>Bank details</th><td>${e(org.bank||'')}${org.acc?`<br>A/c no: ${e(org.acc)}`:''}${org.ifsc?`<br>IFSC: ${e(org.ifsc)}`:''}</td><th>UPI</th><td>${e(org.upi||'—')}</td></tr></table>`:''}`:''}
+${upiQ?`<div style="display:flex;gap:16px;align-items:center;margin-top:18px"><div style="width:130px">${upiQ}</div><div><b>Scan to pay ${inr(total-(+r.got||0))} by UPI</b><div class="muted">Any UPI app · ${e((D.org.find(o=>o.id==='main')||{}).upi)}</div></div></div>`:''}
 <div class="foot"><div class="muted">Thank you for your business.</div><div style="text-align:center"><br><br>Authorised signatory<br><b>${e(org.name||'')}</b></div></div>
 <p class="muted" style="margin-top:30px;font-size:12px">Open this file and press Ctrl+P → Save as PDF to print or share it.</p></body></html>`;
   await saveFile(`${(title+'-'+(r.no||'')).replace(/[^\w-]+/g,'-')}.html`,new Blob([html],{type:'text/html'}));
@@ -2362,11 +2372,25 @@ function audit(action,col,id,summary){
 }
 function vAudit(){
   const q=S.q.toLowerCase();
-  const rows=D.audit.slice().sort((a,b)=>(b.at||0)-(a.at||0)).filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)||nm(r.by).toLowerCase().includes(q)).slice(0,300);
-  return header('Change history')+`<div class="box"><div class="filters"><input id="q" placeholder="Search by person, section or text" value="${esc(S.q)}" aria-label="Search"><span class="code" style="margin-left:auto;align-self:center">Last ${rows.length} changes</span></div>
+  const all=D.audit.slice().sort((a,b)=>(b.at||0)-(a.at||0)),days=+S.audD||0;
+  const fl=all.filter(r=>(!q||JSON.stringify(r).toLowerCase().includes(q)||nm(r.by).toLowerCase().includes(q))&&(!S.audBy||r.by===S.audBy)&&(!S.audCol||r.col===S.audCol)&&(!S.audAct||r.action===S.audAct)&&(!days||Date.now()-(+r.at||0)<days*864e5));
+  const rows=fl.slice(0,300),opt=(v,l,cur)=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(l)}</option>`;
+  const ppl=[...new Set(all.map(r=>r.by).filter(Boolean))].sort((a,b)=>nm(a).localeCompare(nm(b))),cols=[...new Set(all.map(r=>r.col).filter(Boolean))].sort(),acts=[...new Set(all.map(r=>r.action).filter(Boolean))].sort();
+  return header('Change history',`<button type="button" class="btn" data-audcsv>${ico('download')}<span>Download CSV</span></button>`)+`<div class="box"><div class="filters"><input id="q" placeholder="Search by person, section or text" value="${esc(S.q)}" aria-label="Search">
+    <select data-audf="audBy" aria-label="Person" style="width:auto">${opt('','Everyone',S.audBy||'')}${ppl.map(x=>opt(x,nm(x),S.audBy)).join('')}</select>
+    <select data-audf="audCol" aria-label="Section" style="width:auto">${opt('','All sections',S.audCol||'')}${cols.map(x=>opt(x,MOD[x]?MOD[x].label:x,S.audCol)).join('')}</select>
+    <select data-audf="audAct" aria-label="Action" style="width:auto">${opt('','All actions',S.audAct||'')}${acts.map(x=>opt(x,x,S.audAct)).join('')}</select>
+    <select data-audf="audD" aria-label="Period" style="width:auto">${[['','Any time'],['1','Last 24 hours'],['7','Last 7 days'],['30','Last 30 days']].map(([v,l])=>opt(v,l,S.audD||'')).join('')}</select>
+    <span class="code" style="margin-left:auto;align-self:center">${fl.length>rows.length?`Showing ${rows.length} of ${fl.length}`:`${rows.length} change${rows.length===1?'':'s'}`}</span></div>
   ${rows.length?`<div class="tbl-wrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Section</th><th>Details</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="code">${new Date(r.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(nm(r.by))}</td><td><span class="pill ${r.action==='deleted'?'p-red':r.action==='approved'?'p-green':r.action==='created'?'p-blue':'p-grey'}">${esc(r.action)}</span></td><td>${esc(MOD[r.col]?MOD[r.col].label:r.col)}</td><td>${esc(r.summary)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No changes recorded yet. Every add, edit, delete, approval and access change will appear here.</div>'}</div>
   <div class="code">Only the admin and editors can see this history.</div>`;
 }
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.audf)return;S[t.dataset.audf]=t.value;render();});
+document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('[data-audcsv]'))return;
+  const q=(S.q||'').toLowerCase(),days=+S.audD||0,cell=v=>{v=String(v??'');if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';};
+  const rows=D.audit.slice().sort((a,b)=>(b.at||0)-(a.at||0)).filter(r=>(!q||JSON.stringify(r).toLowerCase().includes(q)||nm(r.by).toLowerCase().includes(q))&&(!S.audBy||r.by===S.audBy)&&(!S.audCol||r.col===S.audCol)&&(!S.audAct||r.action===S.audAct)&&(!days||Date.now()-(+r.at||0)<days*864e5));
+  const csv=['When,Who,Action,Section,Details',...rows.map(r=>[new Date(+r.at||0).toLocaleString('en-IN'),nm(r.by),r.action,MOD[r.col]?MOD[r.col].label:r.col,r.summary].map(cell).join(','))].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));a.download=`${orgName()} change history ${today()}.csv`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);});
 const recLabel=(c,r)=>String(r.name||r.title||r.material||r.no||r.stage||(c==='dpr'?dprWork(r):r.work)||r.desc||(r.amount?inr(r.amount):'')||'').slice(0,80);
 
 /* ================= Project templates ================= */
@@ -5586,7 +5610,7 @@ document.addEventListener('keydown',e=>{if(e.repeat||!OPENF.gal||!document.query
  *   then plays inside the app (short-lived HLS link made on the server — the key and verification codes never reach phones).
  * • Any HLS (.m3u8), YouTube Live, MJPEG or web-viewer link also plays inside the app.
  * • "Scan camera QR" reads the QR on the camera / box / a shared QR picture and fills in the camera for you. */
-Object.assign(ICONS,{zap:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',droplet:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>','scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+Object.assign(ICONS,{'refresh-cw':'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>','qr-code':'<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',zap:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',droplet:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>','scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
   'maximize':'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>'});
 const CAM={ez:null,list:null};
 const camEzBrand=c=>['EZVIZ','Hikvision'].includes(c.brand)&&c.serial&&!/demo/i.test(c.serial);
@@ -7048,6 +7072,174 @@ document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.c
 
 /* ================= WhatsApp updates to the admin =================
    The server sends the WhatsApp itself (nobody has to tap Send). Keys stay on the server; the app only sees the last 3 characters. */
+/* ================= Google Calendar & Google Sheets links ================= */
+const FEED={tok:'',err:'',busy:0,col:'dpr',p:''};
+const FEED_LIST=[['dpr','Daily reports'],['tasks','Tasks'],['issues','Issues & snags'],['received','Material received'],['issue','Material issue'],['consumed','Material consumption'],['attendance','Attendance'],['requests','Material requests'],['payments','Payments'],['invoices','Invoices & quotes'],['milestones','Payment stages'],['po','Purchase orders'],['vlabour','Vendor labour'],['cal','Calendar']];
+const feedBase=()=>{const c=cloudCfg();return c?c.googleScriptUrl:'';};
+const feedUrl=q=>`${feedBase()}?feed=${FEED.tok}&${q}`;
+async function feedLoad(reset){if(FEED.busy)return;FEED.busy=1;try{const j=await gasApi('feedGet',{reset:!!reset});FEED.tok=j.token||'';FEED.err='';if(reset)toast('New links made — the old ones no longer work.');}catch(e){FEED.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not make the links');}FEED.busy=0;render();}
+function feedBox(){
+  if(!S.cloud||S.demo||!feedBase())return '';
+  const h=`<div class="box-h">${ico('calendar')}<h2>Google Calendar & Google Sheets</h2></div>`;
+  if(!FEED.tok)return `<div class="box" id="feedBox">${h}<div style="padding:0 16px 16px;display:grid;gap:10px;max-width:680px"><p class="code" style="margin:0">See your BuildMitr tasks, calendar work, site visits and payment stages in Google Calendar, and keep a Google Sheet that fills itself from BuildMitr. You get private links that show only what you can see here.</p>
+    ${FEED.err?`<div class="note warn">${ico('alert-triangle')}<span>${esc(FEED.err)}</span></div>`:''}<button type="button" class="btn pri" style="width:max-content" data-feedmk>${ico('link')}<span>Make my private links</span></button></div></div>`;
+  const fl=FEED_LIST.filter(([k])=>canView(k));if(fl.length&&!fl.some(([k])=>k===FEED.col))FEED.col=fl[0][0];
+  const cal=feedUrl('cal=1'),cs=feedUrl(`csv=${FEED.col}${FEED.p?'&p='+encodeURIComponent(FEED.p):''}`),f=`=IMPORTDATA("${cs}")`;
+  const copy=(v,l)=>`<div class="feed-l"><input readonly value="${esc(v)}" aria-label="${esc(l)}"><button type="button" class="btn sm" data-copy="${esc(v)}">${ico('copy')}<span>Copy</span></button></div>`;
+  return `<div class="box" id="feedBox">${h}<div style="padding:0 16px 16px;display:grid;gap:14px;max-width:680px">
+    <div><b>Google Calendar</b><ol class="code feed-s"><li>Copy this link.</li><li>Open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar → Other calendars → + → From URL</a>.</li><li>Paste it and tap <b>Add calendar</b>. Google refreshes it every few hours.</li></ol>${copy(cal,'Calendar link')}</div>
+    <div><b>Google Sheets (fills itself)</b>
+      <div class="fhead" style="margin:6px 0"><label class="code">What<select data-feedcol>${fl.map(([k,l])=>`<option value="${k}" ${FEED.col===k?'selected':''}>${l}</option>`).join('')}</select></label>
+        <label class="code">Project<select data-feedp><option value="">All my projects</option>${PJ().filter(p=>!p.shared).map(p=>`<option value="${esc(p.id)}" ${FEED.p===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label></div>
+      <ol class="code feed-s"><li>Open a new Google Sheet (<a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a>).</li><li>Click cell A1, paste this formula and press Enter.</li><li>The sheet updates by itself about every hour.</li></ol>${copy(f,'Sheet formula')}</div>
+    <div class="note">${ico('lock')}<span>Anyone who has these links can see the same data you can. Don't post them in public groups. If a link leaks, make new ones — the old ones stop working.</span></div>
+    <button type="button" class="btn sm" style="width:max-content" data-feedreset>${ico('refresh-cw')}<span>Make new links</span></button></div></div>`;}
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  if(e.target.closest('[data-feedmk]')){feedLoad(false);return;}
+  if(e.target.closest('[data-feedreset]')){if(confirm('Make new links? Calendars and sheets using the old links will stop updating.'))feedLoad(true);return;}
+  const c=e.target.closest('[data-copy]');if(c){const v=c.dataset.copy;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('Copied')).catch(()=>{const i=c.parentElement.querySelector('input');if(i){i.select();try{document.execCommand('copy');toast('Copied');}catch(_){}}});}});
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset)return;if('feedcol' in t.dataset){FEED.col=t.value;render();}else if('feedp' in t.dataset){FEED.p=t.value;render();}});
+
+/* ================= UPI payment QR for invoices ================= */
+function upiLink(r){const org=D.org.find(o=>o.id==='main')||{};if(!r||!['Tax invoice','RA bill'].includes(r.kind)||r.status==='Paid'||!org.upi||!/^[\w.\-]{2,}@[\w.\-]{2,}$/.test(String(org.upi).trim()))return '';
+  const due=Math.max(0,Math.round((invTotal(r)-(+r.got||0))*100)/100);if(!(due>0))return '';
+  return 'upi://pay?'+[['pa',String(org.upi).trim()],['pn',(org.name||orgName()).slice(0,40)],['am',due.toFixed(2)],['cu','INR'],['tn',`${r.no||'Invoice'} ${pname(r.project)}`.slice(0,60)]].map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');}
+const qrSvg=t=>loadJs('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',()=>window.qrcode).then(()=>{const q=window.qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:5,margin:2,scalable:true});});
+function upiDialog(id){
+  const r=D.invoices.find(x=>x.id===id);if(!r)return;const u=upiLink(r),org=D.org.find(o=>o.id==='main')||{};
+  if(!u){toast(org.upi?'Nothing is pending on this invoice.':'Add your UPI ID in Settings → Company first.');return;}
+  const due=invTotal(r)-(+r.got||0),c=D.clients.find(x=>x.id===r.client)||{};
+  const msg=`Dear ${c.name||'Sir/Madam'},\n\nPlease pay ${inr(due)} for ${r.kind||'invoice'} ${r.no||''} (${pname(r.project)}).\nUPI ID: ${org.upi}\n\nScan the QR in the attached image or pay to the UPI ID above.\n\nThank you,\n${orgName()}`;
+  document.getElementById('layer').innerHTML=`<div class="drawer"><div class="pane"><div class="pane-h"><h2>Pay by UPI</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b" style="text-align:center"><div><b>${esc(r.no||'')}</b> · ${esc(pname(r.project))}</div><div style="font-size:24px;font-weight:700">${inr(due)}</div>
+      <div id="upiQR" class="upi-qr">Loading QR…</div><div class="code">UPI ID: <b>${esc(org.upi)}</b> · any UPI app (GPay, PhonePe, Paytm, BHIM)</div>
+      <a class="btn" href="${esc(u)}">${ico('smartphone')}<span>Open UPI app on this phone</span></a>
+      <a class="btn" target="_blank" rel="noopener" href="${esc(c.phone?waTo(c.phone,msg):'https://wa.me/?text='+encodeURIComponent(msg))}">${ico('message-circle')}<span>Send payment request on WhatsApp</span></a>
+      ${CANW&&canEditView('payments')?`<hr style="border:0;border-top:1px solid var(--line);width:100%"><div class="code">When the money reaches your bank:</div><button type="button" class="btn pri" data-upigot="${esc(r.id)}">${ico('check')}<span>Mark ${inr(due)} received</span></button>`:''}
+      <p class="code">Tip: show this screen to the client, or take a screenshot and send it with the WhatsApp message.</p></div></div></div>`;
+  qrSvg(u).then(svg=>{const b=document.getElementById('upiQR');if(b)b.innerHTML=svg;}).catch(()=>{const b=document.getElementById('upiQR');if(b)b.textContent='Could not load the QR — use the UPI ID.';});
+}
+const UPIG={};
+document.addEventListener('click',async e=>{if(!e.target.closest)return;
+  const q=e.target.closest('[data-upi]');if(q){upiDialog(q.dataset.upi);return;}
+  const g=e.target.closest('[data-upigot]');if(!g)return;const r=D.invoices.find(x=>x.id===g.dataset.upigot);if(!r||UPIG[r.id])return;
+  const due=Math.round((invTotal(r)-(+r.got||0))*100)/100;if(!(due>0))return;UPIG[r.id]=1;g.disabled=true;
+  const ok=await write(async()=>{await db.doc('invoices/'+r.id).update({got:Math.round(((+r.got||0)+due)*100)/100,status:'Paid'});
+    await db.collection('payments').add({project:r.project,date:today(),dir:'Received from client',cat:'',client:r.client||'',party:'',amount:due,mode:'UPI',ref:r.no||'',by:ME.id,at:Date.now()});},`${inr(due)} received — invoice marked Paid`);
+  delete UPIG[r.id];if(ok)closeLayer();else g.disabled=false;render();});
+
+/* ================= Morning summary (admin) ================= */
+const DIG={cfg:null,err:'',busy:0,prev:null};
+async function digLoad(){if(DIG.busy)return;DIG.busy=1;try{DIG.cfg=await gasApi('digGet',{});DIG.err='';}catch(e){DIG.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not load');}DIG.busy=0;if(S.view==='settings')render();}
+function digBox(){
+  const h=`<div class="box-h">${ico('sun')}<h2>Morning summary</h2>${DIG.cfg?`<span class="pill ${DIG.cfg.on?'p-green':'p-grey'}">${DIG.cfg.on?'On':'Off'}</span>`:''}</div>`;
+  if(!DIG.cfg&&!DIG.err){digLoad();return `<div class="box">${h}<div class="empty">Loading…</div></div>`;}
+  if(!DIG.cfg)return `<div class="box">${h}<div class="note warn">${ico('alert-triangle')}<span>${esc(DIG.err)}</span></div></div>`;
+  const c=DIG.cfg;
+  return `<div class="box" id="digBox">${h}<div style="padding:0 16px 16px;display:grid;gap:10px;max-width:640px">
+    <p class="code" style="margin:0">Every morning after 8 am the admins get one email with yesterday's daily reports (and which sites sent none), labour and material, overdue tasks, open issues, money received and unpaid invoices.</p>
+    <label class="pl-chk"><input type="checkbox" id="dig-on" ${c.on?'checked':''}> <b>Send the morning summary</b></label>
+    <label class="pl-chk"><input type="checkbox" id="dig-wa" ${c.wa?'checked':''}> Also send it on WhatsApp (uses the WhatsApp updates numbers above, when they are on)</label>
+    <div class="code">Goes to: ${c.to&&c.to.length?c.to.map(esc).join(', '):'the company admins'}${c.last?` · last sent ${esc(fd(c.last))}`:''}</div>
+    <div class="srow" style="padding:0;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="digSave">${ico('check')}<span>Save</span></button><button type="button" class="btn" id="digTest">${ico('send')}<span>Email me a sample now</span></button></div>
+    ${DIG.prev?`<div class="dig-prev">${DIG.prev.map(([t,ls])=>`<div><b>${esc(t)}</b><ul>${ls.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`).join('')}</div>`:''}
+  </div></div>`;}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('#digSave,#digTest');if(!b||!DIG.cfg)return;b.disabled=true;
+  try{DIG.cfg=await gasApi('digSet',{cfg:{on:!!(document.getElementById('dig-on')||{}).checked,wa:!!(document.getElementById('dig-wa')||{}).checked}});
+    if(b.id==='digTest'){const r=await gasApi('digTest',{});DIG.prev=r.lines||null;toast(r.sent?'Sample sent to your email':'Could not send the email');}else toast(DIG.cfg.on?'Morning summary is on':'Morning summary is off');}
+  catch(err){toast(err.message||'Could not save');}b.disabled=false;render();});
+
+/* ================= Suggestions to approve ================= */
+/* Drafts BuildMitr prepares from the company's own data. Nothing is sent or saved until a person taps Approve. */
+const SUG_SKIP_KEY='bm_sugskip';
+function sugSkipped(){try{const o=JSON.parse(localStorage.getItem(SUG_SKIP_KEY)||'{}'),now=Date.now();Object.keys(o).forEach(k=>{if(o[k]<now)delete o[k];});return o;}catch(_){return {};}}
+function sugSkip(id,days){try{const o=sugSkipped();o[id]=Date.now()+days*864e5;localStorage.setItem(SUG_SKIP_KEY,JSON.stringify(o));}catch(_){}}
+const daysAgo=d=>{if(!d)return 0;const x=new Date(String(d)+'T00:00:00');return Math.floor((new Date(today()+'T00:00:00')-x)/864e5);};
+function suggestions(){
+  if(!CANW||S.demo)return [];
+  const out=[],t=today(),sk=sugSkipped(),f=a=>(a||[]).filter(inProj);
+  const cli=id=>D.clients.find(c=>c.id===id)||{};
+  /* 1. unpaid invoices older than 15 days → payment reminder to the client */
+  if(canEditView('invoices'))f(D.invoices).filter(v=>['Tax invoice','RA bill'].includes(v.kind)&&v.status!=='Paid'&&daysAgo(v.date)>=15&&(!v.reminded||daysAgo(v.reminded)>=7)).slice(0,5).forEach(v=>{
+    const c=cli(v.client),due=Math.max(0,invTotal(v)-(+v.got||0));if(!due)return;
+    out.push({id:'inv:'+v.id,ico:'receipt',kind:'Payment reminder',title:`${v.no||'Invoice'} · ${inr(due)} pending · ${daysAgo(v.date)} days`,sub:`${c.name||'Client'} · ${pname(v.project)}`,phone:c.phone||'',
+      text:`Dear ${c.name||'Sir/Madam'},\n\nThis is a gentle reminder that ${inr(due)} is pending against ${v.kind||'invoice'} ${v.no||''} dated ${fd(v.date)} for ${pname(v.project)}.\n\nKindly arrange the payment at the earliest. Please ignore if already paid.\n\nThank you,\n${orgName()}`,
+      act:'wa',done:()=>db.doc('invoices/'+v.id).update({reminded:t})});});
+  /* 2. yesterday's plan → today's tasks */
+  if(canEditView('tasks'))f(D.dpr).filter(r=>nextDay(r.date)===t&&dprPlan(r).length).forEach(r=>{
+    const have=new Set(D.tasks.filter(x=>x.source==='Daily report '+r.id).map(x=>x.title)),pl=dprPlan(r).filter(x=>!have.has(`${x.trade}: ${x.work.trim().replace(/\s+/g,' ').slice(0,200)}`));if(!pl.length)return;
+    out.push({id:'plan:'+r.id,ico:'list-checks',kind:'Today\'s tasks',title:`Make ${pl.length} task${pl.length>1?'s':''} from yesterday's plan`,sub:`${pname(r.project)} · ${pl.map(x=>x.trade).join(', ')}`,
+      text:pl.map(x=>`${x.trade}: ${x.work.trim()}`).join('\n'),act:'tasks',rid:r.id});});
+  /* 3. weekly progress update to the client */
+  if(isAdmin())PJ().filter(p=>!p.shared&&inProj({project:p.id})&&p.start&&p.start<=t&&!/complet|closed|hold/i.test(p.status||'')&&(!p.cupd||daysAgo(p.cupd)>=7)).forEach(p=>{
+    const c=cli(p.client),wk=D.dpr.filter(r=>r.project===p.id&&daysAgo(r.date)<7&&daysAgo(r.date)>=0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));if(!wk.length)return;
+    const by={};wk.forEach(r=>dprItems(r).forEach(x=>{(by[x.trade]=by[x.trade]||[]).push(x.work.trim().split('\n')[0]);}));
+    const ph=wk.reduce((s,r)=>s+dprPhotos(r).length,0),plan=dprPlan(wk[wk.length-1]);
+    out.push({id:'cu:'+p.id,ico:'message-circle',kind:'Client update',title:`Weekly progress update — ${pname(p.id)}`,sub:`${c.name||'Client'} · ${wk.length} daily report${wk.length>1?'s':''} this week`,phone:c.phone||'',
+      text:`Dear ${c.name||'Sir/Madam'},\n\nWeekly progress — ${pname(p.id)} (${fd(wk[0].date)} to ${fd(wk[wk.length-1].date)}):\n${Object.entries(by).map(([k,ws])=>`\n*${k}*\n${[...new Set(ws)].slice(0,4).map(w=>'• '+w).join('\n')}`).join('\n')}${plan.length?`\n\n*Next:*\n${plan.map(x=>'• '+x.trade+': '+x.work.trim().split('\n')[0]).join('\n')}`:''}${ph?`\n\n📷 ${ph} site photos taken this week.`:''}\n\nRegards,\n${orgName()}`,
+      act:'wa',done:()=>db.doc('projects/'+p.id).update({cupd:t})});});
+  /* 4. material finished at a site → request */
+  if(canEditView('requests'))stock().filter(s=>inProj(s)&&s.store<=0&&s.received>0&&!D.requests.some(r=>r.project===s.project&&r.status==='Pending'&&String(r.material||'').trim().toLowerCase()===s.material.toLowerCase())).slice(0,5).forEach(s=>{
+    out.push({id:'stk:'+s.project+'|'+s.material,ico:'package',kind:'Material',title:`${s.material} is finished at ${pname(s.project)}`,sub:`Received so far ${num(s.received)} ${s.unit||''} — raise a request to the store / purchase`,
+      text:String(Math.max(1,Math.round(s.received/4))),act:'req',s});});
+  return out.filter(x=>!sk[x.id]);
+}
+function sugBox(){
+  const L=suggestions();if(!L.length)return '';
+  return `<div class="box" id="sugBox"><div class="box-h">${ico('sparkles')}<h2>Suggestions to approve</h2><span class="pill p-blue">${L.length}</span></div>
+    <p class="code" style="margin:0 16px 8px">BuildMitr prepared these from your data. Nothing is sent or saved until you tap Approve.</p>
+    ${L.slice(0,8).map(x=>`<div class="sug"><span class="sug-i">${ico(x.ico)}</span><div class="sug-b"><div class="code">${esc(x.kind)}</div><b>${esc(x.title)}</b><div class="code">${esc(x.sub)}</div></div>
+      <div class="sug-a"><button type="button" class="btn sm pri" data-sugok="${esc(x.id)}">${ico('check')}<span>Approve</span></button><button type="button" class="btn sm" data-sugedit="${esc(x.id)}">${ico('pencil')}<span>Edit</span></button><button type="button" class="btn sm ghost" data-sugskip="${esc(x.id)}" aria-label="Skip for a week">${ico('x')}</button></div></div>`).join('')}
+  </div>`;}
+const SUG_BUSY={};
+async function sugRun(x,text){
+  if(SUG_BUSY[x.id])return;SUG_BUSY[x.id]=1;
+  try{
+    if(x.act==='wa'){const w=window.open(x.phone?waTo(x.phone,text):'https://wa.me/?text='+encodeURIComponent(text),'_blank');if(w)try{w.opener=null;}catch(_){}
+      if(await write(async()=>{await x.done();}))toast('WhatsApp opened — press Send there.');}
+    else if(x.act==='tasks'){const r=D.dpr.find(d=>d.id===x.rid);if(!r)return;const day=nextDay(r.date),src='Daily report '+r.id;
+      const have=new Set(D.tasks.filter(t=>t.source===src).map(t=>t.title));
+      const lines=(text===x.text?dprPlan(r).map(p=>({trade:p.trade,work:p.work.trim()})):String(text).split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([^:]{2,30}):\s*(.+)$/);return m&&DPR_WTYPES.includes(m[1].trim())?{trade:m[1].trim(),work:m[2]}:{trade:'Other',work:l};}))
+        .filter(x=>!have.has(`${x.trade}: ${x.work.replace(/\s+/g,' ').slice(0,200)}`));
+      if(!lines.length){toast('Already added to Tasks.');return;}
+      if(await write(async()=>{for(const l of lines)await db.collection('tasks').add({project:r.project,title:`${l.trade}: ${l.work.replace(/\s+/g,' ').slice(0,200)}`,start:day,due:day,progress:0,status:'Not started',source:src,notes:l.work,by:ME.id,at:Date.now()});}))toast(`${lines.length} task${lines.length>1?'s':''} added for today.`);}
+    else if(x.act==='req'){const q=+String(text).replace(/[^\d.]/g,'');if(!(q>0)){toast('Enter the quantity needed.');return;}
+      if(await write(async()=>{await db.collection('requests').add({kind:'Request from site',project:x.s.project,date:today(),material:x.s.material,unit:x.s.unit||'',qty:q,status:'Pending',by:ME.id,at:Date.now()});}))toast('Material request raised.');}
+  }finally{delete SUG_BUSY[x.id];render();}
+}
+function sugEdit(x){
+  document.getElementById('layer').innerHTML=`<div class="drawer"><form class="pane" id="sugForm"><div class="pane-h"><h2>${esc(x.kind)}</h2><button type="button" class="btn ghost" data-close aria-label="Close">${ico('x')}</button></div>
+    <div class="pane-b"><div><b>${esc(x.title)}</b><div class="code">${esc(x.sub)}</div></div>
+      ${x.act==='wa'?`<label>Send to (WhatsApp number)<input id="sug-ph" type="tel" value="${esc(x.phone||'')}" placeholder="Leave empty to choose the contact in WhatsApp"></label>`:''}
+      <label>${x.act==='req'?'Quantity needed':x.act==='tasks'?'Tasks (one per line, “Type: work”)':'Message'}${x.act==='req'?`<input id="sug-t" inputmode="decimal" value="${esc(x.text)}">`:`<textarea id="sug-t" rows="12">${esc(x.text)}</textarea>`}</label></div>
+    <div class="pane-f"><button type="button" class="btn" data-close>Cancel</button><button class="btn pri">${ico('check')}<span>Approve</span></button></div></form></div>`;
+  document.getElementById('sugForm').onsubmit=ev=>{ev.preventDefault();const t=document.getElementById('sug-t').value.trim();if(!t){toast('Write something first.');return;}
+    const ph=document.getElementById('sug-ph');const y={...x,phone:ph?ph.value.trim():x.phone};closeLayer();sugRun(y,t);};
+}
+document.addEventListener('click',e=>{if(!e.target.closest)return;
+  const ok=e.target.closest('[data-sugok]'),ed=e.target.closest('[data-sugedit]'),sk=e.target.closest('[data-sugskip]');if(!ok&&!ed&&!sk)return;
+  const id=(ok||ed||sk).dataset[ok?'sugok':ed?'sugedit':'sugskip'],x=suggestions().find(s=>s.id===id);if(!x){render();return;}
+  if(sk){sugSkip(id,7);toast('Hidden for a week.');render();return;}
+  if(ed){sugEdit(x);return;}
+  sugRun(x,x.text);});
+
+/* ================= This week in BuildMitr (admin) ================= */
+const ACT_MIN={dpr:15,tasks:3,issues:5,payments:4,invoices:20,received:4,attendance:1,requests:4,documents:5,approvals:5,photos:1};
+function actWeekBox(){
+  if(!isAdmin())return '';
+  const wk=r=>{const a=+r.at||0;return a?Date.now()-a<7*864e5:(r.date?daysAgo(r.date)<7&&daysAgo(r.date)>=0:false);},f=a=>(a||[]).filter(inProj).filter(wk);
+  const recent=new Set((D.audit||[]).filter(a=>Date.now()-(+a.at||0)<7*864e5).map(a=>a.ref));
+  const c={dpr:f(D.dpr).length,tasks:(D.tasks||[]).filter(inProj).filter(t=>t.status==='Completed'&&recent.has(t.id)).length,
+    issues:f(D.issues).length,payments:f(D.payments).length,invoices:f(D.invoices).length,received:f(D.received).length,attendance:f(D.attendance).length,requests:f(D.requests).length,
+    documents:f(D.documents).length,approvals:(D.audit||[]).filter(a=>a.action==='approved'&&Date.now()-(+a.at||0)<7*864e5).length,
+    photos:f(D.dpr).reduce((s,r)=>s+dprPhotos(r).length,0)+f(D.issues).reduce((s,r)=>s+(Array.isArray(r.photos)?r.photos.length:0),0)};
+  const L=[['dpr','Daily reports'],['tasks','Tasks completed'],['issues','Issues raised'],['received','Material entries'],['attendance','Attendance marks'],['payments','Payments recorded'],['invoices','Invoices & quotes'],['requests','Material requests'],['documents','Drawings / documents'],['approvals','Approvals'],['photos','Site photos']].filter(([k])=>c[k]);
+  if(!L.length)return '';
+  const mins=L.reduce((s,[k])=>s+c[k]*ACT_MIN[k],0),people=new Set((D.audit||[]).filter(a=>Date.now()-(+a.at||0)<7*864e5).map(a=>a.by)).size;
+  return `<div class="box"><div class="box-h">${ico('activity')}<h2>This week in BuildMitr</h2><span class="code">last 7 days${people?` · ${people} people active`:''}</span></div>
+    <div class="act-wk">${L.map(([k,l])=>`<div><b>${num(c[k])}</b><span class="code">${l}</span></div>`).join('')}<div class="act-sv"><b>≈ ${mins>=90?num(Math.round(mins/6)/10)+' hours':num(mins)+' min'}</b><span class="code">office time saved*</span></div></div>
+    <p class="code" style="margin:0 16px 12px">*Estimate: time to collect the same information by phone calls and paperwork — about ${ACT_MIN.dpr} min per daily report, ${ACT_MIN.invoices} per invoice, ${ACT_MIN.issues} per issue, 1 per photo.</p></div>`;}
+
 const WAC={cfg:null,last:null,busy:0,err:''};
 const WA_KINDS=[['attlog','Late check-ins'],['eod','End-of-day reports'],['leave','Leave requests'],['documents','Drawings — uploads, approvals, release'],['tasks','Construction schedule — status, progress, comments'],['dtasks','Design schedule — status, progress, comments'],['issues','Issues & snags'],['dpr','Daily reports'],['changes','Change orders'],['requests','Material requests'],['received','Material received'],['po','Purchase orders'],['payments','Payments'],['invoices','Invoices'],['noticesign','Notices accepted / declined'],['workupd','Work updates'],['projects','New projects'],['leads','New leads'],['forms','Checklists']];
 async function waLoad(){if(WAC.busy)return;WAC.busy=1;try{const j=await gasApi('waGet',{});WAC.cfg=j.cfg;WAC.last=j.last;WAC.err='';}catch(e){WAC.err=/Unknown request/i.test(e.message||'')?'Needs the server update — deploy the new server version.':(e.message||'Could not load');}WAC.busy=0;if(S.view==='settings')render();}

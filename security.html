@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BuildMitr – Security</title>
+<style>
+:root{--bg:#f4f6f5;--ink:#1a2420;--muted:#5d6c66;--accent:#2f6b4f;--panel:#fff;--line:#dce3e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101614;--ink:#e3ece8;--muted:#93a59d;--accent:#7cc4a0;--panel:#17201c;--line:#26332e}}
+:root[data-theme="dark"]{--bg:#101614;--ink:#e3ece8;--muted:#93a59d;--accent:#7cc4a0;--panel:#17201c;--line:#26332e}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 6px;color:var(--accent)}
+p,li{margin:6px 0}.muted{color:var(--muted);font-size:14px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:16px}
+a{color:var(--accent)}
+</style></head><body><main>
+<h1>BuildMitr – Security</h1>
+<p class="muted">Last updated: 25 November 2026 · BuildMitr</p>
+
+<div class="box"><p>This page explains in plain words how BuildMitr keeps each company's project data safe. If you have a question, write to <a href="mailto:buildmitr01@gmail.com">buildmitr01@gmail.com</a>.</p></div>
+
+<h2>Where your data is kept</h2>
+<ul>
+<li>BuildMitr runs on Google's cloud (Google Apps Script, Google Sheets and Google Drive). Google stores the data in its own data centres and encrypts it at rest.</li>
+<li>The app itself is served from GitHub Pages over HTTPS.</li>
+<li>Every connection between your phone or computer and BuildMitr uses HTTPS (TLS), so data is encrypted while it travels.</li>
+</ul>
+
+<h2>Each company is kept separate</h2>
+<ul>
+<li>Every request is checked on the server: you only get data from companies you belong to. Hiding a button on screen is never the only protection.</li>
+<li>One company cannot see another company's projects. The only exception is when a company admin chooses to share one project with another company, and the other admin accepts. Payments, invoices, budgets and quotations are never shared.</li>
+<li>Only the BuildMitr owner account can see the list of companies.</li>
+</ul>
+
+<h2>Who can see what inside a company</h2>
+<ul>
+<li>The admin approves every new person and gives them a role: Admin, Project manager, Site engineer, Architect, Accountant, Client and so on.</li>
+<li>Roles and project assignments decide what each person can see and change. The server checks the role and the assigned projects on every request.</li>
+<li>Extra show/hide choices the admin makes in Settings → Role access are applied in the app and in the Google Calendar / Sheets links.</li>
+<li>Clients see only their own projects, drawings released to them and the payments they made.</li>
+</ul>
+
+<h2>Signing in</h2>
+<ul>
+<li>You sign in with your email and a password, or with a 6-digit code sent to your email.</li>
+<li>Passwords are stored only as salted hashes, never as plain text. Login codes expire and can be tried only a few times.</li>
+<li>Your session is signed by the server and lasts 90 days on a device. You can see your devices and sign any of them out, and the admin can sign a person out of all their devices.</li>
+</ul>
+
+<h2>Change history</h2>
+<ul>
+<li>The app records adds, edits, deletions, approvals and access changes with who did it and when.</li>
+<li>The admin and editors can filter this history and download it as a CSV file (Change history).</li>
+</ul>
+
+<h2>Backups</h2>
+<ul>
+<li>Once a week the whole data sheet is copied to a backup folder in Google Drive. Every copy is kept.</li>
+<li>Files an admin removes go to the Google Drive trash first, where they can be recovered for 30 days.</li>
+</ul>
+
+<h2>Private links</h2>
+<ul>
+<li>Google Calendar and Google Sheets links are made per person, show only what that person can see, and can be replaced at any time. When you replace them, the old links stop working.</li>
+</ul>
+
+<h2>Morning summary and WhatsApp</h2>
+<ul>
+<li>Each morning the company admins get one email summary of yesterday's work. The admin can switch it off in Settings → Morning summary.</li>
+<li>If the admin turns on WhatsApp updates, short update messages (and the morning summary, if chosen) are sent through the WhatsApp service the admin picks: the free CallMeBot service or Meta's WhatsApp Business API.</li>
+</ul>
+
+<h2>AI assistant</h2>
+<ul>
+<li>When someone uses the AI assistant, their question and the project records needed to answer it are sent to Google's Gemini service to produce the answer.</li>
+<li>Suggestions on the dashboard, such as payment reminders, are prepared inside the app from your own data. Nothing is sent or saved until a person taps Approve.</li>
+</ul>
+
+<p class="muted" style="margin-top:28px">See also the <a href="privacy.html">Privacy Policy</a>.</p>
+</main></body></html>
