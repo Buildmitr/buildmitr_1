@@ -1,12 +1,12 @@
-/* bm-build:8a5d2b979024 */
+/* bm-build:843acea6e124 */
 /* ---- page code in separate files (packs/*.js) ----
    The main screens are in this file. Other pages' code comes from small separate files that load in the background
    right after the app starts. Until a file has arrived, a stand-in with the same name takes its place:
    while a page is being drawn it notes the gap and the page shows "Loading…" for a moment, then draws in full;
    on a tap or other action it fetches that file at once. */
-const BM_BUILD='8a5d2b979024';
+const BM_BUILD='843acea6e124';
 const PK=(()=>{
-  const P={"reports":["vReports","downloadDoc","vWages","vBalances","vBudgetVA","cashFlow","gstSplit"],"extras":["waLink","convertLead","findPlace","vAttBulk","saveAttBulk","vAudit"],"forms":["accDoc","formLevel","projTeam","autoHead","vForms","openAccess","saveAccess","newForm","openForm2","itemList","vForm","saveFormDoc","exportFormXlsx","printForm","uploadTemplate"],"admin":["backupXlsx","backupJson","restoreJson","vAdminPanel","adminSetRole","adminPhone","shareSheet","shareTo","orgsBox","orgsLoad","orgsDraw","orgCreate","orgSave","orgOpen","vInstall","instQR","orgLinkShare","dlDelBtn","dlDelete","dlMarkDel","feedLoad","upiDialog","digLoad","digBox"],"marketing":["vPipeline","vFollowups","followDone","vEstimator","vEstQuick","estDoc","vContent","vMktDash","vLeadImp","leadMap","runLeadImport","portfolioDoc","readLeadFile"],"chat":["tickState","projPeople","chatProjects","vMessages","chatMarkSeen","chatSend","openChatGroup","openRoleGroup","quoteHtml","renderMsgs","pinBar","openMsgMenu","openForward","doForward","msgAction","msgReact","setLang"],"cameras":["loadHls","vCctv","hlsInto","playCam","camFull","camParseQR","camScanDialog","qrStart","camFromQR"],"planning":["setRows","parseXml","parseXer","readImportFile","parsePaste","impBuild","impRender","openImport","impMatch","runImport","schedExport","schSave","makeSchedule","scheduleRecords","e2MakeProject","schedDialog","schedMake","plSetType","plStdApply","vPlanner","plGantt","plMonths","plSave","plFromEst","plOpen","taskComments","taskCommentAdd","plRe","schedEdit","dsSecForm","schedShiftDialog","dsOpen","dsDraw"],"ai":["aiPrompt","aiMsg","aiAsk","aiTool","aiPrepareForm","aiOpenRecord","aiTrim","aiAskGemini","aiMd","aiFill","aiUsageLine","aiClear"],"estimates":["estModeBtns","vEstDetailed","e2Xls","e2Doc","e2Editor","e2Touch","e2SaveRates","e2Rerender","docTplPick","docTplSave","docNextNo","docTpl","docBlank","docFromRec","docOpen","docNew","docClient","docPdfBlob","docPdf","docPptx","docShareFile","docSave","vDocMaker","lhSave"],"drawings":["relBadge","relBtn","relSet","dleOpen","dleDraw","dleSave","dlMissing","vDlMissing","vDrawLib","dlFloorBox","dlUpload","fileShareText","shareFiles","shareFilesTo","apChips","apButtons","apLog","apDialog","apSave","mkOpen","mkImage","mkPage","mkReady","mkFit","mkTextAt","mkTextDone","mkTools","mkSave","finForm","finNew"],"office":["wtCsv","ntHash","ntPeople","llCsv","vNotices","ntOne","ntPdf","ntSign","ntForm","ntSave"],"library":["stdAccTxt","vStdLib","stdUpForm","stdFolderForm","stdFolderForm2","stdCollect","stdToProj","stdPjDisc"],"meetings":["momText","vMeetings","momOpen","momSave","pnAdd","pnPatch","snapSave","mrChip","mrSegStart","mrStart","mrStop","mrPanelRefresh","mrGo","mrFill","mrListen","mrText"]};const by={};Object.keys(P).forEach(p=>P[p].forEach(n=>{by[n]=p;}));
+  const P={"reports":["vReports","downloadDoc","vWages","vBalances","vBudgetVA","cashFlow","gstSplit"],"extras":["waLink","convertLead","findPlace","vAttBulk","saveAttBulk","vAudit"],"forms":["accDoc","formLevel","projTeam","autoHead","vForms","openAccess","saveAccess","newForm","openForm2","itemList","vForm","saveFormDoc","exportFormXlsx","printForm","uploadTemplate"],"admin":["backupXlsx","backupJson","restoreJson","vAdminPanel","adminSetRole","adminPhone","shareSheet","shareTo","orgsBox","orgsLoad","orgsDraw","orgCreate","orgSave","orgOpen","vInstall","instQR","orgLinkShare","dlDelBtn","dlDelete","dlMarkDel","feedLoad","upiDialog","digLoad","digBox"],"marketing":["vPipeline","vFollowups","followDone","vEstimator","vEstQuick","estDoc","vContent","vMktDash","vLeadImp","leadMap","runLeadImport","portfolioDoc","readLeadFile"],"chat":["tickState","projPeople","chatProjects","vMessages","chatMarkSeen","chatSend","openChatGroup","openRoleGroup","quoteHtml","renderMsgs","pinBar","openMsgMenu","openForward","doForward","msgAction","msgReact","setLang"],"cameras":["loadHls","vCctv","hlsInto","playCam","camFull","camParseQR","camScanDialog","qrStart","camFromQR"],"planning":["setRows","parseXml","parseXer","readImportFile","parsePaste","impBuild","impRender","openImport","impMatch","runImport","schedExport","schSave","makeSchedule","scheduleRecords","e2MakeProject","schedDialog","schedMake","plSetType","plStdApply","vPlanner","plGantt","plMonths","plSave","plFromEst","plOpen","taskComments","taskCommentAdd","plRe","schedEdit","dsSecForm","schedShiftDialog","dsOpen","dsDraw"],"ai":["aiPrompt","aiMsg","aiAsk","aiTool","aiPrepareForm","aiOpenRecord","aiTrim","aiAskGemini","aiMd","aiFill","aiUsageLine","aiClear"],"estimates":["estModeBtns","vEstDetailed","e2Xls","e2Doc","e2Editor","e2Touch","e2SaveRates","e2Rerender","docTplPick","docTplSave","docTpl","docBlank","docFromRec","docOpen","docNew","docClient","docPdfBlob","docPdf","docPptx","docShareFile","docSave","vDocMaker","docUpPage","docUpShow","docUpBlob","docUpFile","lhSave"],"drawings":["relBadge","relBtn","relSet","dleOpen","dleDraw","dleSave","dlMissing","vDlMissing","vDrawLib","dlFloorBox","dlUpload","fileShareText","shareFiles","shareFilesTo","apChips","apButtons","apLog","apDialog","apSave","mkOpen","mkImage","mkPage","mkReady","mkFit","mkTextAt","mkTextDone","mkTools","mkSave","finForm","finNew"],"office":["wtCsv","ntHash","ntPeople","llCsv","vNotices","ntOne","ntPdf","ntSign","ntForm","ntSave"],"library":["stdAccTxt","vStdLib","stdUpForm","stdFolderForm","stdFolderForm2","stdCollect","stdToProj","stdPjDisc"],"meetings":["momText","vMeetings","momOpen","momSave","pnAdd","pnPatch","snapSave","mrChip","mrSegStart","mrStart","mrStop","mrPanelRefresh","mrGo","mrFill","mrListen","mrText"]};const by={};Object.keys(P).forEach(p=>P[p].forEach(n=>{by[n]=p;}));
   const st={},waits={},hits=[],hitP=new Set();let inR=0;
   const dir='packs/'+(BM_BUILD?BM_BUILD+'/':'');   // each version has its own folder, so an open old version never picks up new page files
   const base=(()=>{try{const s=document.currentScript;return s&&s.src?new URL(dir,s.src).href:dir;}catch(_){return dir;}})();
@@ -766,7 +766,7 @@ function vSettings(){
   ${admin?`<div class="box"><div class="box-h">${ico('eye')}<h2>Preview the app as another role</h2></div><div style="padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="code" style="flex:1;min-width:220px">See exactly which screens a client, site engineer, accountant or others get.</span><select id="viewAsSel" style="width:auto"><option value="">Choose a role…</option>${PREVIEW_ROLES.map(r=>`<option>${r}</option>`).join('')}</select></div></div>
   ${canView('audit')?`<div class="box"><div class="box-h">${ico('history')}<h2>Change history</h2></div><div style="padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="code" style="flex:1;min-width:220px">Who added, edited, deleted or approved what, and when.</span><button class="btn" data-go="audit">${ico('history')}Open change history</button></div></div>`:''}
   ${admin?`<div class="box"><div class="box-h">${ico('database')}<h2>Backup & restore</h2></div><div style="padding:14px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="code" style="flex:1;min-width:220px">Download everything — all projects, entries and forms — as one Excel workbook or a backup file. Restore adds back anything missing; it never overwrites existing records.</span>
-    <button class="btn" id="bkXlsx">${ico('download')}Excel backup</button><button class="btn" id="bkJson">${ico('download')}Backup file</button><label class="btn">${ico('upload')}Restore<input type="file" id="bkRestore" accept=".json" hidden></label></div></div>`:''}`:''}`;
+    <button class="btn" id="bkXlsx">${ico('download')}Excel backup</button><button class="btn" id="bkJson">${ico('download')}Backup file</button><label class="btn">${ico('upload')}Restore<input type="file" id="bkRestore" data-nodrop accept=".json" hidden></label></div></div>`:''}`:''}`;
 }
 
 /* ================= Form drawer ================= */
@@ -3215,7 +3215,12 @@ function inWords(v){v=Math.round(+v||0);if(!v)return 'Zero';
   const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
   const two=x=>x<20?a[x]:b[Math.floor(x/10)]+(x%10?' '+a[x%10]:''),three=x=>(x>=100?a[Math.floor(x/100)]+' Hundred'+(x%100?' ':''):'')+(x%100?two(x%100):'');
   const p=[[1e7,'Crore'],[1e5,'Lakh'],[1e3,'Thousand']];let out=[];for(const [d,nm_] of p){if(v>=d){out.push(three(Math.floor(v/d))+' '+nm_);v%=d;}}if(v)out.push(three(v));return out.join(' ');}
-/* → estimates: docNextNo */
+function docNextNo(kind){
+  const q=docIsQ(kind),y=new Date().getFullYear(),pre=q?'QT':(orgVal('invPrefix')||'INV');
+  const same=D.invoices.filter(r=>docIsQ(r.kind)===q&&String(r.no||'').includes(String(y)));
+  const mx=same.reduce((m,r)=>{const x=+(String(r.no).match(/(\d+)\s*$/)||[])[1]||0;return Math.max(m,x);},0);
+  return `${pre}-${y}-${String(mx+1).padStart(3,'0')}`;
+}
 /* → estimates: docTpl */
 let DM=null;   // the document being edited
 /* → estimates: docBlank */
@@ -3325,7 +3330,7 @@ const docFile=d=>`${(d.title||d.kind)} ${d.no||''} ${d.toName||''}`.replace(/[^\
 /* → estimates: docPdfBlob */
 /* → estimates: docPdf */
 /* → estimates: docPptx */
-function docText(){const d=DM.d,t=docTotals(d),org=orgMain(),q=docIsQ(d.kind);
+function docText(){const d=DM.d.mode==='upload'?{...DM.d,title:''}:DM.d,t=docTotals(d),org=orgMain(),q=docIsQ(d.kind);
   return [`Dear ${d.toName||'Sir/Madam'},`,'',q?`Please find our ${d.title?d.title.toLowerCase():'quotation'} (${d.no}) dated ${fdLong(d.date)}.`:`Please find ${d.title?d.title.toLowerCase():'invoice'} ${d.no} dated ${fdLong(d.date)}${d.subject?' — '+d.subject.replace(/\.+$/,''):''}.`,
     ...(d.items||[]).filter(x=>x.d).map(x=>`• ${x.d}${x.amt!==''?': '+inr2(x.amt):''}`),`*Total: ${inr2(t.total)}*${t.rate?` (incl. GST ${t.rate*100}%)`:''}`,
     !q&&t.got?`Received: ${inr2(t.got)} · Balance: ${inr2(t.total-t.got)}`:'',!q&&org.upi?`UPI: ${org.upi}`:'','',`Thank you,`,org.person||'',org.name||'',org.phone||''].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n').trim();}
@@ -3333,6 +3338,13 @@ function docText(){const d=DM.d,t=docTotals(d),org=orgMain(),q=docIsQ(d.kind);
 /* → estimates: docSave */
 /* ---------- page ---------- */
 /* → estimates: vDocMaker */
+/* ---------- a quotation or invoice already made elsewhere (PDF, Word, Excel or a photo): upload it and keep it with the others ---------- */
+const DM_UP_ACCEPT='.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,image/*';
+/* → estimates: docUpPage */
+let DMURL=null;
+/* → estimates: docUpShow */
+/* → estimates: docUpBlob */
+/* → estimates: docUpFile */
 /* ---------- settings: letterhead, signature, billing details ---------- */
 function letterheadBox(){
   if(!isAdmin())return '';const o=orgMain(),lh=o.lh||{};
@@ -3352,7 +3364,8 @@ function letterheadBox(){
 /* → estimates: lhSave */
 /* ---------- events ---------- */
 document.addEventListener('input',e=>{if(S.view!=='docmaker'||!DM)return;const t=e.target,d=t.dataset||{},D_=DM.d;
-  if(d.dm!==undefined){D_[d.dm]=t.value;docQ();return;}
+  if(d.dm!==undefined){D_[d.dm]=t.value;if(D_.mode==='upload')docUpShow();else docQ();return;}
+  if(d.dmup!==undefined){D_.items=D_.items&&D_.items.length?D_.items:[{d:'',amt:''}];D_.items[0][d.dmup]=t.value;docUpShow();return;}
   if(d.dmdl!==undefined){D_.details[+d.dmdl][0]=t.value;docQ();return;}if(d.dmdv!==undefined){D_.details[+d.dmdv][1]=t.value;docQ();return;}
   if(d.dmid!==undefined){D_.items[+d.dmid].d=t.value;t.style.height='auto';t.style.height=t.scrollHeight+'px';docQ();return;}if(d.dmia!==undefined){D_.items[+d.dmia].amt=t.value;docQ();return;}
   if(d.dmsn!==undefined){D_.stages[+d.dmsn][0]=t.value;docQ();return;}if(d.dmsp!==undefined){D_.stages[+d.dmsp][1]=t.value;docQ();return;}
@@ -3362,18 +3375,25 @@ document.addEventListener('change',e=>{if(S.view!=='docmaker'||!DM)return;const 
   if(t.id==='dm-client'){if(t.value)docClient(t.value);else D_.client='';render();return;}
   if(t.id==='dm-preset'&&t.value!==''){const k=docTplKey(D_.kind);const tp=t.value.startsWith('n:')?((orgMain().docTs||[]).find(x=>x.id===t.value.slice(2))||{}).t:t.value==='org'?(orgMain().docT||{})[k]:{...DOC_DEF[k],...DOC_PRESETS[k][+t.value][1]};if(t.value.startsWith('n:'))DM.tname=((orgMain().docTs||[]).find(x=>x.id===t.value.slice(2))||{}).name;
     Object.assign(D_,JSON.parse(JSON.stringify({...DOC_DEF[k],...tp})));render();toast('Template applied — edit anything');return;}
+  if(t.id==='dm-upfile'){const f=t.files&&t.files[0];t.value='';docUpFile(f);return;}
   if(t.id==='dm-np'){D_.newPage=t.checked;docQ();return;}if(t.id==='dm-bank'){D_.showBank=t.checked;docQ();return;}
   if(t.id==='dm-stage'&&t.value){const [rid,i]=t.value.split(':');const r=D.invoices.find(x=>x.id===rid);const s=r&&r.tpl.stages[+i];if(!s)return;
     const amt=Math.round(n(r.amount)*n(s[1])/100);D_.items=(D_.items||[]).filter(x=>String(x.d||'').trim()||n(x.amt));D_.items.push({d:`Stage ${+i+1} payment (${s[0]})`,amt:String(amt)});
     if(!D_.subject)D_.subject=`Stage ${+i+1} payment.`;if(!D_.client&&r.client)docClient(r.client);render();return;}
-  if(t.dataset&&t.dataset.dm==='gst'||t.dataset&&t.dataset.dm==='status'){DM.d[t.dataset.dm]=t.value;docQ();}
+  if(t.dataset&&t.dataset.dm==='gst'||t.dataset&&t.dataset.dm==='status'){DM.d[t.dataset.dm]=t.value;if(DM.d.mode==='upload')docUpShow();else docQ();}
 },true);
 document.addEventListener('click',e=>{if(!e.target.closest)return;
   {const b=e.target.closest('[data-doc^="invoices:"]');if(b){e.preventDefault();e.stopPropagation();docOpen(b.dataset.doc.split(':')[1]);return;}}
   {const b=e.target.closest('[data-dmnew]');if(b){docNew(b.dataset.dmnew);return;}}
   {const b=e.target.closest('[data-dmopen]');if(b){docOpen(b.dataset.dmopen);return;}}
   if(S.view==='docmaker'&&DM){
-    {const b=e.target.closest('[data-dmkind]');if(b){const k=b.dataset.dmkind;if(docIsQ(k)!==docIsQ(DM.d.kind)){const keep={project:DM.d.project,client:DM.d.client,toName:DM.d.toName,toAddr:DM.d.toAddr,toPhone:DM.d.toPhone,toEmail:DM.d.toEmail};DM={id:null,d:docBlank(k,keep)};}else DM.d.kind=k;render();return;}}
+    {const b=e.target.closest('[data-dmkind]');if(b){const k=b.dataset.dmkind;if(docIsQ(k)!==docIsQ(DM.d.kind)){const keep={project:DM.d.project,client:DM.d.client,toName:DM.d.toName,toAddr:DM.d.toAddr,toPhone:DM.d.toPhone,toEmail:DM.d.toEmail,
+        ...(DM.d.mode==='upload'?{mode:'upload',up:DM.d.up,items:DM.d.items,gst:DM.d.gst,no:DM.d.up?DM.d.no:docNextNo(k),date:DM.d.date}:{})};DM={id:null,d:docBlank(k,keep)};}else DM.d.kind=k;render();return;}}
+    {const b=e.target.closest('[data-dmmode]');if(b){const up=b.dataset.dmmode==='upload';if(up===(DM.d.mode==='upload'))return;
+      if(up){DM.keepItems=JSON.parse(JSON.stringify(DM.d.items||[]));const its=(DM.d.items||[]).filter(x=>String(x.d||'').trim()||n(x.amt));   // one line: all lines added up, so the amount and the total agree
+        DM.d.items=[{d:its.map(x=>x.d).filter(Boolean).join('; '),amt:String(docSub(DM.d)||'')}];}
+      else if(DM.keepItems){DM.d.items=DM.keepItems;DM.keepItems=null;}
+      DM.d.mode=up?'upload':'';render();return;}}
     {const b=e.target.closest('[data-dmadd]');if(b){const k=b.dataset.dmadd;DM.d[k]=DM.d[k]||[];DM.d[k].push(k==='items'?{d:'',amt:''}:['','']);render();return;}}
     if(e.target.closest('[data-dmtdel]')){const tid=e.target.closest('[data-dmtdel]').dataset.dmtdel,o=orgMain(),x=(o.docTs||[]).find(y=>y.id===tid);if(!x||!confirm(`Delete template “${x.name}”?`))return;
     const patch={docTs:(o.docTs||[]).filter(y=>y.id!==tid)};if((o.docTdef||{})[x.kind]===tid){patch.docTdef={...o.docTdef,[x.kind]:''};patch.docT={...(o.docT||{}),[x.kind]:null};}write(()=>db.doc('org/main').update(patch),'Template deleted').then(()=>render());return;}
@@ -3382,7 +3402,7 @@ document.addEventListener('click',e=>{if(!e.target.closest)return;
   const id=(e.target.closest('button')||{}).id;if(!id)return;
   if(id==='dmSave'){docSave();return;}if(id==='dmPdf'){docPdf();return;}if(id==='dmPptx'){docPptx();return;}
   if(id==='dmWa'){const ph=DM.d.toPhone;const u='https://wa.me/'+(ph?waNum(ph):'')+'?text='+encodeURIComponent(docText());const w=window.open(u,'_blank');if(w){try{w.opener=null;}catch(_){}}toast('Tip: “Send PDF file” attaches the PDF on a phone');return;}
-  if(id==='dmMail'){location.href='mailto:'+encodeURIComponent(DM.d.toEmail||'')+'?subject='+encodeURIComponent(`${DM.d.title||DM.d.kind} ${DM.d.no} — ${orgName()}`)+'&body='+encodeURIComponent(docText().replace(/\*/g,'')+'\n\n(PDF attached)');docPdf();return;}
+  if(id==='dmMail'){const upm=DM.d.mode==='upload';if(upm&&!DM.d.up){toast('Upload the file first.');return;}location.href='mailto:'+encodeURIComponent(DM.d.toEmail||'')+'?subject='+encodeURIComponent(`${upm?DM.d.kind:(DM.d.title||DM.d.kind)} ${DM.d.no} — ${orgName()}`)+'&body='+encodeURIComponent(docText().replace(/\*/g,'')+(upm?'\n\n(file attached)':'\n\n(PDF attached)'));docPdf();return;}
   if(id==='dmFile'){docShareFile();return;}
   if(id==='dmMore'){shareSheet(`${DM.d.title||DM.d.kind} ${DM.d.no}`,docText(),DM.d.toPhone);return;}
   if(id==='dmTplSave'){const name=(document.getElementById('dm-tname').value||'').trim();if(!name){toast('Give the template a name, e.g. Template-1');return;}
@@ -6150,6 +6170,31 @@ document.addEventListener('submit',e=>{if(e.target.id==='spForm'){e.preventDefau
 
 function draw(){}
 function toast(m){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2800);}
+/* drag & drop: a file dropped on any upload button or box goes into that upload, exactly as if it had been chosen */
+{let dzOn=null,dzInner=false;
+  document.addEventListener('dragstart',()=>{dzInner=true;});document.addEventListener('dragend',()=>{dzInner=false;});   // pictures dragged inside the app are not uploads
+  const dzFiles=e=>{if(dzInner)return false;try{return [...(e.dataTransfer&&e.dataTransfer.types||[])].includes('Files');}catch(_){return false;}};
+  const dzSeen=i=>{const z=i.closest('label,button,.btn,.dm-drop,[data-drop]')||i.parentElement;return !!(z&&z.offsetParent!==null);};
+  const dzPick=list=>{let c=[...list].filter(i=>!i.disabled&&!i.hasAttribute('data-nodrop')&&dzSeen(i));if(c.length>1){const nc=c.filter(i=>!i.hasAttribute('capture'));if(nc.length)c=nc;}return c.length===1?c[0]:null;};
+  /* only the upload itself takes a drop: its button / label / drop box, or a small area right around it (3 steps up) */
+  const dzInput=el=>{for(let n=el,k=0;n&&n.nodeType===1&&n!==document.body&&k<4;n=n.parentElement,k++){
+      if(n.matches('input[type=file]'))return n.disabled||n.hasAttribute('data-nodrop')?null:n;
+      const all=n.querySelectorAll('input[type=file]');if(all.length){const one=dzPick(all);return one;}
+      if(n.matches('.box,form,.pane-f,#layer,dialog'))return null;}return null;};
+  const dzBox=i=>i.closest('label,.dm-drop,.ph-add,.att,.srow,form,.box')||i.parentElement;
+  const dzOk=(f,acc)=>{if(!acc.length)return true;const nm=(f.name||'').toLowerCase(),ty=(f.type||(typeof fileType==='function'?fileType(nm):'')||'').toLowerCase();
+    return acc.some(a=>a.startsWith('.')?nm.endsWith(a):a.endsWith('/*')?ty.startsWith(a.slice(0,-1)):ty===a);};
+  const dzOff=()=>{if(dzOn){dzOn.classList.remove('drop-on');dzOn=null;}};
+  document.addEventListener('dragover',e=>{if(!dzFiles(e))return;e.preventDefault();const i=dzInput(e.target),z=i&&dzBox(i);
+    if(z!==dzOn){dzOff();if(z){z.classList.add('drop-on');dzOn=z;}}try{e.dataTransfer.dropEffect=z?'copy':'none';}catch(_){}});
+  document.addEventListener('dragleave',e=>{if(dzOn&&(!e.relatedTarget||!dzOn.contains(e.relatedTarget)))dzOff();});
+  document.addEventListener('drop',e=>{if(!dzFiles(e))return;e.preventDefault();dzOff();const i=dzInput(e.target);
+    if(!i){toast('Drop the file on an upload button or box.');return;}
+    const acc=(i.accept||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);let fs=[...e.dataTransfer.files];const all=fs.length;fs=fs.filter(f=>dzOk(f,acc));
+    if(!fs.length){toast('That kind of file can’t be added here.');return;}if(!i.multiple)fs=fs.slice(0,1);if(fs.length<all&&i.multiple)toast(`${all-fs.length} file(s) of a kind that can’t be added here were left out.`);
+    try{const dt=new DataTransfer();fs.forEach(f=>dt.items.add(f));i.files=dt.files;}catch(_){toast('Drag and drop is not supported here — tap to choose the file.');return;}
+    i.dispatchEvent(new Event('change',{bubbles:true}));});
+  document.addEventListener('dragend',dzOff);document.addEventListener('drop',()=>{setTimeout(()=>{dzInner=false;},0);},true);}
 /* the alerts list is worked out again only when the data, the day, the language or the person changes (or after 10 s) —
    the bell number is drawn on every page, so this used to be repeated on every redraw */
 {const _ca=computeAlerts;const CAM={k:null,at:0,v:null,arr:null};

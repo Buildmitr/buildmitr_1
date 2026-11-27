@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: library */
 function stdAccTxt(list){list=(list||[]).filter(x=>x!=='Admin'&&x!=='Project manager');if(!list.length)return 'Admin & project manager only';const ppl=list.filter(x=>D.team.some(t=>t.account===x));
   return 'Admin, project manager, '+[list.includes('all')?'everyone in the team':'',...list.filter(x=>x!=='all'&&!ppl.includes(x)),...ppl.map(u=>pnm(u))].filter(Boolean).join(', ');}

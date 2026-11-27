@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: ai */
 function aiPrompt(){
   const cols=AI_COLS.map(c=>`${c}: ${colFields(c).map(f=>f.k+(f.req?'*':'')).join(', ')}`).join('\n');

@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: estimates */
 function estModeBtns(){return `<div class="seg">${[['detail','Detailed template'],['quick','Quick (package rate)']].map(([k,l])=>`<button type="button" class="btn sm ${(EST.mode||'detail')===k?'pri':''}" data-estmode="${k}">${l}</button>`).join('')}</div>`;}
 function vEstDetailed(){
@@ -128,12 +128,6 @@ async function docTplSave(name,def){
   let ex=list.find(x=>x.kind===k&&x.name.toLowerCase()===name.toLowerCase());if(ex)ex.t=t;else{ex={id:'t'+Date.now().toString(36),name,kind:k,t};list.push(ex);}
   const patch={docTs:list};if(def){patch.docTdef={...(o.docTdef||{}),[k]:ex.id};patch.docT={...(o.docT||{}),[k]:t};}
   const ok=await write(()=>db.doc('org/main').update(patch),`Template “${name}” saved`);if(ok)render();return ok;}
-function docNextNo(kind){
-  const q=docIsQ(kind),y=new Date().getFullYear(),pre=q?'QT':(orgVal('invPrefix')||'INV');
-  const same=D.invoices.filter(r=>docIsQ(r.kind)===q&&String(r.no||'').includes(String(y)));
-  const mx=same.reduce((m,r)=>{const x=+(String(r.no).match(/(\d+)\s*$/)||[])[1]||0;return Math.max(m,x);},0);
-  return `${pre}-${y}-${String(mx+1).padStart(3,'0')}`;
-}
 function docTpl(kind){const t=(orgMain().docT||{})[docTplKey(kind)]||{};if(t.items&&!t.items.length)delete t.items;return JSON.parse(JSON.stringify({...DOC_DEF[docTplKey(kind)],...t}));}
 function docBlank(kind,preset){
   const t=docTpl(kind);
@@ -155,7 +149,8 @@ async function docPdfBlob(){
   cvs.forEach((c,i)=>{if(i)pdf.addPage();pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',0,0,210,297);});
   pdf.setProperties({title:`${DM.d.title||DM.d.kind} ${DM.d.no||''}`,author:org.name||''});return pdf.output('blob');
 }
-async function docPdf(){try{toast('Making the PDF…');const b=await docPdfBlob();await saveFile(docFile(DM.d)+'.pdf',b);}catch(e){toast(e.message||'Could not make the PDF');}}
+async function docPdf(){if(DM.d.mode==='upload'){try{const f=await docUpBlob();await saveFile(f.name,f);}catch(e){toast(e.message||'Could not download');}return;}
+  try{toast('Making the PDF…');const b=await docPdfBlob();await saveFile(docFile(DM.d)+'.pdf',b);}catch(e){toast(e.message||'Could not make the PDF');}}
 async function docPptx(){
   try{toast('Making the PowerPoint…');await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js',()=>window.PptxGenJS);
   const org=orgMain(),{pages}=docLayout(DM.d,org),lh=await docImg(org.lh&&org.lh.id),sig=await docImg(org.sig&&org.sig.id);
@@ -171,17 +166,20 @@ async function docPptx(){
   const b=await P.write({outputType:'blob'});await saveFile(docFile(DM.d)+'.pptx',b);}catch(e){toast(e.message||'Could not make the PowerPoint');}
 }
 async function docShareFile(){
-  try{const b=await docPdfBlob();const f=new File([b],docFile(DM.d)+'.pdf',{type:'application/pdf'});
+  try{const f=DM.d.mode==='upload'?await docUpBlob():new File([await docPdfBlob()],docFile(DM.d)+'.pdf',{type:'application/pdf'});const b=f;
     if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:`${DM.d.title} ${DM.d.no}`,text:docText()});return;}
     await saveFile(f.name,b);toast('PDF saved — attach it in WhatsApp or email');}catch(e){if(e&&e.name!=='AbortError')toast(e.message||'Could not share');}
 }
 async function docSave(){
   const d=DM.d,t=docTotals(d);if(!d.no||!d.date){toast('Enter the number and date.');return false;}
+  if(d.mode==='upload'&&!d.up){toast('Upload the file first.');return false;}
   let client=d.client;
   if(!client&&d.toName.trim()){const ex=D.clients.find(x=>(x.name||'').trim().toLowerCase()===d.toName.trim().toLowerCase());
     if(ex)client=ex.id;else{const ok=await write(async()=>{const ref=await db.collection('clients').add({name:d.toName.trim(),address:d.toAddr,phone:d.toPhone,email:d.toEmail,by:ME.id,at:Date.now()});client=ref.id;});if(!ok)return false;}d.client=client;}
-  const {kind,no,date,project,gst,got,status,...rest}=d;
-  const body={kind,no,date,project:project||'',client:client||'',gst,got:n(got)||'',status,amount:t.sub,desc:(d.items||[]).filter(x=>x.d).map(x=>x.d).join('\n')||d.title,tpl:rest,by:ME.id,at:Date.now()};
+  const {kind,no,date,project,gst,got,status,...rest0}=d;
+  const rest=d.mode==='upload'?{...rest0,stages:[]}:(({up,mode,...r})=>({...r,up:null,mode:''}))(rest0);   // a made-here document keeps no uploaded file
+  const body={kind,no,date,project:project||'',client:client||'',gst,got:n(got)||'',status,amount:t.sub,desc:(d.items||[]).filter(x=>x.d).map(x=>x.d).join('\n')||(d.mode==='upload'?((d.up||{}).name||d.kind):d.title),tpl:rest,by:ME.id,at:Date.now()};
+  body.file=d.mode==='upload'&&d.up?d.up.id:'';   // the ready file is kept with the record (cleared if it is made here again)
   const ok=await write(async()=>{if(DM.id)await db.doc('invoices/'+DM.id).update(body);else{const ref=await db.collection('invoices').add(body);DM.id=ref.id;}},`${kind} ${no} saved`);
   if(ok)render();return ok;
 }
@@ -190,8 +188,11 @@ function vDocMaker(){
   const fi=(k,l,ph,o={})=>`<label${o.wide?' class="wide"':''}>${l}${o.ta?`<textarea data-dm="${k}" rows="${o.ta}" placeholder="${esc(ph||'')}">${esc(d[k]??'')}</textarea>`:`<input data-dm="${k}" value="${esc(d[k]??'')}" placeholder="${esc(ph||'')}" ${o.type?`type="${o.type}"`:''}>`}</label>`;
   const quotes=D.invoices.filter(r=>docIsQ(r.kind)&&r.project&&r.project===d.project&&((r.tpl||{}).stages||[]).length);
   const stageOpts=quotes.flatMap(r=>r.tpl.stages.map((s,i)=>({r,i,s,amt:n(r.amount)*n(s[1])/100})));
+  const kinds=`<div class="srow">${['Quotation','Tax invoice','Proforma invoice','RA bill'].map(k=>`<button type="button" class="btn sm ${d.kind===k?'pri':''}" data-dmkind="${k}">${k}</button>`).join('')}</div>
+   <div class="srow"><span class="code">How:</span><button type="button" class="btn sm ${d.mode!=='upload'?'pri':''}" data-dmmode="make">${ico('file-text')}<span>Make it here</span></button><button type="button" class="btn sm ${d.mode==='upload'?'pri':''}" data-dmmode="upload">${ico('upload')}<span>Upload ready file</span></button></div>`;
+  if(d.mode==='upload')return docUpPage(d,q,fi,kinds);
   const left=`<div class="box"><div class="box-h"><h2>${q?'Quotation':'Invoice'} details</h2>${DM.id?'<span class="pill p-green">Saved</span>':'<span class="pill p-amber">Not saved yet</span>'}</div>
-   <div class="srow">${['Quotation','Tax invoice','Proforma invoice','RA bill'].map(k=>`<button type="button" class="btn sm ${d.kind===k?'pri':''}" data-dmkind="${k}">${k}</button>`).join('')}</div>
+   ${kinds}
    <div class="srow"><label class="code" style="flex:1">Start from a template<select id="dm-preset"><option value="">— choose —</option>${docTpls(d.kind).map(x=>`<option value="n:${esc(x.id)}">${esc(x.name)}${x.def?' (default)':''}</option>`).join('')}${!docTpls(d.kind).length&&(orgMain().docT||{})[docTplKey(d.kind)]?`<option value="org">My saved ${q?'quotation':'invoice'} template</option>`:''}${DOC_PRESETS[docTplKey(d.kind)].map(([nm_],i)=>`<option value="${i}">${esc(nm_)}</option>`).join('')}</select></label></div>
    <div class="e2form">
     ${fi('title','Heading on the page','e.g. ARCHITECTURAL INVOICE',{wide:1})}${fi('no','Number','')}${fi('date','Date','',{type:'date'})}
@@ -233,6 +234,47 @@ function vDocMaker(){
   const recent=`<div class="box"><div class="box-h"><h2>Recent quotations & invoices</h2></div>${list.length?`<div class="tbl-wrap"><table><tbody>${list.map(r=>`<tr${DM.id===r.id?' class="e2ed"':''}><td>${esc(r.kind)}<div class="code">${esc(r.no||'')}</div></td><td>${esc(cname(r.client))}<div class="code">${fd(r.date)}</div></td><td class="num">${inr(invTotal(r))}</td><td><span class="pill p-grey">${esc(r.status||'')}</span></td><td><button class="btn sm" data-dmopen="${r.id}">${ico('pencil')}<span>Open</span></button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">None yet.</div>'}</div>`;
   return header('Quotations & invoices',`<button class="btn" data-dmnew="Quotation">${ico('plus')}<span>New quotation</span></button><button class="btn pri" data-dmnew="Tax invoice">${ico('plus')}<span>New invoice</span></button>`)+`<div class="dm-grid">${left}${right}</div>`+recent;
 }
+function docUpPage(d,q,fi,kinds){
+  const u=d.up||null,L=q?'quotation':'invoice';
+  const left=`<div class="box"><div class="box-h"><h2>${q?'Quotation':'Invoice'} details</h2>${DM.id?'<span class="pill p-green">Saved</span>':'<span class="pill p-amber">Not saved yet</span>'}</div>
+   ${kinds}
+   <div class="e2form">
+    <label class="dm-drop" id="dmDrop">${ico('upload')}<b>${u?'Replace the file':`Drop your ready ${L} here`}</b><span class="code">${u?esc(u.name)+' · '+Math.max(1,Math.round((u.size||0)/1024))+' KB':'or tap to choose · PDF, Word, Excel or a photo'}</span><input type="file" id="dm-upfile" accept="${DM_UP_ACCEPT}"></label>
+    ${fi('no','Number','')}${fi('date','Date','',{type:'date'})}
+    <label>Project<select id="dm-proj"><option value="">—</option>${PJ().map(p=>`<option value="${p.id}" ${d.project===p.id?'selected':''}>${esc(pname(p.id))}</option>`).join('')}</select></label>
+    <label>Client<select id="dm-client"><option value="">— type below —</option>${D.clients.map(c=>`<option value="${c.id}" ${d.client===c.id?'selected':''}>${esc(c.name||'')}</option>`).join('')}</select></label>
+    ${fi('toName',q?'To (name)':'Bill to (name)','e.g. Mrs. Voggu Srilatha',{wide:1})}${fi('toPhone','Client phone (WhatsApp)','')}${fi('toEmail','Client email','')}
+    <label class="wide">Description of work<input data-dmup="d" value="${esc(((d.items||[])[0]||{}).d||'')}" placeholder="e.g. Structural design of G+3 residence"></label>
+    <label>Amount before tax (₹)<input data-dmup="amt" value="${esc(((d.items||[])[0]||{}).amt||'')}" inputmode="decimal"></label>
+    <label>GST<select data-dm="gst">${['No GST','GST 18%','GST 12%','GST 5%'].map(g=>`<option ${d.gst===g?'selected':''}>${g}</option>`).join('')}</select></label>
+    ${!q?`<label>Received so far (₹)<input data-dm="got" value="${esc(d.got)}" inputmode="decimal"></label>`:''}
+    <label>Status<select data-dm="status">${(q?['Sent','Accepted','Rejected']:['Unpaid','Part paid','Paid','Sent']).map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select></label>
+   </div><div class="srow"><span class="code" id="dmTot"></span></div></div>`;
+  const prev=!u?`<div class="empty">Your ${L} file will show here.</div>`:/^image\//.test(u.type||'')?`<img class="dm-upimg" src="/_blob/${esc(u.id)}" alt="${esc(u.name)}">`:/pdf/.test(u.type||'')?`<div class="empty" id="dmUpPdf">Opening the PDF…</div>`
+    :`<div class="empty">${ico('file')}<div><b>${esc(u.name)}</b></div><div class="code">${esc(u.type||'File')} — opens in the app that made it</div></div>`;
+  const right=`<div class="box dm-side"><div class="box-h"><h2>Preview</h2><span class="code">Your own file is sent as it is</span></div>
+    <div class="srow dm-acts">${CANW?`<button class="btn pri" id="dmSave">${ico('check')}<span>Save</span></button>`:''}<button class="btn" id="dmPdf" ${u?'':'disabled'}>${ico('file-down')}<span>Download</span></button></div>
+    <div class="srow dm-acts"><button class="btn" id="dmWa">${ico('message-circle')}<span>WhatsApp</span></button><button class="btn" id="dmMail">${ico('mail')}<span>Email</span></button>
+      <button class="btn" id="dmFile" ${u?'':'disabled'}>${ico('share-2')}<span>Send file</span></button><button class="btn ghost" id="dmMore">More…</button></div>
+    <div id="dmPrev" class="dm-prev">${prev}</div></div>`;
+  setTimeout(docUpShow,0);
+  const list=D.invoices.filter(r=>inProj(r)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.at||0)-(a.at||0)).slice(0,12);
+  const recent=`<div class="box"><div class="box-h"><h2>Recent quotations & invoices</h2></div>${list.length?`<div class="tbl-wrap"><table><tbody>${list.map(r=>`<tr${DM.id===r.id?' class="e2ed"':''}><td>${esc(r.kind)}${(r.tpl||{}).up?' <span class="pill p-grey">uploaded</span>':''}<div class="code">${esc(r.no||'')}</div></td><td>${esc(cname(r.client))}<div class="code">${fd(r.date)}</div></td><td class="num">${inr(invTotal(r))}</td><td><button class="btn sm" data-dmopen="${esc(r.id)}">Open</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Nothing yet.</div>'}</div>`;
+  return header('Quotations & invoices',`<button class="btn" data-dmnew="Quotation">${ico('plus')}<span>New quotation</span></button><button class="btn pri" data-dmnew="Tax invoice">${ico('plus')}<span>New invoice</span></button>`)+`<div class="dm-grid">${left}${right}</div>`+recent;
+}
+async function docUpShow(){const d=DM&&DM.d,u=d&&d.up;const t=d&&docTotals(d),s=document.getElementById('dmTot');if(s&&t)s.textContent=`Total ${inr2(t.total)}${t.rate?` (incl. GST ${t.rate*100}%)`:''}`;
+  const box=document.getElementById('dmUpPdf');if(!box||!u)return;
+  try{const r=await bmBlob(u.id,false);const b=await r.blob();if(!document.body.contains(box))return;const url=URL.createObjectURL(new Blob([b],{type:'application/pdf'}));
+    if(DMURL)try{URL.revokeObjectURL(DMURL);}catch(_){}DMURL=url;
+    box.outerHTML=`<iframe class="dm-upprev" title="${esc(u.name)}" src="${url}"></iframe><div class="code" style="text-align:center;padding:6px">PDF not showing on this phone? Use Download.</div>`;}catch(e){box.textContent='Could not open the preview — use Download.';}}
+async function docUpBlob(){const u=DM.d.up;if(!u)throw new Error('Upload the file first.');const r=await bmBlob(u.id,false);const b=await r.blob();return new File([b],u.name||'document',{type:u.type||b.type||'application/octet-stream'});}
+async function docUpFile(file){
+  if(!file)return;if(!A||!CANW){toast('Uploading needs permission to add entries.');return;}if(file.size>(/^image\//.test(file.type||'')?30:10)*1048576){toast('The file is over 10 MB.');return;}
+  const ty=file.type||fileType(file.name)||'application/octet-stream';
+  toast('Uploading…');try{const r=await A.upload(file,{type:ty});DM.d.up={id:r.id,name:file.name||'document',type:ty,size:file.size};
+    if(!DM.d.no||DM.d.no===docNextNo(DM.d.kind)){const base=String(file.name||'').replace(/\.[^.]+$/,'');const m=/(?:^|[^A-Za-z])((?:QT|INV|PI|RA)[\s\-_#:]?\d[\w\-\/]*)/i.exec(base);   // e.g. QT-77, INV_2026_14
+      if(m){const no=m[1].replace(/[\s_#:]+/g,'-').toUpperCase();if(!D.invoices.some(r=>r.no===no&&r.id!==DM.id))DM.d.no=no;}}
+    render();toast('File added — fill in the details and Save');}catch(e){toast((e&&e.message)||'Upload failed');}}
 async function lhSave(f){
   const g=id=>document.getElementById(id),A=window.STORE||null;const up=async inp=>{const file=inp&&inp.files&&inp.files[0];if(!file)return null;
     if(!/^image\/(png|jpe?g)$/.test(file.type)){toast('Use a PNG or JPG image.');throw new Error('type');}const r=await gasApi('upload',{b64:await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]||'');fr.onerror=no;fr.readAsDataURL(file);}),name:file.name,type:file.type});return r.id;};

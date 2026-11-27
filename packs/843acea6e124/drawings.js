@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: drawings */
 function relBadge(d){if(!d||!isDrawing(d)||relHide()||!((d.files||[]).length||d.link)||d.status==='Superseded')return '';
   return d.rel?`<span class="pill p-green" title="Released by ${esc(nm(d.rel.by))}, ${esc(fd(new Date(d.rel.at).toISOString().slice(0,10)))}">${ico('eye')} Visible to site & client</span>`

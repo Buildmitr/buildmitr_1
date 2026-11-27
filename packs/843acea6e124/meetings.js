@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: meetings */
 function momText(m){const P=m.project?pname(m.project):'';const L=[`*Minutes of meeting — ${m.title||m.kind||'Meeting'}*`,`${P?P+' · ':''}${fd(m.date)}${m.time?' '+m.time:''}${m.place?' · '+m.place:''}`,`Type: ${m.kind||'—'}`];
   const att=[...(m.att||[]).map(pnm),...momLines(m.others)];if(att.length)L.push('','*Present:* '+att.join(', '));

@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: cameras */
 function loadHls(){if(window.Hls)return Promise.resolve();return new Promise((ok,bad)=>{const j=document.createElement('script');j.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js';j.onload=ok;j.onerror=bad;document.head.appendChild(j);});}
 function vCctv(){

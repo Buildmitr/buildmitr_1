@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: extras */
 function waLink(k,r){return 'https://wa.me/?text='+encodeURIComponent(waText(k,r));}
 async function convertLead(id){

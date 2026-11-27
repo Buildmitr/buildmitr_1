@@ -1,4 +1,4 @@
-/* bm-build:f3afea8ba48a */
+/* bm-build:843acea6e124 */
 /* BuildMitr page code: chat */
 function tickState(m,key){
   const mem=threadMembers(m.project,m.grp).filter(x=>x.id!==m.from);
