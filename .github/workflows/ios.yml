@@ -27,7 +27,8 @@ jobs:
       - name: Project
         run: |
           set -o pipefail
-          { xcodebuild -version; brew install xcodegen; xcodegen generate; } 2>&1 | tee ../build.log
+          { X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1); [ -n "$X" ] && sudo xcode-select -s "$X"
+            xcodebuild -version; brew install xcodegen; xcodegen generate; } 2>&1 | tee ../build.log
       - name: Build for iPhone (unsigned) and simulator
         run: |
           set -o pipefail
@@ -41,7 +42,7 @@ jobs:
         run: |
           set -o pipefail
           {
-            UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in sorted(d.items(),reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone 16')) )")
+            UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next((x['udid'] for k,v in sorted(d.items(),reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone 16')),None) or next(x['udid'] for k,v in sorted(d.items(),reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
             echo "simulator $UDID"
             xcrun simctl boot "$UDID"; xcrun simctl bootstatus "$UDID" -b
             xcrun simctl install "$UDID" dd-sim/Build/Products/Debug-iphonesimulator/BuildMitr.app
@@ -80,8 +81,7 @@ jobs:
           <key>teamID</key><string>$TEAM</string><key>signingStyle</key><string>automatic</string></dict></plist>
           PL
             xcodebuild -exportArchive -archivePath BuildMitr.xcarchive -exportOptionsPlist export.plist -exportPath export "${AUTH[@]}"
-            rm -f "$KEY"
-          } 2>&1 | grep -vE "^\s*$" | tail -80 | tee -a ../build.log
+          } 2>&1 | tee -a ../build.log
       - name: Save the log if the build failed
         if: failure()
         working-directory: .

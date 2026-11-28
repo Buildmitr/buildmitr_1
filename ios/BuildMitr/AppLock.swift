@@ -33,6 +33,7 @@ final class AppLock: NSObject {
         NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo: c.centerXAnchor),
                                      stack.centerYAnchor.constraint(equalTo: c.centerYAnchor)])
         v.addSubview(c)
+        v.bringSubviewToFront(c)
         cover = c
     }
 
@@ -54,8 +55,8 @@ final class AppLock: NSObject {
     }
 
     private func removeCover() {
-        UIView.animate(withDuration: 0.2, animations: { self.cover?.alpha = 0 }) { _ in
-            self.cover?.removeFromSuperview(); self.cover = nil
-        }
+        guard let c = cover else { return }
+        cover = nil   // a new cover can be put up at once if the app goes to the background during the fade
+        UIView.animate(withDuration: 0.2, animations: { c.alpha = 0 }) { _ in c.removeFromSuperview() }
     }
 }

@@ -80,7 +80,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     @objc private func didBecomeActive() { lock.unlock() }
 
     @objc private func pulledToRefresh(_ rc: UIRefreshControl) {
-        if offlineView != nil { retry() } else { webView.reload() }
+        if webView.url == nil { webView.load(URLRequest(url: Self.home)) } else { webView.reload() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { rc.endRefreshing() }
     }
 
@@ -134,8 +134,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     // window.open(…) / target=_blank
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if let url = action.request.url, url.absoluteString != "", url.absoluteString != "about:blank" {
-            if isAppPage(url), url.scheme != "about" { webView.load(action.request) } else { openOutside(url) }
+        if let url = action.request.url, let s = url.scheme?.lowercased(), !["about", "blob", "data", "javascript"].contains(s) {
+            if isAppPage(url) { webView.load(action.request) } else { openOutside(url) }
         }
         return nil
     }
@@ -151,7 +151,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if webView.url == nil || webView.url?.host != Self.appHost || !webView.canGoBack { showOffline() }
     }
 
-    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { webView.reload() }
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        if webView.url == nil { webView.load(URLRequest(url: Self.home)) } else { webView.reload() }
+    }
 
     private func showOffline() {
         guard offlineView == nil else { return }
@@ -177,7 +179,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             stack.centerYAnchor.constraint(equalTo: v.centerYAnchor),
             stack.leadingAnchor.constraint(greaterThanOrEqualTo: v.leadingAnchor, constant: 24),
         ])
-        view.addSubview(v)
+        view.insertSubview(v, aboveSubview: webView)   // stays under the Face ID lock cover
         offlineView = v
     }
 
@@ -214,9 +216,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     /// shows an alert on top of whatever is open; if nothing can show it, answers at once so the page never hangs
     private func presentAlert(_ a: UIAlertController, fallback: @escaping () -> Void) {
         var top: UIViewController = self
-        while let p = top.presentedViewController, !p.isBeingDismissed { top = p }
-        if top.viewIfLoaded?.window == nil { fallback(); return }
+        while let p = top.presentedViewController { top = p }
+        if top.viewIfLoaded?.window == nil || top.isBeingPresented || top.isBeingDismissed || top is UIAlertController {
+            fallback(); return
+        }
         top.present(a, animated: true)
+        if a.presentingViewController == nil { fallback() }   // could not be shown: answer so the page never hangs
     }
 
     // MARK: - camera / microphone for QR scan and meeting recording (only for BuildMitr pages)
@@ -262,8 +267,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             pop.permittedArrowDirections = []
         }
         var top: UIViewController = self
-        while let p = top.presentedViewController, !p.isBeingDismissed { top = p }
+        while let p = top.presentedViewController { top = p }
+        if top.isBeingPresented || top.isBeingDismissed || top.viewIfLoaded?.window == nil { completion?(false); return }
         top.present(vc, animated: true)
+        if vc.presentingViewController == nil { completion?(false) }
     }
 
     private func toast(_ text: String) {
@@ -332,7 +339,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
       try{var cfg;Object.defineProperty(window,'BM_CONFIG',{configurable:true,get:function(){return cfg;},set:function(v){if(v&&typeof v==='object')v.googleClientId='';cfg=v;}});}catch(e){}
       /* print (the site prints from a hidden frame) → the iPhone print sheet, which also saves as PDF */
       var pr=function(w){return function(){var d;try{d=w.document;}catch(e){}post({t:'print',html:d&&d.documentElement?d.documentElement.outerHTML:'',title:(d&&d.title)||document.title||'BuildMitr'});};};
-      window.print=pr(window);
+      window.print=function(){post({t:'print',html:'',title:document.title||'BuildMitr'});};
       try{var cw=Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,'contentWindow');
         Object.defineProperty(HTMLIFrameElement.prototype,'contentWindow',{configurable:true,get:function(){var w=cw.get.call(this);try{if(w&&!w.__bmP){w.__bmP=1;w.print=pr(w);}}catch(e){}return w;}});}catch(e){}
       /* share → the iPhone share sheet (text, links and files such as PDFs) */

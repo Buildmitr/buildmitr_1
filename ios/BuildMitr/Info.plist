@@ -33,7 +33,7 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>WKAppBoundDomains</key>
-	<array><string>buildmitr.github.io</string></array>
+	<array><string>buildmitr.github.io</string><string>www.youtube.com</string><string>www.youtube-nocookie.com</string></array>
 	<key>NSCameraUsageDescription</key><string>BuildMitr uses the camera to take site photos for daily reports and to scan QR codes.</string>
 	<key>NSPhotoLibraryUsageDescription</key><string>BuildMitr lets you attach photos from your library to reports, issues and documents.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key><string>BuildMitr can save photos and files you choose to your library.</string>

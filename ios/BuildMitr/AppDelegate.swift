@@ -13,13 +13,4 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window = w
         return true
     }
-
-    // links such as https://buildmitr.github.io/buildmitr_1/... opened from WhatsApp or mail (universal links) open inside the app
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity,
-                     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        guard userActivity.activityType == NSUserActivityTypeBrowsingWeb, let url = userActivity.webpageURL,
-              let vc = window?.rootViewController as? WebViewController else { return false }
-        vc.open(url)
-        return true
-    }
 }
