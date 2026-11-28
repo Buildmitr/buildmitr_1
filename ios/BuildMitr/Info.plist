@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleDisplayName</key><string>BuildMitr</string>
+	<key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+	<key>CFBundleName</key><string>BuildMitr</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key><true/>
+	<key>ITSAppUsesNonExemptEncryption</key><false/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key><string>LaunchBackground</string>
+		<key>UIImageName</key><string>LaunchLogo</string>
+	</dict>
+	<key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>WKAppBoundDomains</key>
+	<array><string>buildmitr.github.io</string></array>
+	<key>NSCameraUsageDescription</key><string>BuildMitr uses the camera to take site photos for daily reports and to scan QR codes.</string>
+	<key>NSPhotoLibraryUsageDescription</key><string>BuildMitr lets you attach photos from your library to reports, issues and documents.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key><string>BuildMitr can save photos and files you choose to your library.</string>
+	<key>NSMicrophoneUsageDescription</key><string>BuildMitr uses the microphone only when you record a meeting.</string>
+	<key>NSLocationWhenInUseUsageDescription</key><string>BuildMitr records your location when you mark attendance at a site.</string>
+	<key>NSFaceIDUsageDescription</key><string>BuildMitr can lock the app with Face ID (turn it on in Settings → BuildMitr).</string>
+</dict>
+</plist>

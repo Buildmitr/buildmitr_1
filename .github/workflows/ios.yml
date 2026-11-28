@@ -1,0 +1,90 @@
+# Builds the BuildMitr iPhone / iPad app whenever the ios/ folder changes.
+# 1. Always: compiles it for iPhone and for the simulator, opens it in an iPhone simulator and takes screenshots,
+#    then publishes them as the "ios-latest" pre-release (so the app can be checked before Apple membership is active).
+# 2. Once the Apple membership is active and the App Store Connect key is saved in the repo secrets
+#    (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, APPLE_TEAM_ID): also signs the app and uploads it to App Store Connect / TestFlight.
+name: iOS app
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HAS_ASC: ${{ secrets.ASC_KEY_P8 != '' }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Project
+        run: |
+          set -o pipefail
+          { xcodebuild -version; brew install xcodegen; xcodegen generate; } 2>&1 | tee ../build.log
+      - name: Build for iPhone (unsigned) and simulator
+        run: |
+          set -o pipefail
+          { xcodebuild -project BuildMitr.xcodeproj -scheme BuildMitr -configuration Release -sdk iphoneos \
+              -destination 'generic/platform=iOS' -derivedDataPath dd-dev CODE_SIGNING_ALLOWED=NO build
+            xcodebuild -project BuildMitr.xcodeproj -scheme BuildMitr -configuration Debug -sdk iphonesimulator \
+              -destination 'generic/platform=iOS Simulator' -derivedDataPath dd-sim CODE_SIGNING_ALLOWED=NO build
+          } 2>&1 | grep -E "error|warning: |BUILD|\*\*" | tee -a ../build.log
+          test -d dd-sim/Build/Products/Debug-iphonesimulator/BuildMitr.app
+      - name: Open in the iPhone simulator and take screenshots
+        run: |
+          set -o pipefail
+          {
+            UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in sorted(d.items(),reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone 16')) )")
+            echo "simulator $UDID"
+            xcrun simctl boot "$UDID"; xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl install "$UDID" dd-sim/Build/Products/Debug-iphonesimulator/BuildMitr.app
+            xcrun simctl launch "$UDID" com.buildmitr.app
+            sleep 40; xcrun simctl io "$UDID" screenshot ../shot-1-start.png
+            xcrun simctl ui "$UDID" appearance dark; sleep 5; xcrun simctl io "$UDID" screenshot ../shot-2-dark.png
+            xcrun simctl ui "$UDID" appearance light
+            xcrun simctl spawn "$UDID" log show --last 2m --predicate 'process == "BuildMitr"' --style compact | tail -60 || true
+          } 2>&1 | tee -a ../build.log
+      - name: Publish
+        run: |
+          set -o pipefail
+          cd ..
+          ( cd ios/dd-sim/Build/Products/Debug-iphonesimulator && zip -qr "$GITHUB_WORKSPACE/BuildMitr-simulator.zip" BuildMitr.app )
+          gh release delete ios-latest -y --cleanup-tag || true
+          gh release create ios-latest --prerelease --title "BuildMitr for iPhone (test build)" \
+            --notes "Test build from commit ${GITHUB_SHA::7}: compiled for iPhone and opened in an iPhone simulator (screenshots attached). The App Store version is signed and uploaded once the Apple Developer membership is active." \
+            shot-1-start.png shot-2-dark.png BuildMitr-simulator.zip build.log
+      - name: Sign and upload to App Store Connect
+        if: env.HAS_ASC == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -o pipefail
+          {
+            mkdir -p ~/private_keys; KEY=~/private_keys/AuthKey_$ASC_KEY_ID.p8; printf '%s\n' "$ASC_KEY_P8" > "$KEY"
+            AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+            xcodebuild -project BuildMitr.xcodeproj -scheme BuildMitr -configuration Release -destination 'generic/platform=iOS' \
+              -archivePath BuildMitr.xcarchive DEVELOPMENT_TEAM="$TEAM" CURRENT_PROJECT_VERSION=$((100 + GITHUB_RUN_NUMBER)) "${AUTH[@]}" archive
+            cat > export.plist <<PL
+          <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict><key>method</key><string>app-store-connect</string><key>destination</key><string>upload</string>
+          <key>teamID</key><string>$TEAM</string><key>signingStyle</key><string>automatic</string></dict></plist>
+          PL
+            xcodebuild -exportArchive -archivePath BuildMitr.xcarchive -exportOptionsPlist export.plist -exportPath export "${AUTH[@]}"
+            rm -f "$KEY"
+          } 2>&1 | grep -vE "^\s*$" | tail -80 | tee -a ../build.log
+      - name: Save the log if the build failed
+        if: failure()
+        working-directory: .
+        run: |
+          gh release delete ci-log-ios -y --cleanup-tag || true
+          gh release create ci-log-ios --draft --title "iOS build log" --notes "Build failed" build.log

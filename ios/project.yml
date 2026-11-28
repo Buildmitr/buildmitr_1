@@ -1,0 +1,25 @@
+# BuildMitr for iPhone / iPad — Xcode project made by XcodeGen (`xcodegen generate` in this folder).
+name: BuildMitr
+options:
+  bundleIdPrefix: com.buildmitr
+  deploymentTarget: { iOS: "15.0" }
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  BuildMitr:
+    type: application
+    platform: iOS
+    sources:
+      - path: BuildMitr
+        excludes: [Info.plist]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.buildmitr.app
+        INFOPLIST_FILE: BuildMitr/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_BITCODE: NO
